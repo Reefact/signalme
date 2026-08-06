@@ -1,7 +1,6 @@
-﻿#region Usings declarations
+#region Usings declarations
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 using SignalMe.Services;
@@ -12,23 +11,18 @@ namespace SignalMe.Infrastructure;
 
 public sealed class UserCurrentStatus {
 
-    private const string FileName = "signalme.ini";
+    private const string FileName      = "signalme.ini";
+    private const string DirectoryName = "SignalMe";
 
     #region Statics members declarations
 
     public static UserStatus? Get() {
         string filePath = GetFilePath();
+        if (!File.Exists(filePath)) { return null; }
 
-        string? serializedStatus;
-        if (!File.Exists(filePath)) {
-            serializedStatus = null;
-        } else {
-            string rawStatus = File.ReadAllText(filePath).Trim();
-            serializedStatus = string.IsNullOrWhiteSpace(rawStatus) ? null : rawStatus;
-        }
-        UserStatus? userStatus = DeSerialize(serializedStatus);
+        string rawStatus = File.ReadAllText(filePath).Trim();
 
-        return userStatus;
+        return DeSerialize(rawStatus);
     }
 
     public static void Set(UserStatus? status) {
@@ -38,21 +32,26 @@ public sealed class UserCurrentStatus {
                 File.Delete(filePath);
             }
         } else {
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
             string serializedStatus = Serialize(status.Value);
             File.WriteAllText(filePath, serializedStatus);
         }
     }
 
-    [return: NotNullIfNotNull(nameof(serializedStatus))]
-    private static UserStatus? DeSerialize(string? serializedStatus) {
-        if (serializedStatus == null) { return null; }
-
+    /// <summary>
+    ///     Reads back a serialized status, treating anything unrecognized as "no status".
+    /// </summary>
+    /// <remarks>
+    ///     An empty or corrupted file must not be fatal: it used to throw, which took down every mood
+    ///     command until the file was deleted. Forgetting the remembered status is the recoverable outcome.
+    /// </remarks>
+    private static UserStatus? DeSerialize(string serializedStatus) {
         return serializedStatus switch {
             UserStatusSerializedValue.Away         => UserStatus.Away,
             UserStatusSerializedValue.Available    => UserStatus.Available,
             UserStatusSerializedValue.Busy         => UserStatus.Busy,
             UserStatusSerializedValue.DoNotDisturb => UserStatus.DoNotDisturb,
-            _                                      => throw new ArgumentOutOfRangeException(nameof(serializedStatus), serializedStatus, null)
+            _                                      => null
         };
     }
 
@@ -68,10 +67,18 @@ public sealed class UserCurrentStatus {
         return serializedStatus;
     }
 
+    /// <summary>
+    ///     Locates the file remembering the last durable status, under the current user's local
+    ///     application data.
+    /// </summary>
+    /// <remarks>
+    ///     It used to sit next to the executable, which is not writable once signalme is installed in a
+    ///     shared location: the write threw and the command died after the LEDs had already changed.
+    /// </remarks>
     private static string GetFilePath() {
-        string exeDir = AppContext.BaseDirectory;
+        string localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
 
-        return Path.Combine(exeDir, FileName);
+        return Path.Combine(localApplicationData, DirectoryName, FileName);
     }
 
     #endregion

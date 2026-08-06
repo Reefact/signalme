@@ -13,6 +13,12 @@ public static class UserMoodConverter {
 
     #region Statics members declarations
 
+    /// <summary>
+    ///     Every value <see cref="TryConvert" /> accepts, in the order they are offered to the user.
+    /// </summary>
+    /// <remarks>Kept next to the switch below so that the two cannot drift apart.</remarks>
+    public static readonly string[] KnownValues = ["happy", "bored", "desperate", "ready", "warning", "alerting"];
+
     public static bool TryConvert(string input, [NotNullWhen(true)] out UserMood? userMood) {
         ArgumentNullException.ThrowIfNull(input);
         userMood = null;

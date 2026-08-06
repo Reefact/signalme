@@ -34,14 +34,16 @@ public sealed class AlertingPattern {
     public void Play() {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
-        for (int i = 0; i < 20; i++) {
-            _luxaforDevice.SetColor(BrightColor.Red);
-            Thread.Sleep(50);
-            _luxaforDevice.TurnOff();
-            Thread.Sleep(50);
+        try {
+            for (int i = 0; i < 20; i++) {
+                _luxaforDevice.SetColor(BrightColor.Red);
+                Thread.Sleep(50);
+                _luxaforDevice.TurnOff();
+                Thread.Sleep(50);
+            }
+        } finally {
+            _userStatusController.TryRestore(currentUserStatus);
         }
-
-        _userStatusController.Display(currentUserStatus);
     }
 
 }

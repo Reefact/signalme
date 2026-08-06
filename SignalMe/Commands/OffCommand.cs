@@ -18,13 +18,13 @@ public class OffCommand : Command {
     public override int Execute(CommandContext context) {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!LuxaforDeviceHelper.TryGetDefaultLuxaforDevice(out ILuxaforDevice? luxaforDevice)) { return 1; }
+        if (!LuxaforDeviceHelper.TryGetDefaultLuxaforDevice(out ILuxaforDevice? luxaforDevice)) { return ExitCode.DeviceError; }
 
         try {
             SignalMeService service = new(luxaforDevice);
             service.TurnOff();
 
-            return 0;
+            return ExitCode.Success;
         } finally {
             luxaforDevice.Dispose();
         }
