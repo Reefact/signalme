@@ -33,29 +33,31 @@ public sealed class SignalMeService {
 
     #region Fields declarations
 
-    private readonly ILuxaforDevice _luxaforDevice;
+    private readonly ILuxaforDevice    _luxaforDevice;
+    private readonly UserCurrentStatus _userCurrentStatus;
 
     #endregion
 
     #region Constructors declarations
 
-    public SignalMeService(ILuxaforDevice luxaforDevice) {
+    public SignalMeService(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
-        _luxaforDevice = luxaforDevice;
+        _luxaforDevice     = luxaforDevice;
+        _userCurrentStatus = userCurrentStatus ?? UserCurrentStatus.Default;
     }
 
     #endregion
 
     public void SetAs(string statusOrMood) {
         if (UserStatusConverter.TryConvert(statusOrMood, out UserStatus? userStatus)) {
-            new UserStatusController(_luxaforDevice).Display(userStatus.Value);
+            new UserStatusController(_luxaforDevice, _userCurrentStatus).Display(userStatus.Value);
 
             return;
         }
 
         if (UserMoodConverter.TryConvert(statusOrMood, out UserMood? userMood)) {
-            new UserMoodLedController(_luxaforDevice).Display(userMood.Value);
+            new UserMoodLedController(_luxaforDevice, _userCurrentStatus).Display(userMood.Value);
 
             return;
         }
@@ -66,9 +68,9 @@ public sealed class SignalMeService {
     /// <exception cref="DeviceCommandFailedException">The device refused the command.</exception>
     public void TurnOff() {
         // Same rule as Display: forget the remembered status only once the LEDs are actually off.
-        if (!_luxaforDevice.TurnOff()) { throw new DeviceCommandFailedException("The Luxafor device refused to turn its LEDs off."); }
+        _luxaforDevice.TurnOffOrThrow();
 
-        UserCurrentStatus.Set(null);
+        _userCurrentStatus.Set(null);
     }
 
 }

@@ -6,6 +6,7 @@ using System.Threading;
 
 using Reefact.LuxaforLightingDeviceController;
 
+using SignalMe.Infrastructure;
 using SignalMe.Services;
 
 #endregion
@@ -23,11 +24,11 @@ public sealed class HappyPattern {
 
     #region Constructors declarations
 
-    public HappyPattern(ILuxaforDevice luxaforDevice) {
+    public HappyPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice);
+        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
     }
 
     #endregion
@@ -35,7 +36,7 @@ public sealed class HappyPattern {
     public void Play() {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
-        try {
+        _userStatusController.PlayAndRestore(currentUserStatus, () => {
             const int ledCount = 6;
 
             BrightColor userStatusColor = _userStatusController.GetUserStatusColor(currentUserStatus);
@@ -54,7 +55,7 @@ public sealed class HappyPattern {
                     Hsv              hsv      = new(hue, 0.5f, 0.7f); // HSV pastel
                     BrightColor      color    = ColorService.GetBrightFromHsv(hsv);
                     LightingCommand? cmd      = LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), color);
-                    _luxaforDevice.Send(cmd);
+                    _luxaforDevice.SendOrThrow(cmd);
                 }
                 Thread.Sleep(10);
             }
@@ -62,10 +63,7 @@ public sealed class HappyPattern {
             // ==== 3. Retour fluide vers couleur stable ====
 
             UnicornTransition(pastelColor, userStatusColor);
-        } finally {
-            // ==== 4. Retour à la case départ
-            _userStatusController.TryRestore(currentUserStatus);
-        }
+                });
     }
 
     private void UnicornTransition(BrightColor currentColor, BrightColor targetColor) {
@@ -106,7 +104,7 @@ public sealed class HappyPattern {
                 BrightColor     interpolated = BrightColor.From(r, g, b);
                 TargetedLeds    led          = TargetedLeds.FromLuxCode((byte)(ledIndex + 1));
                 LightingCommand command      = LightingCommand.CreateSetColorCommand(led, interpolated);
-                _luxaforDevice.Send(command);
+                _luxaforDevice.SendOrThrow(command);
             }
 
             Thread.Sleep(frameIntervalMs);

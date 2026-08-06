@@ -1,4 +1,4 @@
-﻿#region Usings declarations
+#region Usings declarations
 
 using System;
 using System.Diagnostics;
@@ -13,13 +13,25 @@ namespace SignalMe.Services;
 ///     Saturation defines how pure or intense the color is, from 0 (gray) to 1 (fully saturated).
 ///     Value defines the brightness of the color, from 0 (black) to 1 (full brightness).
 /// </summary>
+/// <remarks>
+///     <para>
+///         Being a struct, the constructor can be bypassed through <c>default(Hsv)</c> or an array of
+///         <see cref="Hsv" />. That is harmless here: the resulting HSV(0, 0, 0) is black, which satisfies
+///         all three range invariants, so every reachable value still respects them.
+///     </para>
+///     <para>
+///         The properties are deliberately get-only rather than <c>init</c>: that keeps the <c>with</c>
+///         expression from compiling, which would otherwise be a second way to build an out-of-range
+///         instance without going through the constructor.
+///     </para>
+/// </remarks>
 [DebuggerDisplay("{ToString()}")]
-public sealed class Hsv : IEquatable<Hsv> {
+public readonly record struct Hsv {
 
     #region Constructors declarations
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="Hsv" /> class.
+    ///     Initializes a new <see cref="Hsv" />.
     /// </summary>
     /// <param name="hue">Hue in degrees (0 ≤ hue &lt; 360).</param>
     /// <param name="saturation">Saturation in [0, 1].</param>
@@ -109,6 +121,11 @@ public sealed class Hsv : IEquatable<Hsv> {
         if (hue < 0f) {
             hue += 360f;
         }
+        // Adding 360 to a hue just below zero rounds to exactly 360 in single precision, which the
+        // constructor rejects. 360° and 0° are the same hue, so wrap instead of throwing.
+        if (hue >= 360f) {
+            hue = 0f;
+        }
 
         float saturation = Saturation + (to.Saturation - Saturation) * t;
         float value      = Value      + (to.Value      - Value)      * t;
@@ -119,46 +136,6 @@ public sealed class Hsv : IEquatable<Hsv> {
     /// <inheritdoc />
     public override string ToString() {
         return $"HSV({Hue:0.##}, {Saturation:0.##}, {Value:0.##})";
-    }
-
-    /// <inheritdoc />
-    public bool Equals(Hsv? other) {
-        if (other is null) { return false; }
-        if (ReferenceEquals(this, other)) { return true; }
-
-        return Hue.Equals(other.Hue) && Saturation.Equals(other.Saturation) && Value.Equals(other.Value);
-    }
-
-    /// <inheritdoc />
-    public override bool Equals(object? obj) {
-        return Equals(obj as Hsv);
-    }
-
-    /// <inheritdoc />
-    public override int GetHashCode() {
-        unchecked {
-            int hashCode = Hue.GetHashCode();
-            hashCode = (hashCode * 397) ^ Saturation.GetHashCode();
-            hashCode = (hashCode * 397) ^ Value.GetHashCode();
-
-            return hashCode;
-        }
-    }
-
-    /// <summary>Indicates whether two <see cref="Hsv">HSV colors</see> are equal.</summary>
-    /// <param name="left">The first <see cref="Hsv">HSV color</see> to compare.</param>
-    /// <param name="right">The second <see cref="Hsv">HSV color</see> to compare.</param>
-    /// <returns>true if both values are equal, otherwise false.</returns>
-    public static bool operator ==(Hsv? left, Hsv? right) {
-        return left is null ? right is null : left.Equals(right);
-    }
-
-    /// <summary>Indicates whether two <see cref="Hsv">HSV colors</see> are different.</summary>
-    /// <param name="left">The first <see cref="Hsv">HSV color</see> to compare.</param>
-    /// <param name="right">The second <see cref="Hsv">HSV color</see> to compare.</param>
-    /// <returns>true if both values are different, otherwise false.</returns>
-    public static bool operator !=(Hsv? left, Hsv? right) {
-        return !(left == right);
     }
 
 }

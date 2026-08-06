@@ -1,6 +1,5 @@
-﻿#region Usings declarations
+#region Usings declarations
 
-using System;
 using System.Diagnostics;
 
 #endregion
@@ -11,14 +10,18 @@ namespace SignalMe.Services;
 ///     Represents a color in the RGB (Red, Green, Blue) color model,
 ///     where each component is an integer between 0 and 255.
 /// </summary>
+/// <remarks>
+///     Every triple of bytes is a valid color, so there is no invariant for the default value to break:
+///     <c>default(Rgb)</c> is black. The properties are get-only rather than <c>init</c>, which keeps the
+///     <c>with</c> expression out of reach and the type genuinely immutable.
+/// </remarks>
 [DebuggerDisplay("{ToString()}")]
-public sealed class Rgb : IEquatable<Rgb> {
+public readonly record struct Rgb {
 
     #region Constructors declarations
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="Rgb" /> class
-    ///     using the specified red, green, and blue components.
+    ///     Initializes a new <see cref="Rgb" /> using the specified red, green, and blue components.
     /// </summary>
     /// <param name="red">The red component (0–255).</param>
     /// <param name="green">The green component (0–255).</param>
@@ -52,46 +55,6 @@ public sealed class Rgb : IEquatable<Rgb> {
     /// <returns>A string representing the color in hexadecimal format.</returns>
     public override string ToString() {
         return $"#{Red:X2}{Green:X2}{Blue:X2}";
-    }
-
-    /// <inheritdoc />
-    public bool Equals(Rgb? other) {
-        if (other is null) { return false; }
-        if (ReferenceEquals(this, other)) { return true; }
-
-        return Red == other.Red && Green == other.Green && Blue == other.Blue;
-    }
-
-    /// <inheritdoc />
-    public override bool Equals(object? obj) {
-        return Equals(obj as Rgb);
-    }
-
-    /// <inheritdoc />
-    public override int GetHashCode() {
-        unchecked {
-            int hashCode = Red;
-            hashCode = (hashCode * 397) ^ Green;
-            hashCode = (hashCode * 397) ^ Blue;
-
-            return hashCode;
-        }
-    }
-
-    /// <summary>Indicates whether two <see cref="Rgb">RGB colors</see> are equal.</summary>
-    /// <param name="left">The first <see cref="Rgb">RGB color</see> to compare.</param>
-    /// <param name="right">The second <see cref="Rgb">RGB color</see> to compare.</param>
-    /// <returns>true if both values are equal, otherwise false.</returns>
-    public static bool operator ==(Rgb? left, Rgb? right) {
-        return left is null ? right is null : left.Equals(right);
-    }
-
-    /// <summary>Indicates whether two <see cref="Rgb">RGB colors</see> are different.</summary>
-    /// <param name="left">The first <see cref="Rgb">RGB color</see> to compare.</param>
-    /// <param name="right">The second <see cref="Rgb">RGB color</see> to compare.</param>
-    /// <returns>true if both values are different, otherwise false.</returns>
-    public static bool operator !=(Rgb? left, Rgb? right) {
-        return !(left == right);
     }
 
 }
