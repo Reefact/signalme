@@ -18,7 +18,7 @@ public class OffCommand : Command {
     public override int Execute(CommandContext context) {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!LuxaforDeviceHelper.TryGetDefaultLuxaforDevice(out LuxaforDevice? luxaforDevice)) { return 1; }
+        if (!LuxaforDeviceHelper.TryGetDefaultLuxaforDevice(out ILuxaforDevice? luxaforDevice)) { return 1; }
 
         try {
             SignalMeService service = new(luxaforDevice);

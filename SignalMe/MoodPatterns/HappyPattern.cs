@@ -16,14 +16,14 @@ public sealed class HappyPattern {
 
     #region Fields declarations
 
-    private readonly LuxaforDevice        _luxaforDevice;
+    private readonly ILuxaforDevice       _luxaforDevice;
     private readonly UserStatusController _userStatusController;
 
     #endregion
 
     #region Constructors declarations
 
-    public HappyPattern(LuxaforDevice luxaforDevice) {
+    public HappyPattern(ILuxaforDevice luxaforDevice) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;

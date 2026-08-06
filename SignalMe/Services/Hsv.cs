@@ -1,10 +1,7 @@
 ﻿#region Usings declarations
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-
-using Value;
 
 #endregion
 
@@ -17,7 +14,7 @@ namespace SignalMe.Services;
 ///     Value defines the brightness of the color, from 0 (black) to 1 (full brightness).
 /// </summary>
 [DebuggerDisplay("{ToString()}")]
-public sealed class Hsv : ValueType<Hsv> {
+public sealed class Hsv : IEquatable<Hsv> {
 
     #region Constructors declarations
 
@@ -124,10 +121,44 @@ public sealed class Hsv : ValueType<Hsv> {
         return $"HSV({Hue:0.##}, {Saturation:0.##}, {Value:0.##})";
     }
 
-    protected override IEnumerable<object> GetAllAttributesToBeUsedForEquality() {
-        yield return Hue;
-        yield return Saturation;
-        yield return Value;
+    /// <inheritdoc />
+    public bool Equals(Hsv? other) {
+        if (other is null) { return false; }
+        if (ReferenceEquals(this, other)) { return true; }
+
+        return Hue.Equals(other.Hue) && Saturation.Equals(other.Saturation) && Value.Equals(other.Value);
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) {
+        return Equals(obj as Hsv);
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode() {
+        unchecked {
+            int hashCode = Hue.GetHashCode();
+            hashCode = (hashCode * 397) ^ Saturation.GetHashCode();
+            hashCode = (hashCode * 397) ^ Value.GetHashCode();
+
+            return hashCode;
+        }
+    }
+
+    /// <summary>Indicates whether two <see cref="Hsv">HSV colors</see> are equal.</summary>
+    /// <param name="left">The first <see cref="Hsv">HSV color</see> to compare.</param>
+    /// <param name="right">The second <see cref="Hsv">HSV color</see> to compare.</param>
+    /// <returns>true if both values are equal, otherwise false.</returns>
+    public static bool operator ==(Hsv? left, Hsv? right) {
+        return left is null ? right is null : left.Equals(right);
+    }
+
+    /// <summary>Indicates whether two <see cref="Hsv">HSV colors</see> are different.</summary>
+    /// <param name="left">The first <see cref="Hsv">HSV color</see> to compare.</param>
+    /// <param name="right">The second <see cref="Hsv">HSV color</see> to compare.</param>
+    /// <returns>true if both values are different, otherwise false.</returns>
+    public static bool operator !=(Hsv? left, Hsv? right) {
+        return !(left == right);
     }
 
 }

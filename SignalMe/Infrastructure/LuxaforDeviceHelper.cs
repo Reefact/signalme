@@ -14,7 +14,7 @@ public static class LuxaforDeviceHelper {
 
     #region Statics members declarations
 
-    public static bool TryGetDefaultLuxaforDevice([NotNullWhen(true)] out LuxaforDevice? device) {
+    public static bool TryGetDefaultLuxaforDevice([NotNullWhen(true)] out ILuxaforDevice? device) {
         device = null;
         try {
             device = Luxafor.GetDevices().FirstOrDefault();

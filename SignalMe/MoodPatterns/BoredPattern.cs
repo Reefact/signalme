@@ -32,14 +32,14 @@ public sealed class BoredPattern {
 
     #region Fields declarations
 
-    private readonly LuxaforDevice        _luxaforDevice;
+    private readonly ILuxaforDevice       _luxaforDevice;
     private readonly UserStatusController _userStatusController;
 
     #endregion
 
     #region Constructors declarations
 
-    public BoredPattern(LuxaforDevice luxaforDevice) {
+    public BoredPattern(ILuxaforDevice luxaforDevice) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
