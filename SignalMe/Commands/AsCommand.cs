@@ -20,7 +20,7 @@ public class AsCommand : Command<AsCommand.Settings> {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(settings);
 
-        if (!LuxaforDeviceHelper.TryGetDefaultLuxaforDevice(out LuxaforDevice? luxaforDevice)) { return 1; }
+        if (!LuxaforDeviceHelper.TryGetDefaultLuxaforDevice(out ILuxaforDevice? luxaforDevice)) { return 1; }
 
         try {
             SignalMeService service = new(luxaforDevice);

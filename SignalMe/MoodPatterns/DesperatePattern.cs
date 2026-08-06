@@ -15,14 +15,14 @@ public sealed class DesperatePattern {
 
     #region Fields declarations
 
-    private readonly LuxaforDevice        _luxaforDevice;
+    private readonly ILuxaforDevice       _luxaforDevice;
     private readonly UserStatusController _userStatusController;
 
     #endregion
 
     #region Constructors declarations
 
-    public DesperatePattern(LuxaforDevice luxaforDevice) {
+    public DesperatePattern(ILuxaforDevice luxaforDevice) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;

@@ -15,14 +15,14 @@ public sealed class AlertingPattern {
 
     #region Fields declarations
 
-    private readonly LuxaforDevice        _luxaforDevice;
+    private readonly ILuxaforDevice       _luxaforDevice;
     private readonly UserStatusController _userStatusController;
 
     #endregion
 
     #region Constructors declarations
 
-    public AlertingPattern(LuxaforDevice luxaforDevice) {
+    public AlertingPattern(ILuxaforDevice luxaforDevice) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
