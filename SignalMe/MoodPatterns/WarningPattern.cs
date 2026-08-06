@@ -41,21 +41,23 @@ public sealed class WarningPattern {
         BrightColor red  = BrightColor.Red;
         BrightColor blue = BrightColor.Blue;
 
-        for (int i = 0; i < repeatCount; i++) {
-            // Phase 1 : avant bleu + arrière rouge progressif
-            SetFrontLeds(blue);
-            RunBackSequence(red, colorDuration);
-            TurnAllLedsOff();
-            Thread.Sleep(offDuration);
+        try {
+            for (int i = 0; i < repeatCount; i++) {
+                // Phase 1 : avant bleu + arrière rouge progressif
+                SetFrontLeds(blue);
+                RunBackSequence(red, colorDuration);
+                TurnAllLedsOff();
+                Thread.Sleep(offDuration);
 
-            // Phase 2 : avant rouge + arrière bleu progressif
-            SetFrontLeds(red);
-            RunBackSequence(blue, colorDuration);
-            TurnAllLedsOff();
-            Thread.Sleep(offDuration);
+                // Phase 2 : avant rouge + arrière bleu progressif
+                SetFrontLeds(red);
+                RunBackSequence(blue, colorDuration);
+                TurnAllLedsOff();
+                Thread.Sleep(offDuration);
+            }
+        } finally {
+            _userStatusController.TryRestore(currentUserStatus);
         }
-
-        _userStatusController.Display(currentUserStatus);
     }
 
     // Allume les LEDs 1 à 3 (avant) dans une couleur uniforme

@@ -32,26 +32,35 @@ public sealed class ReadyPattern {
     #endregion
 
     public void Play() {
-        UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
+        UserStatus? previousStatus = _userStatusController.GetUserCurrentStatus();
+        // "ready" is the one pattern that deliberately changes the durable status. Until it gets there,
+        // the status to fall back on is the previous one.
+        UserStatus? statusToRestore = previousStatus;
 
-        if (currentUserStatus == UserStatus.DoNotDisturb) {
-            Thread.Sleep(1000);
-            _luxaforDevice.SetColor(PredefinedColor.Busy);
-            currentUserStatus = UserStatus.Busy;
+        try {
+            UserStatus? displayedStatus = previousStatus;
+
+            if (displayedStatus == UserStatus.DoNotDisturb) {
+                Thread.Sleep(1000);
+                _luxaforDevice.SetColor(PredefinedColor.Busy);
+                displayedStatus = UserStatus.Busy;
+            }
+
+            if (displayedStatus == UserStatus.Busy) {
+                Thread.Sleep(2000);
+            }
+
+            for (int i = 0; i < 15; i++) {
+                _luxaforDevice.TurnOff();
+                Thread.Sleep(10);
+                _luxaforDevice.SetColor(PredefinedColor.Available);
+                Thread.Sleep(50);
+            }
+
+            statusToRestore = UserStatus.Available;
+        } finally {
+            _userStatusController.TryRestore(statusToRestore);
         }
-
-        if (currentUserStatus == UserStatus.Busy) {
-            Thread.Sleep(2000);
-        }
-
-        for (int i = 0; i < 15; i++) {
-            _luxaforDevice.TurnOff();
-            Thread.Sleep(10);
-            _luxaforDevice.SetColor(PredefinedColor.Available);
-            Thread.Sleep(50);
-        }
-
-        _userStatusController.Display(UserStatus.Available);
     }
 
 }

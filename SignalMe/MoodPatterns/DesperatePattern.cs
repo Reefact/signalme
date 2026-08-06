@@ -34,6 +34,14 @@ public sealed class DesperatePattern {
     public void Play() {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
+        try {
+            PlaySequence();
+        } finally {
+            _userStatusController.TryRestore(currentUserStatus);
+        }
+    }
+
+    private void PlaySequence() {
         Thread.Sleep(1000);
         _luxaforDevice.TurnOff();
         Thread.Sleep(300);
@@ -77,8 +85,6 @@ public sealed class DesperatePattern {
         _luxaforDevice.TurnOff();
 
         Thread.Sleep(1000);
-
-        _userStatusController.Display(currentUserStatus);
     }
 
 }
