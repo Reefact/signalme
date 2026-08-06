@@ -35,35 +35,37 @@ public sealed class HappyPattern {
     public void Play() {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
-        const int ledCount = 6;
+        try {
+            const int ledCount = 6;
 
-        BrightColor userStatusColor = _userStatusController.GetUserStatusColor(currentUserStatus);
-        BrightColor pastelColor     = userStatusColor.GetPastel();
+            BrightColor userStatusColor = _userStatusController.GetUserStatusColor(currentUserStatus);
+            BrightColor pastelColor     = userStatusColor.GetPastel();
 
-        // ==== 1. Transition initiale vers pastel ====
-        UnicornTransition(userStatusColor, pastelColor);
+            // ==== 1. Transition initiale vers pastel ====
+            UnicornTransition(userStatusColor, pastelColor);
 
-        // ==== 2. Wave pastel arc-en-ciel ====
-        float[] baseHues  = [0, 60, 120, 180, 240, 300];
-        int     waveSteps = 30;
-        for (int step = 0; step < waveSteps; step++) {
-            for (byte led = 1; led <= ledCount; led++) {
-                int              hueIndex = (led + step) % baseHues.Length;
-                float            hue      = baseHues[hueIndex];
-                Hsv              hsv      = new(hue, 0.5f, 0.7f); // HSV pastel
-                BrightColor      color    = ColorService.GetBrightFromHsv(hsv);
-                LightingCommand? cmd      = LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), color);
-                _luxaforDevice.Send(cmd);
+            // ==== 2. Wave pastel arc-en-ciel ====
+            float[] baseHues  = [0, 60, 120, 180, 240, 300];
+            int     waveSteps = 30;
+            for (int step = 0; step < waveSteps; step++) {
+                for (byte led = 1; led <= ledCount; led++) {
+                    int              hueIndex = (led + step) % baseHues.Length;
+                    float            hue      = baseHues[hueIndex];
+                    Hsv              hsv      = new(hue, 0.5f, 0.7f); // HSV pastel
+                    BrightColor      color    = ColorService.GetBrightFromHsv(hsv);
+                    LightingCommand? cmd      = LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), color);
+                    _luxaforDevice.Send(cmd);
+                }
+                Thread.Sleep(10);
             }
-            Thread.Sleep(10);
+
+            // ==== 3. Retour fluide vers couleur stable ====
+
+            UnicornTransition(pastelColor, userStatusColor);
+        } finally {
+            // ==== 4. Retour à la case départ
+            _userStatusController.TryRestore(currentUserStatus);
         }
-
-        // ==== 3. Retour fluide vers couleur stable ====
-
-        UnicornTransition(pastelColor, userStatusColor);
-
-        // ==== 4. Retour à la case départ
-        _userStatusController.Display(currentUserStatus);
     }
 
     private void UnicornTransition(BrightColor currentColor, BrightColor targetColor) {

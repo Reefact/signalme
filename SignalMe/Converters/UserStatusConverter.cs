@@ -13,6 +13,13 @@ public static class UserStatusConverter {
 
     #region Statics members declarations
 
+    /// <summary>
+    ///     Every value <see cref="TryConvert" /> accepts, aliases included, in the order they are offered
+    ///     to the user.
+    /// </summary>
+    /// <remarks>Kept next to the switch below so that the two cannot drift apart.</remarks>
+    public static readonly string[] KnownValues = ["available", "free", "busy", "away", "do-not-disturb", "dnd"];
+
     public static bool TryConvert(string input, [NotNullWhen(true)] out UserStatus? userStatus) {
         ArgumentNullException.ThrowIfNull(input);
         userStatus = null;

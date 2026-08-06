@@ -51,23 +51,25 @@ public sealed class BoredPattern {
     public void Play() {
         UserStatus? userCurrentStatus = _userStatusController.GetUserCurrentStatus();
 
-        BrightColor[] currentColors = new BrightColor[6];
-        for (int i = 0; i < 25; i++) {
-            IEnumerable<byte> ledCodes = GetRandomLedOrder();
-            foreach (byte luxCode in ledCodes) {
-                TargetedLeds targetedLed = TargetedLeds.FromLuxCode(luxCode);
-                BrightColor  boredColor  = ComputeBoredColor();
-                currentColors[luxCode - 1] = boredColor;
-                _luxaforDevice.Send(LightingCommand.CreateSetColorCommand(targetedLed, boredColor));
-                Thread.Sleep(Random.Shared.Next(0, 25));
+        try {
+            BrightColor[] currentColors = new BrightColor[6];
+            for (int i = 0; i < 25; i++) {
+                IEnumerable<byte> ledCodes = GetRandomLedOrder();
+                foreach (byte luxCode in ledCodes) {
+                    TargetedLeds targetedLed = TargetedLeds.FromLuxCode(luxCode);
+                    BrightColor  boredColor  = ComputeBoredColor();
+                    currentColors[luxCode - 1] = boredColor;
+                    _luxaforDevice.Send(LightingCommand.CreateSetColorCommand(targetedLed, boredColor));
+                    Thread.Sleep(Random.Shared.Next(0, 25));
+                }
+                Thread.Sleep(Random.Shared.Next(0, 100));
             }
-            Thread.Sleep(Random.Shared.Next(0, 100));
+
+            BrightColor targetColor = _userStatusController.GetUserStatusColor(userCurrentStatus);
+            TransitionToColorPerLed(currentColors, targetColor);
+        } finally {
+            _userStatusController.TryRestore(userCurrentStatus);
         }
-
-        BrightColor targetColor = _userStatusController.GetUserStatusColor(userCurrentStatus);
-        TransitionToColorPerLed(currentColors, targetColor);
-
-        _userStatusController.Display(userCurrentStatus);
     }
 
     public void TransitionToColorPerLed(BrightColor[] currentColors, BrightColor targetColor) {
