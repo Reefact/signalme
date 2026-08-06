@@ -31,7 +31,7 @@ public sealed class UserStatusController {
 
     #region Constructors declarations
 
-    public UserStatusController(LuxaforDevice luxaforDevice) {
+    public UserStatusController(ILuxaforDevice luxaforDevice) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         Device = luxaforDevice;
@@ -39,7 +39,7 @@ public sealed class UserStatusController {
 
     #endregion
 
-    public LuxaforDevice Device { get; }
+    public ILuxaforDevice Device { get; }
 
     public BrightColor GetUserStatusColor(UserStatus? userStatus) {
         if (userStatus == null) { return BrightColor.Black; }

@@ -15,13 +15,13 @@ public sealed class SignalMeService {
 
     #region Fields declarations
 
-    private readonly LuxaforDevice _luxaforDevice;
+    private readonly ILuxaforDevice _luxaforDevice;
 
     #endregion
 
     #region Constructors declarations
 
-    public SignalMeService(LuxaforDevice luxaforDevice) {
+    public SignalMeService(ILuxaforDevice luxaforDevice) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice = luxaforDevice;
