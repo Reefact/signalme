@@ -7,6 +7,7 @@ using System.Threading;
 
 using Reefact.LuxaforLightingDeviceController;
 
+using SignalMe.Infrastructure;
 using SignalMe.Services;
 
 #endregion
@@ -39,11 +40,11 @@ public sealed class BoredPattern {
 
     #region Constructors declarations
 
-    public BoredPattern(ILuxaforDevice luxaforDevice) {
+    public BoredPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice);
+        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
     }
 
     #endregion
@@ -51,7 +52,7 @@ public sealed class BoredPattern {
     public void Play() {
         UserStatus? userCurrentStatus = _userStatusController.GetUserCurrentStatus();
 
-        try {
+        _userStatusController.PlayAndRestore(userCurrentStatus, () => {
             BrightColor[] currentColors = new BrightColor[6];
             for (int i = 0; i < 25; i++) {
                 IEnumerable<byte> ledCodes = GetRandomLedOrder();
@@ -59,7 +60,7 @@ public sealed class BoredPattern {
                     TargetedLeds targetedLed = TargetedLeds.FromLuxCode(luxCode);
                     BrightColor  boredColor  = ComputeBoredColor();
                     currentColors[luxCode - 1] = boredColor;
-                    _luxaforDevice.Send(LightingCommand.CreateSetColorCommand(targetedLed, boredColor));
+                    _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(targetedLed, boredColor));
                     Thread.Sleep(Random.Shared.Next(0, 25));
                 }
                 Thread.Sleep(Random.Shared.Next(0, 100));
@@ -67,9 +68,7 @@ public sealed class BoredPattern {
 
             BrightColor targetColor = _userStatusController.GetUserStatusColor(userCurrentStatus);
             TransitionToColorPerLed(currentColors, targetColor);
-        } finally {
-            _userStatusController.TryRestore(userCurrentStatus);
-        }
+                });
     }
 
     public void TransitionToColorPerLed(BrightColor[] currentColors, BrightColor targetColor) {
@@ -104,7 +103,7 @@ public sealed class BoredPattern {
                 }
 
                 TargetedLeds ledTarget = TargetedLeds.FromLuxCode((byte)led);
-                _luxaforDevice.Send(LightingCommand.CreateSetColorCommand(ledTarget, colorToApply));
+                _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(ledTarget, colorToApply));
             }
 
             // Thread.Sleep(delayPerFrameMs);
@@ -112,7 +111,7 @@ public sealed class BoredPattern {
 
         // Finalisation : appliquer la couleur cible à toutes les LEDs
         for (byte led = 1; led <= ledCount; led++) {
-            _luxaforDevice.Send(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), targetColor));
+            _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), targetColor));
         }
     }
 

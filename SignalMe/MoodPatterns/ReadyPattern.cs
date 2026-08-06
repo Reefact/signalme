@@ -5,6 +5,7 @@ using System.Threading;
 
 using Reefact.LuxaforLightingDeviceController;
 
+using SignalMe.Infrastructure;
 using SignalMe.Services;
 
 #endregion
@@ -22,27 +23,26 @@ public sealed class ReadyPattern {
 
     #region Constructors declarations
 
-    public ReadyPattern(ILuxaforDevice luxaforDevice) {
+    public ReadyPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice);
+        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
     }
 
     #endregion
 
     public void Play() {
         UserStatus? previousStatus = _userStatusController.GetUserCurrentStatus();
-        // "ready" is the one pattern that deliberately changes the durable status. Until it gets there,
-        // the status to fall back on is the previous one.
-        UserStatus? statusToRestore = previousStatus;
 
-        try {
+        // "ready" is the one pattern that deliberately changes the durable status: it announces that the
+        // user has become available. Until it gets there, the status to fall back on is the previous one.
+        _userStatusController.PlayAndRestore(previousStatus, () => {
             UserStatus? displayedStatus = previousStatus;
 
             if (displayedStatus == UserStatus.DoNotDisturb) {
                 Thread.Sleep(1000);
-                _luxaforDevice.SetColor(PredefinedColor.Busy);
+                _luxaforDevice.SetColorOrThrow(PredefinedColor.Busy);
                 displayedStatus = UserStatus.Busy;
             }
 
@@ -51,16 +51,14 @@ public sealed class ReadyPattern {
             }
 
             for (int i = 0; i < 15; i++) {
-                _luxaforDevice.TurnOff();
+                _luxaforDevice.TurnOffOrThrow();
                 Thread.Sleep(10);
-                _luxaforDevice.SetColor(PredefinedColor.Available);
+                _luxaforDevice.SetColorOrThrow(PredefinedColor.Available);
                 Thread.Sleep(50);
             }
 
-            statusToRestore = UserStatus.Available;
-        } finally {
-            _userStatusController.TryRestore(statusToRestore);
-        }
+            return UserStatus.Available;
+        });
     }
 
 }

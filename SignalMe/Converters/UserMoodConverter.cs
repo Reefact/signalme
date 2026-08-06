@@ -1,7 +1,9 @@
 #region Usings declarations
 
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 using SignalMe.Services;
 
@@ -14,43 +16,42 @@ public static class UserMoodConverter {
     #region Statics members declarations
 
     /// <summary>
-    ///     Every value <see cref="TryConvert" /> accepts, in the order they are offered to the user.
+    ///     Every value the CLI accepts for a temporary mood, in the order they are offered to the user, and
+    ///     the mood each one means.
     /// </summary>
-    /// <remarks>Kept next to the switch below so that the two cannot drift apart.</remarks>
-    public static readonly string[] KnownValues = ["happy", "bored", "desperate", "ready", "warning", "alerting"];
+    /// <remarks>
+    ///     The single source of truth: <see cref="TryConvert" /> parses from this table and
+    ///     <see cref="KnownValues" /> is projected from it, so the accepted values and the advertised ones
+    ///     cannot describe different things.
+    /// </remarks>
+    private static readonly (string Value, UserMood Mood)[] _moods = [
+        ("happy", UserMood.Happy),
+        ("bored", UserMood.Bored),
+        ("desperate", UserMood.Desperate),
+        ("ready", UserMood.Ready),
+        ("warning", UserMood.Warning),
+        ("alerting", UserMood.Alerting)
+    ];
+
+    /// <summary>
+    ///     The accepted values, in display order.
+    /// </summary>
+    public static ReadOnlyCollection<string> KnownValues { get; } = new(_moods.Select(mood => mood.Value).ToArray());
 
     public static bool TryConvert(string input, [NotNullWhen(true)] out UserMood? userMood) {
         ArgumentNullException.ThrowIfNull(input);
+
+        foreach ((string value, UserMood mood) in _moods) {
+            if (string.Equals(value, input, StringComparison.Ordinal)) {
+                userMood = mood;
+
+                return true;
+            }
+        }
+
         userMood = null;
 
-        switch (input) {
-            case "alerting":
-                userMood = UserMood.Alerting;
-
-                return true;
-            case "warning":
-                userMood = UserMood.Warning;
-
-                return true;
-            case "desperate":
-                userMood = UserMood.Desperate;
-
-                return true;
-            case "happy":
-                userMood = UserMood.Happy;
-
-                return true;
-            case "ready":
-                userMood = UserMood.Ready;
-
-                return true;
-            case "bored":
-                userMood = UserMood.Bored;
-
-                return true;
-            default:
-                return false;
-        }
+        return false;
     }
 
     #endregion

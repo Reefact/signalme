@@ -5,6 +5,7 @@ using System.Threading;
 
 using Reefact.LuxaforLightingDeviceController;
 
+using SignalMe.Infrastructure;
 using SignalMe.Services;
 
 #endregion
@@ -22,11 +23,11 @@ public sealed class AlertingPattern {
 
     #region Constructors declarations
 
-    public AlertingPattern(ILuxaforDevice luxaforDevice) {
+    public AlertingPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice);
+        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
     }
 
     #endregion
@@ -34,16 +35,14 @@ public sealed class AlertingPattern {
     public void Play() {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
-        try {
+        _userStatusController.PlayAndRestore(currentUserStatus, () => {
             for (int i = 0; i < 20; i++) {
-                _luxaforDevice.SetColor(BrightColor.Red);
+                _luxaforDevice.SetColorOrThrow(BrightColor.Red);
                 Thread.Sleep(50);
-                _luxaforDevice.TurnOff();
+                _luxaforDevice.TurnOffOrThrow();
                 Thread.Sleep(50);
             }
-        } finally {
-            _userStatusController.TryRestore(currentUserStatus);
-        }
+                });
     }
 
 }
