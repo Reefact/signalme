@@ -1,10 +1,49 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <nullable>enable</nullable>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <!-- Explicit usings, like the rest of the Reefact codebases: every file states what it depends on. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- EnforceCodeStyleInBuild is deliberately left off: no .editorconfig describes this project's
+         formatting, so it would report the codebase's own deliberate style as build errors. -->
   </PropertyGroup>
+
+  <PropertyGroup Label="dotnet tool">
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>signalme</ToolCommandName>
+    <PackageId>SignalMe</PackageId>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package metadata">
+    <Authors>Sylvain AURAT</Authors>
+    <Description>A tiny command-line companion for Luxafor USB LED devices. Set your availability status, play expressive light signals, and automate your workplace presence without a GUI. Windows only.</Description>
+    <PackageTags>luxafor;dotnet-tool;cli;led;availability;presence;status;usb;hid</PackageTags>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Reefact/signalme</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Reefact/signalme.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>©2026 Reefact</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Reproducible builds">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Reefact.LuxaforLightingDeviceController" Version="2.0.0" />

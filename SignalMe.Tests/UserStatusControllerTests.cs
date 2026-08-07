@@ -72,7 +72,7 @@ public sealed class UserStatusControllerTests {
     public void GetUserStatusColor_is_black_when_no_status_is_set() {
         using TemporaryStatusStore statuses = new();
 
-        Assert.Equal("#000000", new UserStatusController(new FakeLuxaforDevice(), statuses.Store).GetUserStatusColor(null).ToString());
+        Assert.Equal("#000000", UserStatusController.GetUserStatusColor(null).ToString());
     }
 
     [Fact]

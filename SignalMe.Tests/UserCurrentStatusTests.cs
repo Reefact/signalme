@@ -69,6 +69,32 @@ public sealed class UserCurrentStatusTests {
         Assert.Equal(UserStatus.Busy, statuses.Store.Get());
     }
 
+    /// <summary>
+    ///     The status is written aside and moved into place, so an interruption mid-write cannot leave a
+    ///     half-written file where the status used to be.
+    /// </summary>
+    [Fact]
+    public void A_status_is_written_atomically() {
+        using TemporaryStatusStore statuses = new();
+        statuses.Store.Set(UserStatus.Busy);
+
+        statuses.Store.Set(UserStatus.Away);
+
+        Assert.Equal(UserStatus.Away, statuses.Store.Get());
+        // No scratch file is left behind next to it.
+        Assert.Equal([statuses.FilePath], Directory.GetFiles(statuses.Directory));
+    }
+
+    [Fact]
+    public void A_leftover_temporary_file_is_ignored() {
+        using TemporaryStatusStore statuses = new();
+        statuses.Store.Set(UserStatus.Busy);
+        File.WriteAllText(statuses.FilePath + ".tmp", "away");
+
+        // A crash between the write and the move must not change what signalme remembers.
+        Assert.Equal(UserStatus.Busy, statuses.Store.Get());
+    }
+
     [Fact]
     public void The_directory_is_created_on_demand() {
         using TemporaryStatusStore statuses = new();

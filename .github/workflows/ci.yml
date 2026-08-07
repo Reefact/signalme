@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    # Windows: signalme can only find and drive a Luxafor device through the Windows HID stack, so it is
+    # built and tested on the platform it ships to. No physical device is ever needed: the tests drive a
+    # fake ILuxaforDevice.
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # Source Link embeds the commit, it needs the full history
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      # Whitespace is deliberately left out: this codebase aligns consecutive assignments, which
+      # `dotnet format whitespace` normalises away. Style and analyzer rules are checked in full, and the
+      # build itself turns every analyzer warning into an error.
+      - name: Check code style
+        run: |
+          dotnet format style SignalMe.sln --verify-no-changes --no-restore
+          dotnet format analyzers SignalMe.sln --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test -c Release --no-build --verbosity normal
+
+      - name: Pack
+        run: dotnet pack SignalMe/SignalMe.csproj -c Release --no-build -o artifacts
+
+      - name: Validate package content
+        shell: pwsh
+        run: ./build/Validate-Package.ps1 -ArtifactsDirectory artifacts
+
+      # Reading the archive is not enough: this installs the tool for real and runs the commands that
+      # work without a device.
+      - name: Install and run the tool
+        shell: pwsh
+        run: ./build/Test-ToolInstall.ps1 -ArtifactsDirectory artifacts
+
+      - name: Upload package
+        uses: actions/upload-artifact@v6
+        with:
+          name: nuget-package
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error

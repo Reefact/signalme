@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading.Tasks;
 
 using Reefact.LuxaforLightingDeviceController;
 
@@ -25,6 +26,14 @@ public sealed class UserStatusController {
             { UserStatus.Busy, PredefinedColor.Busy },
             { UserStatus.DoNotDisturb, PredefinedColor.DoNotDisturb }
         };
+    }
+
+    public static BrightColor GetUserStatusColor(UserStatus? userStatus) {
+        if (userStatus == null) { return BrightColor.Black; }
+
+        if (!Enum.IsDefined(typeof(UserStatus), userStatus)) { throw new InvalidEnumArgumentException(nameof(userStatus), (int)userStatus, typeof(UserStatus)); }
+
+        return _colorByUserStatus[userStatus.Value];
     }
 
     #endregion
@@ -52,14 +61,6 @@ public sealed class UserStatusController {
     #endregion
 
     public ILuxaforDevice Device { get; }
-
-    public BrightColor GetUserStatusColor(UserStatus? userStatus) {
-        if (userStatus == null) { return BrightColor.Black; }
-
-        if (!Enum.IsDefined(typeof(UserStatus), userStatus)) { throw new InvalidEnumArgumentException(nameof(userStatus), (int)userStatus, typeof(UserStatus)); }
-
-        return _colorByUserStatus[userStatus.Value];
-    }
 
     /// <summary>
     ///     Displays <paramref name="status" /> on the device and remembers it, or turns the device off when
@@ -111,13 +112,18 @@ public sealed class UserStatusController {
     /// <exception cref="DeviceCommandFailedException">
     ///     The animation completed but the durable status could not be restored.
     /// </exception>
-    public void PlayAndRestore(UserStatus? statusOnFailure, Func<UserStatus?> animation) {
+    /// <exception cref="OperationCanceledException">
+    ///     The user interrupted the animation. The status is restored first.
+    /// </exception>
+    public async Task PlayAndRestoreAsync(UserStatus? statusOnFailure, Func<Task<UserStatus?>> animation) {
         ArgumentNullException.ThrowIfNull(animation);
 
         UserStatus? statusToRestore;
         try {
-            statusToRestore = animation();
+            statusToRestore = await animation().ConfigureAwait(false);
         } catch {
+            // Covers a cancelled animation too: the restore is synchronous and takes no token, so
+            // Ctrl+C still puts the durable status back before the interruption surfaces.
             RestoreQuietly(statusOnFailure);
 
             throw;
@@ -126,12 +132,12 @@ public sealed class UserStatusController {
         Display(statusToRestore);
     }
 
-    /// <inheritdoc cref="PlayAndRestore(UserStatus?, Func{UserStatus?})" />
-    public void PlayAndRestore(UserStatus? statusToRestore, Action animation) {
+    /// <inheritdoc cref="PlayAndRestoreAsync(UserStatus?, Func{Task{UserStatus?}})" />
+    public Task PlayAndRestoreAsync(UserStatus? statusToRestore, Func<Task> animation) {
         ArgumentNullException.ThrowIfNull(animation);
 
-        PlayAndRestore(statusToRestore, () => {
-            animation();
+        return PlayAndRestoreAsync(statusToRestore, async () => {
+            await animation().ConfigureAwait(false);
 
             return statusToRestore;
         });
