@@ -1,3 +1,5 @@
+_[Version française](troubleshooting-FR.md)_
+
 # Troubleshooting
 
 SignalMe reports every failure on stderr and exits with a

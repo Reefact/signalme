@@ -1,3 +1,5 @@
+_[Version française](commands-FR.md)_
+
 # Command reference
 
 The commands, values and exit codes on this page are the public contract of SignalMe 1.0. Compatible
