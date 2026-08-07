@@ -53,6 +53,13 @@ try {
         if (-not (Test-Path $path)) { throw "The package is missing '$entry'." }
     }
 
+    # nuget.org caps the package icon at 1 MB, and it only says so when the package is pushed — after the
+    # tag is cut and the release job is already running. Measuring it here moves that failure to the build.
+    # An icon landing exactly on the megabyte is refused too: that is the ceiling the documentation states,
+    # and trimming a file that close to it costs nothing next to finding out at publish time.
+    $icon = Get-Item (Join-Path $extracted 'icon.png')
+    if ($icon.Length -ge 1MB) { throw "The icon is $('{0:N0}' -f $icon.Length) bytes: nuget.org requires it to stay under 1 MB (1,048,576 bytes)." }
+
     [xml] $toolSettings = Get-Content (Join-Path $extracted 'tools/net10.0/any/DotnetToolSettings.xml')
     $commandName = $toolSettings.DotNetCliTool.Commands.Command.Name
     if ($commandName -ne 'signalme') { throw "Expected the installed command to be 'signalme', found '$commandName'." }

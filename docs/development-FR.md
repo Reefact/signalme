@@ -64,6 +64,8 @@ l'icône revient à remplacer ce fichier.
 
 Une seule contrainte ferme pour un remplacement : **rester sous 1 Mo.** nuget.org refuse une icône plus
 lourde, et il le fait au moment de la publication, bien après que la CI soit passée au vert.
+`build/Validate-Package.ps1` mesure l'icône empaquetée par rapport à cette limite : une icône de
+remplacement trop lourde fait échouer le build plutôt que la release.
 
 ## CI
 
@@ -81,9 +83,9 @@ appliqués.
 
 Les deux dernières étapes comptent plus qu'il n'y paraît. `build/Validate-Package.ps1` lit le `.nupkg` et
 vérifie qu'il s'agit bien d'un package d'outil installable — le marqueur `DotnetTool`, le nom de la
-commande, les assemblies attendues, le README, aucun fichier source parasite. `build/Test-ToolInstall.ps1`
-l'installe ensuite pour de vrai et exécute les commandes qui fonctionnent sans périphérique, y compris le
-chemin « aucun périphérique ».
+commande, les assemblies attendues, le README, une icône sous la limite de 1 Mo de nuget.org, aucun
+fichier source parasite. `build/Test-ToolInstall.ps1` l'installe ensuite pour de vrai et exécute les
+commandes qui fonctionnent sans périphérique, y compris le chemin « aucun périphérique ».
 
 ## Publier une release
 

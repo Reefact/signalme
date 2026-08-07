@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Package validation now checks the icon against nuget.org's 1 MB limit.** The constraint was written
+  down in the development guide but nothing enforced it, and nuget.org only applies it when the package is
+  pushed — after the tag is cut and the release job is already running. It is now a build failure, where a
+  too-heavy icon costs nothing but a smaller file.
+
 ## [1.0.2] - 2026-08-07
 
 Another icon-only release, for the same reason as the last one: a published NuGet package is immutable, so
