@@ -1,3 +1,5 @@
+_[Version française](hardware-FR.md)_
+
 # Hardware and platform support
 
 ## Platform

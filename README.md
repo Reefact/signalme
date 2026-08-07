@@ -1,3 +1,5 @@
+_[Version française](https://github.com/Reefact/signalme/blob/main/README-FR.md)_
+
 # SignalMe
 
 [![CI](https://github.com/Reefact/signalme/actions/workflows/ci.yml/badge.svg)](https://github.com/Reefact/signalme/actions/workflows/ci.yml)

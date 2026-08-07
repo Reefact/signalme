@@ -1,3 +1,5 @@
+_[Version française](signals-FR.md)_
+
 # Statuses and signals
 
 SignalMe distinguishes between durable statuses and temporary signals.

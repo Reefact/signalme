@@ -1,3 +1,5 @@
+_[Version française](CHANGELOG-FR.md)_
+
 # Changelog
 
 All notable changes to this project are documented in this file.
