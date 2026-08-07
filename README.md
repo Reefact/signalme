@@ -2,12 +2,12 @@
 
 [![CI](https://github.com/Reefact/signalme/actions/workflows/ci.yml/badge.svg)](https://github.com/Reefact/signalme/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/SignalMe.svg)](https://www.nuget.org/packages/SignalMe)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/Reefact/signalme/blob/main/LICENSE)
 
 SignalMe is a tiny command-line companion for Luxafor devices. Set your availability, trigger expressive
 light signals, and automate your workplace status without a GUI.
 
-![The busy status, the happy signal, and the automatic return to busy](assets/demo.gif)
+![The busy status, the happy signal, and the automatic return to busy](https://raw.githubusercontent.com/Reefact/signalme/main/assets/demo.gif)
 
 <sub>Rendered from the LED sequence the code actually produces, slowed down to be readable. Not a
 recording of a device.</sub>
@@ -22,9 +22,9 @@ signalme off          # lights out
 ## Why SignalMe?
 
 - **No GUI.** One command, from any shell, script or automation.
-- **Expressive.** Durable availability statuses, plus temporary light signals for the moment.
-- **Safe restoration.** A signal always puts your durable status back — including when it fails, and when
-  you interrupt it.
+- **Expressive.** Durable availability statuses plus temporary light signals.
+- **Safe restoration.** Signals restore your durable status even on failure or interruption; `ready`
+  intentionally ends on `available`.
 
 ## Install
 
@@ -72,16 +72,16 @@ signalme off                     # alias: switch-off
 
 SignalMe remembers your durable status in your local application data and restores it after a signal. It
 never reports success for a command the device refused, and every failure has its own
-[exit code](docs/commands.md#exit-codes).
+[exit code](https://github.com/Reefact/signalme/blob/main/docs/commands.md#exit-codes).
 
 ## Documentation
 
-- [Command reference](docs/commands.md) — every command, value and exit code
-- [Statuses and signals](docs/signals.md) — what each signal does, and the exact restoration rules
-- [Hardware and platform support](docs/hardware.md) — tested devices, Windows-only, multiple devices
-- [Troubleshooting](docs/troubleshooting.md) — what each error means and what to do
-- [Development and releases](docs/development.md) — build, tests, CI, publishing
+- [Command reference](https://github.com/Reefact/signalme/blob/main/docs/commands.md) — every command, value and exit code
+- [Statuses and signals](https://github.com/Reefact/signalme/blob/main/docs/signals.md) — what each signal does, and the exact restoration rules
+- [Hardware and platform support](https://github.com/Reefact/signalme/blob/main/docs/hardware.md) — tested devices, Windows-only, multiple devices
+- [Troubleshooting](https://github.com/Reefact/signalme/blob/main/docs/troubleshooting.md) — what each error means and what to do
+- [Development and releases](https://github.com/Reefact/signalme/blob/main/docs/development.md) — build, tests, CI, publishing
 
 ## License
 
-[Apache-2.0](LICENSE)
+[Apache-2.0](https://github.com/Reefact/signalme/blob/main/LICENSE)
