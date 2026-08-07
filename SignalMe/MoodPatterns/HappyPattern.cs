@@ -1,8 +1,9 @@
-﻿#region Usings declarations
+#region Usings declarations
 
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Reefact.LuxaforLightingDeviceController;
 
@@ -13,108 +14,98 @@ using SignalMe.Services;
 
 namespace SignalMe.MoodPatterns;
 
+/// <summary>
+///     Fades to a pastel version of the durable status color, runs a pastel rainbow wave, then fades back.
+/// </summary>
 public sealed class HappyPattern {
+
+    private const int LedCount        = 6;
+    private const int WaveSteps       = 30;
+    private const int FrameIntervalMs = 1;
+    private const int TotalFrames     = 500;
 
     #region Fields declarations
 
     private readonly ILuxaforDevice       _luxaforDevice;
     private readonly UserStatusController _userStatusController;
+    private readonly IDelay               _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public HappyPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
+    public HappyPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
         _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
+        _delay                = delay ?? RealDelay.Instance;
     }
 
     #endregion
 
-    public void Play() {
+    public Task PlayAsync(CancellationToken cancellationToken) {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
-        _userStatusController.PlayAndRestore(currentUserStatus, () => {
-            const int ledCount = 6;
-
-            BrightColor userStatusColor = _userStatusController.GetUserStatusColor(currentUserStatus);
+        return _userStatusController.PlayAndRestoreAsync(currentUserStatus, async () => {
+            BrightColor userStatusColor = UserStatusController.GetUserStatusColor(currentUserStatus);
             BrightColor pastelColor     = userStatusColor.GetPastel();
 
-            // ==== 1. Transition initiale vers pastel ====
-            UnicornTransition(userStatusColor, pastelColor);
-
-            // ==== 2. Wave pastel arc-en-ciel ====
-            float[] baseHues  = [0, 60, 120, 180, 240, 300];
-            int     waveSteps = 30;
-            for (int step = 0; step < waveSteps; step++) {
-                for (byte led = 1; led <= ledCount; led++) {
-                    int              hueIndex = (led + step) % baseHues.Length;
-                    float            hue      = baseHues[hueIndex];
-                    Hsv              hsv      = new(hue, 0.5f, 0.7f); // HSV pastel
-                    BrightColor      color    = ColorService.GetBrightFromHsv(hsv);
-                    LightingCommand? cmd      = LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), color);
-                    _luxaforDevice.SendOrThrow(cmd);
-                }
-                Thread.Sleep(10);
-            }
-
-            // ==== 3. Retour fluide vers couleur stable ====
-
-            UnicornTransition(pastelColor, userStatusColor);
-                });
+            await FadeAsync(userStatusColor, pastelColor, cancellationToken).ConfigureAwait(false);
+            await PlayRainbowWaveAsync(cancellationToken).ConfigureAwait(false);
+            await FadeAsync(pastelColor, userStatusColor, cancellationToken).ConfigureAwait(false);
+        });
     }
 
-    private void UnicornTransition(BrightColor currentColor, BrightColor targetColor) {
-        const int ledCount        = 6;
-        const int frameIntervalMs = 1;
-        int       totalFrames     = 500;
+    private async Task PlayRainbowWaveAsync(CancellationToken cancellationToken) {
+        float[] baseHues = [0, 60, 120, 180, 240, 300];
 
-        // Convert to RGB for interpolation
+        for (int step = 0; step < WaveSteps; step++) {
+            for (byte led = 1; led <= LedCount; led++) {
+                float       hue   = baseHues[(led + step) % baseHues.Length];
+                BrightColor color = ColorService.GetBrightFromHsv(new Hsv(hue, 0.5f, 0.7f));
+                _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), color));
+            }
+            await _delay.WaitAsync(10, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    ///     Interpolates every LED from one color to another, each LED starting a little later than the last
+    ///     and drifting slightly, so the fade never looks mechanical.
+    /// </summary>
+    private async Task FadeAsync(BrightColor currentColor, BrightColor targetColor, CancellationToken cancellationToken) {
         Rgb from = currentColor.ToRgb();
         Rgb to   = targetColor.ToRgb();
 
-        Random rng = new();
+        // Per-LED head start, expressed in frames.
+        int[] offsets    = Enumerable.Range(0, LedCount).Select(_ => Random.Shared.Next(5, 15)).ToArray();
+        int[] ledIndices = Enumerable.Range(0, LedCount).ToArray();
 
-        // Décalage aléatoire pour chaque LED en nombre de frames
-        int[] offsets = Enumerable.Range(0, ledCount)
-                                  .Select(_ => rng.Next(5, 15)) // 50ms à 150ms = 5 à 15 frames
-                                  .ToArray();
-
-        int[] ledIndices = Enumerable.Range(0, ledCount).ToArray();
-        int   step;
-        for (int frame = 0; frame < totalFrames; frame += step) {
-            ledIndices = ledIndices.OrderBy(_ => rng.Next()).ToArray();
+        int step;
+        for (int frame = 0; frame < TotalFrames; frame += step) {
+            ledIndices = ledIndices.OrderBy(_ => Random.Shared.Next()).ToArray();
             foreach (int ledIndex in ledIndices) {
-                int ledStart = offsets[ledIndex];
-                int ledEnd   = totalFrames - 1;
+                int    ledStart = offsets[ledIndex];
+                double t        = Math.Clamp((double)(frame - ledStart) / (TotalFrames - 1 - ledStart), 0, 1);
 
-                double t = (double)(frame - ledStart) / (ledEnd - ledStart);
-                t = Math.Clamp(t, 0, 1);
-
-                // Ajout d'une petite variation sur l'intensité pour un rendu moins linéaire
-                double noise = rng.NextDouble() * 0.1 - 0.05; // entre -0.05 et +0.05
-                t = Math.Clamp(t + noise, 0, 1);
+                // A touch of noise on the intensity, so the LEDs do not move in lockstep.
+                t = Math.Clamp(t + (Random.Shared.NextDouble() * 0.1 - 0.05), 0, 1);
 
                 byte r = (byte)(from.Red   + (to.Red   - from.Red)   * t);
                 byte g = (byte)(from.Green + (to.Green - from.Green) * t);
                 byte b = (byte)(from.Blue  + (to.Blue  - from.Blue)  * t);
 
-                BrightColor     interpolated = BrightColor.From(r, g, b);
-                TargetedLeds    led          = TargetedLeds.FromLuxCode((byte)(ledIndex + 1));
-                LightingCommand command      = LightingCommand.CreateSetColorCommand(led, interpolated);
-                _luxaforDevice.SendOrThrow(command);
+                _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode((byte)(ledIndex + 1)), BrightColor.From(r, g, b)));
             }
 
-            Thread.Sleep(frameIntervalMs);
-            if (frame == totalFrames - 1) {
+            await _delay.WaitAsync(FrameIntervalMs, cancellationToken).ConfigureAwait(false);
+
+            if (frame == TotalFrames - 1) {
                 step = 1;
             } else {
                 step = Random.Shared.Next(97, 333);
-                if (totalFrames - frame < step) {
-                    step = totalFrames - frame - 1;
-                }
+                if (TotalFrames - frame < step) { step = TotalFrames - frame - 1; }
             }
         }
     }

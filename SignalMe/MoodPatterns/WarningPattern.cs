@@ -1,7 +1,8 @@
-﻿#region Usings declarations
+#region Usings declarations
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Reefact.LuxaforLightingDeviceController;
 
@@ -12,80 +13,80 @@ using SignalMe.Services;
 
 namespace SignalMe.MoodPatterns;
 
+/// <summary>
+///     Alternates red and blue between the front and back LEDs, like an emergency light, then goes back to
+///     the durable status.
+/// </summary>
 public sealed class WarningPattern {
+
+    private const int RepeatCount = 5;
+    /// <summary>How long one side holds its color, split across the three back LEDs.</summary>
+    private const int ColorDurationMs = 100;
+    private const int OffDurationMs   = 1;
+    private const int LedCount        = 6;
 
     #region Fields declarations
 
     private readonly ILuxaforDevice       _luxaforDevice;
     private readonly UserStatusController _userStatusController;
+    private readonly IDelay               _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public WarningPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
+    public WarningPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
         _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
+        _delay                = delay ?? RealDelay.Instance;
     }
 
     #endregion
 
-    public void Play() {
+    public Task PlayAsync(CancellationToken cancellationToken) {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
-        const int repeatCount   = 5;
-        const int colorDuration = 100; // Durée du rouge ou du bleu (en ms)
-        const int offDuration   = 1;
-
-        BrightColor red  = BrightColor.Red;
-        BrightColor blue = BrightColor.Blue;
-
-        _userStatusController.PlayAndRestore(currentUserStatus, () => {
-            for (int i = 0; i < repeatCount; i++) {
-                // Phase 1 : avant bleu + arrière rouge progressif
-                SetFrontLeds(blue);
-                RunBackSequence(red, colorDuration);
+        return _userStatusController.PlayAndRestoreAsync(currentUserStatus, async () => {
+            for (int i = 0; i < RepeatCount; i++) {
+                // Blue at the front while red sweeps the back...
+                SetFrontLeds(BrightColor.Blue);
+                await SweepBackLedsAsync(BrightColor.Red, cancellationToken).ConfigureAwait(false);
                 TurnAllLedsOff();
-                Thread.Sleep(offDuration);
+                await _delay.WaitAsync(OffDurationMs, cancellationToken).ConfigureAwait(false);
 
-                // Phase 2 : avant rouge + arrière bleu progressif
-                SetFrontLeds(red);
-                RunBackSequence(blue, colorDuration);
+                // ... then the other way round.
+                SetFrontLeds(BrightColor.Red);
+                await SweepBackLedsAsync(BrightColor.Blue, cancellationToken).ConfigureAwait(false);
                 TurnAllLedsOff();
-                Thread.Sleep(offDuration);
+                await _delay.WaitAsync(OffDurationMs, cancellationToken).ConfigureAwait(false);
             }
-                });
+        });
     }
 
-    // Allume les LEDs 1 à 3 (avant) dans une couleur uniforme
+    /// <summary>Lights LEDs 1 to 3, the front of the device, in a single color.</summary>
     private void SetFrontLeds(BrightColor color) {
-        for (byte i = 1; i <= 3; i++) {
-            LightingCommand cmd = LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(i), color);
-            _luxaforDevice.SendOrThrow(cmd);
+        for (byte led = 1; led <= 3; led++) {
+            _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), color));
         }
     }
 
-    // Enchaîne LED 5 puis 4 et 6 avec une couleur, sur une durée totale
-    private void RunBackSequence(BrightColor color, int totalDurationMs) {
-        int stepDelay = totalDurationMs / 3;
+    /// <summary>Lights the middle back LED, then the two beside it, spreading the color over the duration.</summary>
+    private async Task SweepBackLedsAsync(BrightColor color, CancellationToken cancellationToken) {
+        int stepDelay = ColorDurationMs / 3;
 
-        // LED 5 centrale
         _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(5), color));
-        Thread.Sleep(stepDelay);
+        await _delay.WaitAsync(stepDelay, cancellationToken).ConfigureAwait(false);
 
-        // LED 4 et 6 en même temps
         _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(4), color));
         _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(6), color));
-        Thread.Sleep(stepDelay * 2); // Les 3 restent allumées
+        await _delay.WaitAsync(stepDelay * 2, cancellationToken).ConfigureAwait(false);
     }
 
-    // Éteint toutes les LEDs (1 à 6)
     private void TurnAllLedsOff() {
-        for (byte i = 1; i <= 6; i++) {
-            LightingCommand? cmd = LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(i), BrightColor.Black);
-            _luxaforDevice.SendOrThrow(cmd);
+        for (byte led = 1; led <= LedCount; led++) {
+            _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(led), BrightColor.Black));
         }
     }
 

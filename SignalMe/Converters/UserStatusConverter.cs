@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -38,6 +39,17 @@ public static class UserStatusConverter {
     ///     The accepted values, aliases included, in display order.
     /// </summary>
     public static ReadOnlyCollection<string> KnownValues { get; } = new(_statuses.Select(status => status.Value).ToArray());
+
+    /// <summary>
+    ///     The value signalme prints for a status: the first one listed for it, aliases being alternatives.
+    /// </summary>
+    public static string ToCanonicalValue(UserStatus status) {
+        foreach ((string value, UserStatus candidate) in _statuses) {
+            if (candidate == status) { return value; }
+        }
+
+        throw new InvalidEnumArgumentException(nameof(status), (int)status, typeof(UserStatus));
+    }
 
     public static bool TryConvert(string input, [NotNullWhen(true)] out UserStatus? userStatus) {
         ArgumentNullException.ThrowIfNull(input);

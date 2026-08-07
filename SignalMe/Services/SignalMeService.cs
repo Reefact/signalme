@@ -1,6 +1,8 @@
 #region Usings declarations
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Reefact.LuxaforLightingDeviceController;
 
@@ -16,8 +18,8 @@ public sealed class SignalMeService {
     #region Statics members declarations
 
     /// <summary>
-    ///     Indicates whether <paramref name="statusOrMood" /> is a value <see cref="SetAs" /> knows how to
-    ///     display.
+    ///     Indicates whether <paramref name="statusOrMood" /> is a value <see cref="SetAsAsync" /> knows how
+    ///     to display.
     /// </summary>
     /// <remarks>
     ///     Lets the CLI reject a typo before a device is acquired, so the user is told about their typo
@@ -33,36 +35,38 @@ public sealed class SignalMeService {
 
     #region Fields declarations
 
-    private readonly ILuxaforDevice    _luxaforDevice;
-    private readonly UserCurrentStatus _userCurrentStatus;
+    private readonly ILuxaforDevice     _luxaforDevice;
+    private readonly UserCurrentStatus  _userCurrentStatus;
+    private readonly IDelay?            _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public SignalMeService(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
+    public SignalMeService(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice     = luxaforDevice;
         _userCurrentStatus = userCurrentStatus ?? UserCurrentStatus.Default;
+        _delay             = delay;
     }
 
     #endregion
 
-    public void SetAs(string statusOrMood) {
+    /// <exception cref="DeviceCommandFailedException">The device refused a command.</exception>
+    /// <exception cref="OperationCanceledException">The user interrupted an animation.</exception>
+    public Task SetAsAsync(string statusOrMood, CancellationToken cancellationToken) {
         if (UserStatusConverter.TryConvert(statusOrMood, out UserStatus? userStatus)) {
             new UserStatusController(_luxaforDevice, _userCurrentStatus).Display(userStatus.Value);
 
-            return;
+            return Task.CompletedTask;
         }
 
         if (UserMoodConverter.TryConvert(statusOrMood, out UserMood? userMood)) {
-            new UserMoodLedController(_luxaforDevice, _userCurrentStatus).Display(userMood.Value);
-
-            return;
+            return new UserMoodLedController(_luxaforDevice, _userCurrentStatus, _delay).DisplayAsync(userMood.Value, cancellationToken);
         }
 
-        throw new ArgumentException($"Unknown user status or mood : {statusOrMood}");
+        throw new ArgumentException($"Unknown status or mood: '{statusOrMood}'.", nameof(statusOrMood));
     }
 
     /// <exception cref="DeviceCommandFailedException">The device refused the command.</exception>

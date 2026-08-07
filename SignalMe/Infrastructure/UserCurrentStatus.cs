@@ -101,14 +101,19 @@ public sealed class UserCurrentStatus {
     public void Set(UserStatus? status) {
         string filePath = GetFilePath();
         if (status == null) {
-            if (File.Exists(filePath)) {
-                File.Delete(filePath);
-            }
-        } else {
-            Directory.CreateDirectory(_directory);
-            string serializedStatus = Serialize(status.Value);
-            File.WriteAllText(filePath, serializedStatus);
+            if (File.Exists(filePath)) { File.Delete(filePath); }
+
+            return;
         }
+
+        Directory.CreateDirectory(_directory);
+
+        // Written aside and moved into place, so an interruption mid-write leaves the previous status
+        // intact rather than a half-written file. The move is atomic within a volume, and both paths sit
+        // in the same directory.
+        string temporaryPath = filePath + ".tmp";
+        File.WriteAllText(temporaryPath, Serialize(status.Value));
+        File.Move(temporaryPath, filePath, overwrite: true);
     }
 
     private string GetFilePath() {

@@ -21,4 +21,21 @@ internal static class StandardError {
         }
     }
 
+    /// <summary>
+    ///     Returns what <paramref name="action" /> wrote on the error output. Exceptions are left to the
+    ///     caller, which usually captures them with <c>Record.ExceptionAsync</c>.
+    /// </summary>
+    public static async Task<string> CaptureAsync(Func<Task> action) {
+        TextWriter   original = Console.Error;
+        StringWriter captured = new();
+        Console.SetError(captured);
+        try {
+            await action();
+
+            return captured.ToString();
+        } finally {
+            Console.SetError(original);
+        }
+    }
+
 }
