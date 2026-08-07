@@ -9,6 +9,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.0.1]
+
+### Added
+
+- **A package icon** — a lighthouse — so SignalMe is recognisable in a NuGet listing instead of showing
+  the default placeholder. The build now fails if the icon does not make it into the package, the same way
+  it already did for the README. The design is credited in the README, as its licence requires.
+
+Nothing else changed: same tool, same commands, same behaviour. NuGet packages are immutable, so an icon
+cannot be added to an already published version — hence a patch release.
+
 ## [1.0.0]
 
 First stable public release of SignalMe.
@@ -48,5 +59,6 @@ new major version. It is not a claim that the tool has stopped evolving.
   [Hardware and platform support](docs/hardware.md) for what is expected to work and what is not
   supported.
 
-[Unreleased]: https://github.com/Reefact/signalme/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Reefact/signalme/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Reefact/signalme/releases/tag/v1.0.0

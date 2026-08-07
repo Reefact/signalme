@@ -36,9 +36,11 @@ try {
     if ([string]::IsNullOrWhiteSpace($metadata.description)) { throw 'The package has no description.' }
     if ([string]::IsNullOrWhiteSpace($metadata.repository.url)) { throw 'The package declares no repository URL.' }
     if ($metadata.readme -ne 'README.md') { throw 'The package declares no README.' }
+    if ($metadata.icon -ne 'icon.png') { throw 'The package declares no icon.' }
 
     $expected = @(
         'README.md',
+        'icon.png',
         'tools/net10.0/any/DotnetToolSettings.xml',
         'tools/net10.0/any/SignalMe.dll',
         'tools/net10.0/any/SignalMe.runtimeconfig.json',
