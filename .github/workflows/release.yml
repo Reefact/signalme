@@ -10,15 +10,16 @@ name: Release
 # Authentication uses nuget.org trusted publishing (OIDC): no long-lived API key is stored in the
 # repository, the job exchanges a GitHub OIDC token for a short-lived key at push time. It needs, once:
 #
-#   - on nuget.org (Account > Trusted Publishing), a policy for this repository:
-#       owner        Reefact
-#       repository   signalme
-#       workflow     .github/workflows/release.yml   (optional filter, recommended)
-#       environment  nuget                           (optional filter, matches the job below)
-#       tag filter   v*                              (optional filter, matches the trigger)
-#   - the NUGET_USER secret (or repository variable), holding the nuget.org account name the policy
-#     belongs to. Trust policies are attached to an individual account, so this is the personal username
-#     of whoever created the policy, even when the package owner is the Reefact organization.
+#   - on nuget.org, a trusted publishing policy for this repository:
+#       repository owner   Reefact
+#       repository         signalme
+#       workflow file      release.yml   <- the file name alone, NOT .github/workflows/release.yml
+#       environment        nuget         (optional, matches the job below)
+#   - the NUGET_USER secret (or repository variable), holding the nuget.org account the policy belongs
+#     to. A policy can be owned by a user or by an organization, so this is whichever of the two owns it.
+#
+# There is nothing to configure for the tag: nuget.org filters on owner, repository, workflow file and
+# environment, and the `on.push.tags` trigger below is what restricts this workflow to v* tags.
 #
 # The job refuses to publish when the tag does not match the version of the project, so a mistyped tag
 # cannot publish the wrong version, and it runs the tests, the package validation and a real tool
@@ -50,10 +51,13 @@ jobs:
         with:
           fetch-depth: 0   # Source Link embeds the commit, it needs the full history
 
+      # Reads global.json, so the agent installs exactly the SDK the repository pins. With a
+      # zero-warning policy the SDK is part of the build definition: its analyzers and its compiler
+      # decide what is a warning, and a floating version means green here and red there.
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          global-json-file: global.json
 
       - name: Check the nuget.org account is configured
         shell: pwsh
@@ -62,7 +66,7 @@ jobs:
           NUGET_USER: ${{ secrets.NUGET_USER || vars.NUGET_USER }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:NUGET_USER)) {
-            throw "NUGET_USER is not configured: add it in Settings > Secrets and variables > Actions, holding the nuget.org account name the trusted publishing policy belongs to."
+            throw "NUGET_USER is not configured: add it in Settings > Secrets and variables > Actions, holding the nuget.org account -- user or organization -- that owns the trusted publishing policy."
           }
           Write-Host "Publishing as the nuget.org account $env:NUGET_USER."
 
