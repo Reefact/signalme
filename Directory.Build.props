@@ -1,0 +1,18 @@
+﻿<Project>
+
+  <PropertyGroup Label="Language and quality, shared by every project">
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Pinned instead of taken from whichever SDK happens to be installed, so the rule set is the same
+         everywhere and bumping it is a deliberate act with a visible diff. Note this does not make the
+         build fully reproducible across SDKs on its own: some diagnostics depend on how the compiler
+         lowers the code, and the compiler still comes from the SDK. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.302" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

@@ -2,11 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
     <!-- CA1707 forbids underscores in member names. Test methods are named as sentences on purpose, which
          is what makes a failing test readable in the runner output. Scoped to this project only; the
          analyzer stays fully enabled on SignalMe itself. -->

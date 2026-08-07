@@ -15,7 +15,7 @@ public sealed class FakeLuxaforDevice : ILuxaforDevice {
     private int _calls;
 
     /// <summary>Every command the device accepted, in order.</summary>
-    public List<string> Commands { get; } = [];
+    public List<string> Commands { get; } = new();
 
     /// <summary>Refuse every command from this call number on (1-based). Null never refuses.</summary>
     public int? RefuseFromCall { get; set; }
