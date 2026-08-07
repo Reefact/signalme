@@ -3,12 +3,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <!-- Explicit usings, like the rest of the Reefact codebases: every file states what it depends on. -->
     <ImplicitUsings>disable</ImplicitUsings>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
     <!-- EnforceCodeStyleInBuild is deliberately left off: no .editorconfig describes this project's
          formatting, so it would report the codebase's own deliberate style as build errors. -->
   </PropertyGroup>

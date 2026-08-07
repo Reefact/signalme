@@ -9,7 +9,8 @@ namespace SignalMe.Tests;
 /// </summary>
 public sealed class CancellationTests {
 
-    public static TheoryData<UserMood> AllMoods => [UserMood.Happy, UserMood.Bored, UserMood.Desperate, UserMood.Ready, UserMood.Warning, UserMood.Alerting];
+    /// <summary>Derived from the enum, so adding a mood cannot silently leave it untested.</summary>
+    public static TheoryData<UserMood> AllMoods => new(Enum.GetValues<UserMood>());
 
     [Theory]
     [MemberData(nameof(AllMoods))]

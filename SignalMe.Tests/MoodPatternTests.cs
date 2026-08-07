@@ -11,9 +11,10 @@ namespace SignalMe.Tests;
 public sealed class MoodPatternTests {
 
     /// <summary>Every mood except "ready", which deliberately ends on another status.</summary>
-    public static TheoryData<UserMood> RestoringMoods => [UserMood.Happy, UserMood.Bored, UserMood.Desperate, UserMood.Warning, UserMood.Alerting];
+    public static TheoryData<UserMood> RestoringMoods => new(Enum.GetValues<UserMood>().Where(mood => mood != UserMood.Ready));
 
-    public static TheoryData<UserMood> AllMoods => [UserMood.Happy, UserMood.Bored, UserMood.Desperate, UserMood.Ready, UserMood.Warning, UserMood.Alerting];
+    /// <summary>Derived from the enum, so adding a mood cannot silently leave it untested.</summary>
+    public static TheoryData<UserMood> AllMoods => new(Enum.GetValues<UserMood>());
 
     private static Task PlayAsync(UserMood mood, FakeLuxaforDevice device, TemporaryStatusStore statuses, IDelay? delay = null, CancellationToken cancellationToken = default) {
         return new UserMoodLedController(device, statuses.Store, delay ?? new InstantDelay()).DisplayAsync(mood, cancellationToken);
