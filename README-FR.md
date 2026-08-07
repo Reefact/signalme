@@ -89,3 +89,8 @@ son propre [code de sortie](https://github.com/Reefact/signalme/blob/main/docs/c
 ## Licence
 
 [Apache-2.0](https://github.com/Reefact/signalme/blob/main/LICENSE)
+
+## Crédits
+
+Icône du phare : [Maison lumineuse icônes créées par VectorPortal](https://www.flaticon.com/fr/icones-gratuites/maison-lumineuse)
+— Flaticon.

@@ -12,6 +12,17 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
+## [1.0.1]
+
+### Ajouté
+
+- **Une icône de package** — un phare — pour que SignalMe soit identifiable dans une liste NuGet au lieu
+  d'afficher le placeholder par défaut. Le build échoue désormais si l'icône n'arrive pas dans le package,
+  comme il le faisait déjà pour le README. Le design est crédité dans le README, comme sa licence l'exige.
+
+Rien d'autre n'a changé : même outil, mêmes commandes, même comportement. Un package NuGet est immuable, on
+ne peut donc pas ajouter d'icône à une version déjà publiée — d'où une version corrective.
+
 ## [1.0.0]
 
 Première version publique stable de SignalMe.
@@ -53,5 +64,6 @@ l'outil a cessé d'évoluer.
 - Seul le Luxafor Orb a été testé. Voir [Matériel et plateformes](docs/hardware-FR.md) pour ce qui devrait
   fonctionner et ce qui n'est pas supporté.
 
-[Non publié]: https://github.com/Reefact/signalme/compare/v1.0.0...HEAD
+[Non publié]: https://github.com/Reefact/signalme/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Reefact/signalme/releases/tag/v1.0.0
