@@ -57,8 +57,16 @@ try {
     # tag is cut and the release job is already running. Measuring it here moves that failure to the build.
     # An icon landing exactly on the megabyte is refused too: that is the ceiling the documentation states,
     # and trimming a file that close to it costs nothing next to finding out at publish time.
-    $icon = Get-Item (Join-Path $extracted 'icon.png')
-    if ($icon.Length -ge 1MB) { throw "The icon is $('{0:N0}' -f $icon.Length) bytes: nuget.org requires it to stay under 1 MB (1,048,576 bytes)." }
+    # The byte counts are formatted through the invariant culture on purpose: '-f' and ToString() follow the
+    # machine's culture, so the message would read '1 048 576' on a French agent and the tests asserting on
+    # it would fail there and nowhere else.
+    $icon      = Get-Item (Join-Path $extracted 'icon.png')
+    $iconLimit = 1MB
+    if ($icon.Length -ge $iconLimit) {
+        $actual = $icon.Length.ToString('N0', [cultureinfo]::InvariantCulture)
+        $limit  = $iconLimit.ToString('N0', [cultureinfo]::InvariantCulture)
+        throw "The icon is $actual bytes: nuget.org requires it to stay under 1 MB ($limit bytes)."
+    }
 
     [xml] $toolSettings = Get-Content (Join-Path $extracted 'tools/net10.0/any/DotnetToolSettings.xml')
     $commandName = $toolSettings.DotNetCliTool.Commands.Command.Name

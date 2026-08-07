@@ -18,6 +18,12 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   contrainte était écrite dans le guide de développement, mais rien ne l'appliquait, et nuget.org ne la
   fait respecter qu'au push du package — une fois le tag posé et le job de release déjà lancé. C'est
   maintenant un échec de build, où une icône trop lourde ne coûte rien d'autre qu'un fichier plus léger.
+- **Des tests pour les scripts de build**, en Pester, sous `build/tests`, lancés par
+  `build/Test-BuildScripts.ps1` dans les deux workflows. `Validate-Package.ps1` est ce qui sépare un
+  package cassé d'une version publiée immuable, et il ne mérite cette place que s'il échoue vraiment : la
+  suite lui soumet des packages synthétiques faux d'exactement une façon — une icône d'exactement 1 Mo,
+  une assembly manquante, une commande renommée, un fichier source qui a fui — et vérifie qu'il refuse
+  chacun d'eux.
 
 ## [1.0.2] - 2026-08-07
 

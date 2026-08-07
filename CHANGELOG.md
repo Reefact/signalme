@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   down in the development guide but nothing enforced it, and nuget.org only applies it when the package is
   pushed — after the tag is cut and the release job is already running. It is now a build failure, where a
   too-heavy icon costs nothing but a smaller file.
+- **Tests for the build scripts**, in Pester, under `build/tests`, run by `build/Test-BuildScripts.ps1` in
+  both workflows. `Validate-Package.ps1` is what stands between a broken package and an immutable
+  published version, and it only earns that place if it actually fails: the suite hands it synthetic
+  packages that are wrong in exactly one way — an icon of exactly 1 MB, a missing assembly, a renamed
+  command, a leaked source file — and checks it rejects each of them.
 
 ## [1.0.2] - 2026-08-07
 
