@@ -51,10 +51,16 @@ La parallélisation des tests est désactivée pour une seule raison — plusieu
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 1.0.0
+dotnet tool install --global SignalMe --add-source ./artifacts --version 1.0.1
 ```
 
 Utilisez `--tool-path ./tmp-tool` au lieu de `--global` pour l'essayer sans toucher à vos outils globaux.
+
+## Ressources graphiques
+
+`assets/icon.png` est l'icône du package, dessinée par [`build/make-icon.py`](../build/make-icon.py)
+(nécessite Pillow). Le script est versionné pour que l'icône reste modifiable : un PNG seul transforme le
+moindre changement de couleur en redessin complet.
 
 ## CI
 

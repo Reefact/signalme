@@ -13,7 +13,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>signalme</ToolCommandName>
     <PackageId>SignalMe</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <PropertyGroup Label="Package metadata">
@@ -23,6 +23,7 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Reefact/signalme</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/Reefact/signalme.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>©2026 Reefact</Copyright>
@@ -39,6 +40,7 @@
 
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="/" />
+    <None Include="../assets/icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
