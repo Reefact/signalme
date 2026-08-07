@@ -9,6 +9,10 @@ using SignalMe.Services;
 
 namespace SignalMe.Infrastructure;
 
+/// <summary>
+///     Remembers the last durable status signalme was asked to display, so that an animation can put it
+///     back once it is over.
+/// </summary>
 public sealed class UserCurrentStatus {
 
     private const string FileName      = "signalme.ini";
@@ -16,27 +20,10 @@ public sealed class UserCurrentStatus {
 
     #region Statics members declarations
 
-    public static UserStatus? Get() {
-        string filePath = GetFilePath();
-        if (!File.Exists(filePath)) { return null; }
-
-        string rawStatus = File.ReadAllText(filePath).Trim();
-
-        return DeSerialize(rawStatus);
-    }
-
-    public static void Set(UserStatus? status) {
-        string filePath = GetFilePath();
-        if (status == null) {
-            if (File.Exists(filePath)) {
-                File.Delete(filePath);
-            }
-        } else {
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-            string serializedStatus = Serialize(status.Value);
-            File.WriteAllText(filePath, serializedStatus);
-        }
-    }
+    /// <summary>
+    ///     The store signalme uses, under the current user's local application data.
+    /// </summary>
+    public static UserCurrentStatus Default { get; } = new(GetDefaultDirectory());
 
     /// <summary>
     ///     Reads back a serialized status, treating anything unrecognized as "no status".
@@ -67,21 +54,66 @@ public sealed class UserCurrentStatus {
         return serializedStatus;
     }
 
-    /// <summary>
-    ///     Locates the file remembering the last durable status, under the current user's local
-    ///     application data.
-    /// </summary>
     /// <remarks>
-    ///     It used to sit next to the executable, which is not writable once signalme is installed in a
-    ///     shared location: the write threw and the command died after the LEDs had already changed.
+    ///     The file used to sit next to the executable, which is not writable once signalme is installed in
+    ///     a shared location: the write threw after the LEDs had already changed.
     /// </remarks>
-    private static string GetFilePath() {
+    private static string GetDefaultDirectory() {
         string localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
 
-        return Path.Combine(localApplicationData, DirectoryName, FileName);
+        return Path.Combine(localApplicationData, DirectoryName);
     }
 
     #endregion
+
+    #region Fields declarations
+
+    private readonly string _directory;
+
+    #endregion
+
+    #region Constructors declarations
+
+    /// <summary>
+    ///     Remembers the status in <paramref name="directory" />.
+    /// </summary>
+    /// <remarks>
+    ///     signalme itself uses <see cref="Default" />; taking the directory as an argument is what lets the
+    ///     tests point at a temporary folder instead of the real user profile.
+    /// </remarks>
+    public UserCurrentStatus(string directory) {
+        ArgumentNullException.ThrowIfNull(directory);
+
+        _directory = directory;
+    }
+
+    #endregion
+
+    public UserStatus? Get() {
+        string filePath = GetFilePath();
+        if (!File.Exists(filePath)) { return null; }
+
+        string rawStatus = File.ReadAllText(filePath).Trim();
+
+        return DeSerialize(rawStatus);
+    }
+
+    public void Set(UserStatus? status) {
+        string filePath = GetFilePath();
+        if (status == null) {
+            if (File.Exists(filePath)) {
+                File.Delete(filePath);
+            }
+        } else {
+            Directory.CreateDirectory(_directory);
+            string serializedStatus = Serialize(status.Value);
+            File.WriteAllText(filePath, serializedStatus);
+        }
+    }
+
+    private string GetFilePath() {
+        return Path.Combine(_directory, FileName);
+    }
 
     #region Nested types declarations
 

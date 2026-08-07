@@ -5,6 +5,7 @@ using System.Threading;
 
 using Reefact.LuxaforLightingDeviceController;
 
+using SignalMe.Infrastructure;
 using SignalMe.Services;
 
 #endregion
@@ -22,11 +23,11 @@ public sealed class DesperatePattern {
 
     #region Constructors declarations
 
-    public DesperatePattern(ILuxaforDevice luxaforDevice) {
+    public DesperatePattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
 
         _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice);
+        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
     }
 
     #endregion
@@ -34,55 +35,53 @@ public sealed class DesperatePattern {
     public void Play() {
         UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
 
-        try {
+        _userStatusController.PlayAndRestore(currentUserStatus, () => {
             PlaySequence();
-        } finally {
-            _userStatusController.TryRestore(currentUserStatus);
-        }
+                });
     }
 
     private void PlaySequence() {
         Thread.Sleep(1000);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(300);
 
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(100);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(100);
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(100);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(100);
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(100);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(300);
 
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(500);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(100);
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(500);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(100);
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(500);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(300);
 
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(100);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(100);
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(100);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
         Thread.Sleep(100);
-        _luxaforDevice.SetColor(BrightColor.White);
+        _luxaforDevice.SetColorOrThrow(BrightColor.White);
         Thread.Sleep(100);
-        _luxaforDevice.TurnOff();
+        _luxaforDevice.TurnOffOrThrow();
 
         Thread.Sleep(1000);
     }
