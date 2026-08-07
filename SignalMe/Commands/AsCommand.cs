@@ -51,7 +51,7 @@ public sealed class AsCommand : AsyncCommand<AsCommand.Settings> {
 
     public sealed class Settings : CommandSettings {
 
-        [CommandArgument(0, "<status-or-mood>")]
+        [CommandArgument(0, "<status-or-signal>")]
         [Description("""
                      Durable status:    available (or free), busy, away, do-not-disturb (or dnd)
                      Temporary signal:  happy, bored, desperate, ready, warning, alerting
