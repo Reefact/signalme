@@ -19,7 +19,7 @@ public static class BrightColorExtensions {
 
         string hex = color.ToString();
 
-        if (!hex.StartsWith("#") || hex.Length != 7) { throw new ArgumentException("Invalid BrightColor format", nameof(color)); }
+        if (!hex.StartsWith('#') || hex.Length != 7) { throw new ArgumentException("Invalid BrightColor format", nameof(color)); }
 
         byte r = Convert.ToByte(hex.Substring(1, 2), 16);
         byte g = Convert.ToByte(hex.Substring(3, 2), 16);

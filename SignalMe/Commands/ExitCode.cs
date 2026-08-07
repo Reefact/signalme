@@ -1,7 +1,7 @@
 namespace SignalMe.Commands;
 
 /// <summary>
-///     The process exit codes returned by signalme.
+///     The process exit codes returned by signalme. They are part of its contract: scripts can rely on them.
 /// </summary>
 public static class ExitCode {
 
@@ -15,6 +15,8 @@ public static class ExitCode {
     public const int DeviceError = 2;
     /// <summary>An unexpected error occurred.</summary>
     public const int UnexpectedError = 3;
+    /// <summary>The user interrupted an animation with Ctrl+C. The previous status was restored.</summary>
+    public const int Cancelled = 4;
 
     #endregion
 

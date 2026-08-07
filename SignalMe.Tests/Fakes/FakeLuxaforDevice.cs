@@ -39,13 +39,13 @@ public sealed class FakeLuxaforDevice : ILuxaforDevice {
     public bool TurnOff()                                                => Accept("TurnOff");
     public bool TurnOff(TargetedLeds targetedLeds)                       => Accept($"TurnOff({targetedLeds})");
     public bool Send(LightingCommand command)                            => Accept($"Send({command})");
-    public bool FadeColor(BrightColor c, FadeDuration d)                 => Accept("FadeColor");
-    public bool FadeColor(TargetedLeds t, BrightColor c, FadeDuration d) => Accept("FadeColor");
-    public bool Strobe(BrightColor c, Speed s, Repeat r)                 => Accept("Strobe");
-    public bool Strobe(TargetedLeds t, BrightColor c, Speed s, Repeat r) => Accept("Strobe");
+    public bool FadeColor(BrightColor color, FadeDuration duration)                             => Accept("FadeColor");
+    public bool FadeColor(TargetedLeds targetedLeds, BrightColor color, FadeDuration duration)   => Accept("FadeColor");
+    public bool Strobe(BrightColor color, Speed speed, Repeat repeat)                            => Accept("Strobe");
+    public bool Strobe(TargetedLeds targetedLeds, BrightColor color, Speed speed, Repeat repeat) => Accept("Strobe");
 
-    public bool PlayPattern(WavePattern w, BrightColor c, Speed s, Repeat r) => Accept("PlayPattern");
-    public bool PlayPattern(BuiltInPattern p, Repeat r)                      => Accept("PlayPattern");
+    public bool PlayPattern(WavePattern wavePattern, BrightColor color, Speed speed, Repeat repeat) => Accept("PlayPattern");
+    public bool PlayPattern(BuiltInPattern pattern, Repeat repeat)                                  => Accept("PlayPattern");
 
     public void Dispose() {
         IsDisposed = true;
