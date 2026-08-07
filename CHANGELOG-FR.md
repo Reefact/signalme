@@ -12,7 +12,10 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
-## [1.0.1]
+## [1.0.1] - 2026-08-07
+
+Une version qui n'apporte qu'une icône. Un package NuGet est immuable : l'icône ne pouvait pas rejoindre la
+1.0.0 déjà publiée, et exigeait une version à elle. Même outil, mêmes commandes, même comportement.
 
 ### Ajouté
 
@@ -20,10 +23,7 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   d'afficher le placeholder par défaut. Le build échoue désormais si l'icône n'arrive pas dans le package,
   comme il le faisait déjà pour le README. Le design est crédité dans le README, comme sa licence l'exige.
 
-Rien d'autre n'a changé : même outil, mêmes commandes, même comportement. Un package NuGet est immuable, on
-ne peut donc pas ajouter d'icône à une version déjà publiée — d'où une version corrective.
-
-## [1.0.0]
+## [1.0.0] - 2026-08-07
 
 Première version publique stable de SignalMe.
 
