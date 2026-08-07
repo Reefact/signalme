@@ -9,6 +9,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-08-07
+
+Another icon-only release, for the same reason as the last one: a published NuGet package is immutable, so
+a new icon needs a version of its own. Same tool, same commands, same behaviour.
+
+### Changed
+
+- **A new package icon** — a glowing orb, the thing SignalMe actually lights up. It replaces the 1.0.1
+  lighthouse, which came from Flaticon under a licence requiring the design to be credited wherever it
+  appears. A package icon carries no credit line of its own, so the README had to carry it on the
+  package's behalf. The icon is now the project's own and depends on nobody else's terms, which is why the
+  attribution section is gone from both READMEs — it existed only to carry that credit.
+
+### Removed
+
+- **`build/make-icon.py`**, which drew the lighthouse from vector primitives. The icon is a committed
+  image now, not a generated one, so a generator that produces the old design would only be misleading.
+  The constraints a replacement icon has to meet are written down in the development guide instead.
+
 ## [1.0.1] - 2026-08-07
 
 An icon-only release. NuGet packages are immutable, so the icon could not reach the published 1.0.0 and
@@ -59,6 +78,7 @@ new major version. It is not a claim that the tool has stopped evolving.
   [Hardware and platform support](docs/hardware.md) for what is expected to work and what is not
   supported.
 
-[Unreleased]: https://github.com/Reefact/signalme/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/Reefact/signalme/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Reefact/signalme/releases/tag/v1.0.0
