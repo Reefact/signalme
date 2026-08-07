@@ -28,10 +28,13 @@ jobs:
         with:
           fetch-depth: 0   # Source Link embeds the commit, it needs the full history
 
+      # Reads global.json, so the agent installs exactly the SDK the repository pins. With a
+      # zero-warning policy the SDK is part of the build definition: its analyzers and its compiler
+      # decide what is a warning, and a floating version means green here and red there.
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore
