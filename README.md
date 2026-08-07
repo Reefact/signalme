@@ -7,6 +7,11 @@
 SignalMe is a tiny command-line companion for Luxafor devices. Set your availability, trigger expressive
 light signals, and automate your workplace status without a GUI.
 
+![The busy status, the happy signal, and the automatic return to busy](assets/demo.gif)
+
+<sub>Rendered from the LED sequence the code actually produces, slowed down to be readable. Not a
+recording of a device.</sub>
+
 ```shell
 signalme as busy      # solid yellow, and it stays there
 signalme as happy     # rainbow signal, then back to busy on its own
