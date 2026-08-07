@@ -87,8 +87,3 @@ never reports success for a command the device refused, and every failure has it
 ## License
 
 [Apache-2.0](https://github.com/Reefact/signalme/blob/main/LICENSE)
-
-## Credits
-
-Lighthouse icon by [VectorPortal](https://www.flaticon.com/fr/icones-gratuites/maison-lumineuse) —
-Flaticon.

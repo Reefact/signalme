@@ -49,16 +49,19 @@ SignalMe reports, which is process-wide state.
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 1.0.1
+dotnet tool install --global SignalMe --add-source ./artifacts --version 1.0.2
 ```
 
 Use `--tool-path ./tmp-tool` instead of `--global` to try it without touching your global tools.
 
 ## Assets
 
-`assets/icon.png` is the package icon and is drawn by [`build/make-icon.py`](../build/make-icon.py)
-(needs Pillow). The script is here so the icon can be adjusted rather than redrawn: a committed PNG on its
-own makes a colour change a from-scratch job.
+`assets/icon.png` is the package icon: a glowing orb, 512 × 512, transparent background. It is committed
+as it was authored — nothing in the build derives or rewrites it, so replacing the icon means replacing
+that file.
+
+One hard constraint on a replacement: **it must stay under 1 MB.** nuget.org rejects a heavier icon, and
+it does so at publish time, long after CI has gone green.
 
 ## CI
 

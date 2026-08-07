@@ -12,6 +12,28 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
+## [1.0.2] - 2026-08-07
+
+Encore une version qui n'apporte qu'une icône, pour la même raison que la précédente : un package NuGet
+publié est immuable, une nouvelle icône exige donc une version à elle. Même outil, mêmes commandes, même
+comportement.
+
+### Modifié
+
+- **Une nouvelle icône de package** — une sphère lumineuse, ce que SignalMe allume vraiment. Elle remplace
+  le phare de la 1.0.1, qui venait de Flaticon sous une licence exigeant que le design soit crédité partout
+  où il apparaît. Une icône de package ne porte aucune mention de ce genre : c'était donc au README de le
+  faire pour elle. L'icône appartient désormais au projet et ne dépend des conditions de personne, d'où la
+  disparition de la section d'attribution dans les deux READMEs — elle n'existait que pour porter ce
+  crédit.
+
+### Supprimé
+
+- **`build/make-icon.py`**, qui dessinait le phare à partir de primitives vectorielles. L'icône est
+  maintenant une image versionnée et non plus générée : un générateur qui produit l'ancien design ne
+  ferait qu'induire en erreur. Les contraintes qu'une icône de remplacement doit respecter sont écrites
+  dans le guide de développement à la place.
+
 ## [1.0.1] - 2026-08-07
 
 Une version qui n'apporte qu'une icône. Un package NuGet est immuable : l'icône ne pouvait pas rejoindre la
@@ -64,6 +86,7 @@ l'outil a cessé d'évoluer.
 - Seul le Luxafor Orb a été testé. Voir [Matériel et plateformes](docs/hardware-FR.md) pour ce qui devrait
   fonctionner et ce qui n'est pas supporté.
 
-[Non publié]: https://github.com/Reefact/signalme/compare/v1.0.1...HEAD
+[Non publié]: https://github.com/Reefact/signalme/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Reefact/signalme/releases/tag/v1.0.0
