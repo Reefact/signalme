@@ -9,7 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
-## [1.0.1]
+## [1.0.1] - 2026-08-07
+
+An icon-only release. NuGet packages are immutable, so the icon could not reach the published 1.0.0 and
+needed a version of its own. Same tool, same commands, same behaviour.
 
 ### Added
 
@@ -17,10 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   the default placeholder. The build now fails if the icon does not make it into the package, the same way
   it already did for the README. The design is credited in the README, as its licence requires.
 
-Nothing else changed: same tool, same commands, same behaviour. NuGet packages are immutable, so an icon
-cannot be added to an already published version — hence a patch release.
-
-## [1.0.0]
+## [1.0.0] - 2026-08-07
 
 First stable public release of SignalMe.
 
