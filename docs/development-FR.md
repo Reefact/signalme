@@ -47,6 +47,21 @@ Les tests vérifient le contrat, pas les images : aucun ne fige une frame d'anim
 La parallélisation des tests est désactivée pour une seule raison — plusieurs tests redirigent
 `Console.Error` pour vérifier ce que SignalMe rapporte, ce qui est un état global au processus.
 
+### Les scripts de build
+
+`build/Validate-Package.ps1` garde une porte à sens unique — une version publiée sur nuget.org est
+immuable — il a donc sa propre suite de tests, en Pester, sous `build/tests`.
+
+```shell
+./build/Test-BuildScripts.ps1            # -Detailed détaille chaque test
+```
+
+Elle demande Pester 5 (`Install-Module Pester -MinimumVersion 5.0.0 -Scope CurrentUser
+-SkipPublisherCheck`) ; l'image Windows de la CI l'embarque déjà. `PackageFixture.psm1` fabrique des
+`.nupkg` synthétiques au lieu de lancer `dotnet pack`, parce qu'un build sain ne sait pas exprimer ce dont
+la suite parle : des packages faux d'exactement une façon. Chaque test nomme son défaut — une icône
+d'exactement 1 Mo, une assembly manquante, une commande renommée — et vérifie que le validateur le refuse.
+
 ## Installation locale de l'outil
 
 ```shell
@@ -74,18 +89,21 @@ plateforme à laquelle SignalMe est destiné. Aucun périphérique physique n'es
 
 ```text
 restore → contrôles de style et d'analyseurs → build -warnaserror → tests → pack
-        → validation du contenu du package → installation de l'outil et exécution → publication du package
+        → tests des scripts de build → validation du contenu du package
+        → installation de l'outil et exécution → publication du package
 ```
 
 `dotnet format whitespace` en est volontairement exclu : ce code aligne les affectations consécutives, ce
 que le style par défaut normalise. `dotnet format style` et `dotnet format analyzers` sont tous deux
 appliqués.
 
-Les deux dernières étapes comptent plus qu'il n'y paraît. `build/Validate-Package.ps1` lit le `.nupkg` et
+Les étapes d'empaquetage comptent plus qu'il n'y paraît. `build/Validate-Package.ps1` lit le `.nupkg` et
 vérifie qu'il s'agit bien d'un package d'outil installable — le marqueur `DotnetTool`, le nom de la
 commande, les assemblies attendues, le README, une icône sous la limite de 1 Mo de nuget.org, aucun
 fichier source parasite. `build/Test-ToolInstall.ps1` l'installe ensuite pour de vrai et exécute les
-commandes qui fonctionnent sans périphérique, y compris le chemin « aucun périphérique ».
+commandes qui fonctionnent sans périphérique, y compris le chemin « aucun périphérique ». L'étape qui
+les précède fait tourner les tests du validateur : un validateur qui ne refuserait plus rien est repéré
+avant de laisser passer un package cassé.
 
 ## Publier une release
 

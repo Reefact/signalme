@@ -56,6 +56,18 @@ jobs:
       - name: Pack
         run: dotnet pack SignalMe/SignalMe.csproj -c Release --no-build -o artifacts
 
+      # The validator below is the last gate before nuget.org, where a published version is immutable. It
+      # only earns that place if it actually fails, so it has tests of its own: synthetic packages, one
+      # defect each. Pester ships with the Windows image; the install is there so this does not silently
+      # depend on that staying true.
+      - name: Test the build scripts
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable Pester | Where-Object { $_.Version.Major -ge 5 })) {
+            Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0 -SkipPublisherCheck
+          }
+          ./build/Test-BuildScripts.ps1
+
       - name: Validate package content
         shell: pwsh
         run: ./build/Validate-Package.ps1 -ArtifactsDirectory artifacts

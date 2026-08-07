@@ -45,6 +45,21 @@ Tests assert the contract, not the frames: none of them pins a specific animatio
 Test parallelisation is disabled for one reason — several tests redirect `Console.Error` to assert on what
 SignalMe reports, which is process-wide state.
 
+### The build scripts
+
+`build/Validate-Package.ps1` guards a one-way door — a version published to nuget.org is immutable — so it
+has a suite of its own, in Pester, under `build/tests`.
+
+```shell
+./build/Test-BuildScripts.ps1            # -Detailed lists every test
+```
+
+It needs Pester 5 (`Install-Module Pester -MinimumVersion 5.0.0 -Scope CurrentUser -SkipPublisherCheck`);
+the Windows CI image already ships it. `PackageFixture.psm1` builds synthetic `.nupkg` files rather than
+running `dotnet pack`, because a healthy build cannot express what the suite is about: packages that are
+wrong in exactly one way. Each test names its defect — an icon of exactly 1 MB, a missing assembly, a
+command renamed — and checks the validator rejects it.
+
 ## Local tool installation
 
 ```shell
@@ -71,18 +86,20 @@ SignalMe ships to. No physical device is ever needed.
 
 ```text
 restore → format and analyzer checks → build -warnaserror → test → pack
-        → validate package content → install the tool and run it → upload the package
+        → test the build scripts → validate package content → install the tool and run it
+        → upload the package
 ```
 
 `dotnet format whitespace` is deliberately not part of it: this codebase aligns consecutive assignments,
 which the default style normalises away. `dotnet format style` and `dotnet format analyzers` are both
 enforced.
 
-The last two steps matter more than they look. `build/Validate-Package.ps1` reads the `.nupkg` and checks
+The packaging steps matter more than they look. `build/Validate-Package.ps1` reads the `.nupkg` and checks
 it really is an installable tool package — the `DotnetTool` marker, the command name, the expected
 assemblies, the README, an icon within nuget.org's 1 MB limit, no stray source files.
 `build/Test-ToolInstall.ps1` then installs it for real and runs the commands that work without a device,
-including the no-device path.
+including the no-device path. The step before them runs the validator's own tests, so a validator that
+stopped rejecting anything is caught before it waves a broken package through.
 
 ## Releasing SignalMe
 
