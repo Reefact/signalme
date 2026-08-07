@@ -12,6 +12,13 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
+### Ajouté
+
+- **La validation du package vérifie désormais l'icône par rapport à la limite de 1 Mo de nuget.org.** La
+  contrainte était écrite dans le guide de développement, mais rien ne l'appliquait, et nuget.org ne la
+  fait respecter qu'au push du package — une fois le tag posé et le job de release déjà lancé. C'est
+  maintenant un échec de build, où une icône trop lourde ne coûte rien d'autre qu'un fichier plus léger.
+
 ## [1.0.2] - 2026-08-07
 
 Encore une version qui n'apporte qu'une icône, pour la même raison que la précédente : un package NuGet

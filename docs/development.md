@@ -61,7 +61,8 @@ as it was authored — nothing in the build derives or rewrites it, so replacing
 that file.
 
 One hard constraint on a replacement: **it must stay under 1 MB.** nuget.org rejects a heavier icon, and
-it does so at publish time, long after CI has gone green.
+it does so at publish time, long after CI has gone green. `build/Validate-Package.ps1` measures the packed
+icon against that limit, so a replacement that is too heavy fails the build rather than the release.
 
 ## CI
 
@@ -79,8 +80,9 @@ enforced.
 
 The last two steps matter more than they look. `build/Validate-Package.ps1` reads the `.nupkg` and checks
 it really is an installable tool package — the `DotnetTool` marker, the command name, the expected
-assemblies, the README, no stray source files. `build/Test-ToolInstall.ps1` then installs it for real and
-runs the commands that work without a device, including the no-device path.
+assemblies, the README, an icon within nuget.org's 1 MB limit, no stray source files.
+`build/Test-ToolInstall.ps1` then installs it for real and runs the commands that work without a device,
+including the no-device path.
 
 ## Releasing SignalMe
 
