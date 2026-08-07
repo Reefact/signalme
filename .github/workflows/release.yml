@@ -2,28 +2,11 @@ name: Release
 
 # Publishes the .NET tool to nuget.org when a version tag is pushed.
 #
-# Procedure:
-#   1. set <Version> in SignalMe/SignalMe.csproj (e.g. 0.1.0)
-#   2. update CHANGELOG.md, merge everything into main
-#   3. git tag v0.1.0 && git push origin v0.1.0
+# How to cut a release, and the one-time nuget.org setup this needs:
+# docs/development.md, "Releasing SignalMe".
 #
-# Authentication uses nuget.org trusted publishing (OIDC): no long-lived API key is stored in the
-# repository, the job exchanges a GitHub OIDC token for a short-lived key at push time. It needs, once:
-#
-#   - on nuget.org, a trusted publishing policy for this repository:
-#       repository owner   Reefact
-#       repository         signalme
-#       workflow file      release.yml   <- the file name alone, NOT .github/workflows/release.yml
-#       environment        nuget         (optional, matches the job below)
-#   - the NUGET_USER secret (or repository variable), holding the nuget.org account the policy belongs
-#     to. A policy can be owned by a user or by an organization, so this is whichever of the two owns it.
-#
-# There is nothing to configure for the tag: nuget.org filters on owner, repository, workflow file and
-# environment, and the `on.push.tags` trigger below is what restricts this workflow to v* tags.
-#
-# The job refuses to publish when the tag does not match the version of the project, so a mistyped tag
-# cannot publish the wrong version, and it runs the tests, the package validation and a real tool
-# installation before pushing anything.
+# Authentication uses nuget.org trusted publishing (OIDC): the job exchanges a GitHub OIDC token for a
+# short-lived key at push time, so no long-lived API key is stored in this repository.
 
 on:
   push:

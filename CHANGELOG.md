@@ -7,40 +7,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
-## [0.1.0]
+## [1.0.0]
 
-First public release. SignalMe existed before this as a program you had to clone and build; 0.1.0 is the
-first version you can install and run.
+First stable public release of SignalMe.
+
+1.0.0 means the public CLI contract — commands, accepted values, aliases and exit codes — is now
+considered stable. Compatible additions will come in minor versions; anything incompatible would require a
+new major version. It is not a claim that the tool has stopped evolving.
 
 ### Added
 
-- Distributed as a .NET tool: `dotnet tool install --global SignalMe`, then `signalme`.
-- `signalme status`, printing the durable status SignalMe last set. It does not open the device — Luxafor
-  devices cannot be queried — so it reports what was asked for, and works with the device unplugged.
-- `signalme off` as the name for turning the LEDs off. `switch-off` still works as an alias.
-- Ctrl+C interrupts an animation, restores the durable status and exits with code `4`.
-- Documented exit codes: `0` success, `1` usage error, `2` device error, `3` unexpected error,
+- **Installable as a global .NET tool**: `dotnet tool install --global SignalMe`, then `signalme`.
+  Targets .NET 10, runs on Windows.
+- **Durable availability statuses**: `available` (alias `free`), `busy`, `away` and `do-not-disturb`
+  (alias `dnd`). They stay on until you change them, and are remembered locally.
+- **Temporary light signals**: `happy`, `bored`, `desperate`, `warning`, `alerting` and `ready`. Each
+  plays an animation and then restores the durable status — including when the animation fails, and when
+  it is interrupted. `ready` is the exception: it announces availability and ends on `available`.
+- **`signalme status`**, printing the durable status SignalMe last set. It does not open the device —
+  Luxafor devices cannot report their LED state back — so it reports what was requested, and works with no
+  device connected.
+- **`signalme off`**, turning every LED off and forgetting the durable status. `switch-off` is an alias.
+- **Ctrl+C** stops a signal, restores the previous durable status, and exits cleanly.
+- **Stable exit codes**: `0` success, `1` usage error, `2` device error, `3` unexpected error,
   `4` interrupted.
+- **Documentation**: a command reference, the semantics of every status and signal, the tested and
+  untested hardware, troubleshooting, and a development and release guide.
 
-### Changed
+### Notes
 
-- Targets .NET 10, the current LTS.
-- Help distinguishes durable statuses from temporary signals, lists the aliases, and states that `ready`
-  ends on `available` rather than restoring the previous status.
-- The durable status is stored under the user's local application data instead of next to the executable,
-  and is written through a temporary file so an interruption cannot leave it half written.
-
-### Fixed
-
-- A command the device refused is no longer reported as a success. Every device call is checked, and a
+- A command never reports success for something the device refused. Every device call is checked, and a
   refusal fails the command with a message naming the operation.
-- An animation always restores the durable status: on success, on failure, and on Ctrl+C. If the restore
-  itself fails after a successful animation, the command fails rather than leaving the LEDs on an
-  animation colour. A failed restore never masks the error that interrupted the animation.
-- Failures are no longer silent. Missing devices, refused commands and unknown statuses each produce a
-  message and a distinct exit code; unknown values are rejected before the device is opened, so a typo is
-  reported as a typo.
-- A corrupted or empty status file reads as "no status" instead of taking down every signal command.
+- The durable status is stored in `%LOCALAPPDATA%\SignalMe\signalme.ini`, written through a temporary file
+  so an interruption cannot leave it half written. A missing or unreadable file reads as "no status".
+- SignalMe uses the first Luxafor device the controller library discovers. Explicit device selection is
+  not supported in 1.0.
+- Only the Luxafor Orb has been tested. See
+  [Hardware and platform support](docs/hardware.md) for what is expected to work and what is not
+  supported.
 
-[Unreleased]: https://github.com/Reefact/signalme/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Reefact/signalme/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Reefact/signalme/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Reefact/signalme/releases/tag/v1.0.0
