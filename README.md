@@ -16,7 +16,8 @@ signalme off          # lights out
 
 ## Install
 
-SignalMe is distributed as a .NET tool. It needs the [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+SignalMe requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) to install as a .NET
+tool: `dotnet tool install` ships with the SDK, not with the runtime alone.
 
 ```shell
 dotnet tool install --global SignalMe
@@ -114,6 +115,12 @@ dotnet build -c Release
 dotnet test -c Release
 dotnet pack -c Release -o artifacts
 ```
+
+`global.json` pins the SDK feature band, and the CI installs exactly that one. SignalMe builds with
+warnings as errors, and which diagnostics exist is decided by the SDK's analyzers and compiler — an
+unpinned SDK means a build that is green on one machine and red on another. If `dotnet` reports a missing
+SDK, install the version `global.json` asks for rather than editing the file; bumping it is a deliberate
+change, because it can surface new warnings.
 
 The whole test suite runs in under a second and needs no hardware: it drives SignalMe through a fake
 `ILuxaforDevice`, and animations use an injected delay so nothing waits for real.
