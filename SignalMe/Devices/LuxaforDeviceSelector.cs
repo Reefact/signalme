@@ -113,9 +113,14 @@ public sealed class LuxaforDeviceSelector {
             return devices[0];
         }
 
+        // The dialog is spaced as the spec draws it (§43): a blank line under the banner, before the table,
+        // before each question, before each announcement. Written as lines of their own rather than folded
+        // into the blocks, so that a test reads the transcript as the user sees the screen.
         ILuxaforDevice? identified = null;
         try {
+            _console.WriteLine(string.Empty);
             _console.WriteLine($"{devices.Count} Luxafor devices detected.");
+            _console.WriteLine(string.Empty);
             _console.WriteLine(RenderTable(devices));
 
             while (true) {
@@ -123,6 +128,7 @@ public sealed class LuxaforDeviceSelector {
                 ILuxaforDevice candidate = devices[number - 1];
 
                 identified = candidate;
+                _console.WriteLine(string.Empty);
                 _console.WriteLine($"Identifying device #{number}...");
                 try {
                     await DeviceIdentificationWave.PlayAsync(candidate, _delay, cancellationToken).ConfigureAwait(false);
@@ -139,6 +145,7 @@ public sealed class LuxaforDeviceSelector {
                 identified = null;
 
                 if (await ConfirmAsync(cancellationToken).ConfigureAwait(false)) {
+                    _console.WriteLine(string.Empty);
                     _console.WriteLine($"Device selected: {candidate.Path}");
                     DisposeAll(devices, candidate);
 
@@ -180,6 +187,9 @@ public sealed class LuxaforDeviceSelector {
     ///     an answer, so the end of input is treated exactly like a cancellation.
     /// </summary>
     private async Task<string> ReadAnswerAsync(string prompt, CancellationToken cancellationToken) {
+        // Every question sits under a blank line, whatever preceded it: the table, a refused answer, the
+        // report of a failed wave, or the question's own previous ask.
+        _console.WriteLine(string.Empty);
         _console.Write(prompt);
         string? answer = await _console.ReadLineAsync(cancellationToken).ConfigureAwait(false);
 

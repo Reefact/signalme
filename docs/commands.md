@@ -10,8 +10,8 @@ SignalMe has two levels of commands. The **command line** starts it:
 
 ```shell
 signalme [--mode <MODE>]
-signalme --help
-signalme --version
+signalme --help       # or -h
+signalme --version    # or -v
 ```
 
 Once it runs, the **interactive commands** are typed at its prompt:
@@ -150,6 +150,7 @@ Play an animation over your durable status, then put it back.
 > happy
 Playing: happy
 Restored: busy
+
 > ready
 Playing: ready
 Status: available
@@ -305,14 +306,17 @@ Press Ctrl+C to stop.
 
 > available
 Status: available
+
 > happy
 Playing: happy
 Restored: available
+
 > status
 Mode: manual
 Desired status: available
 Effective status: available
 Session: active
+
 > 
 Windows session locked.
 Effective status: away
@@ -321,10 +325,13 @@ Windows session unlocked.
 Effective status: available
 > dnd
 Status: do-not-disturb
+
 > off
 Status: off
+
 > happy
 SignalMe is off: 'happy' is not played.
+
 > ^C
 Stopping SignalMe...
 SignalMe stopped.

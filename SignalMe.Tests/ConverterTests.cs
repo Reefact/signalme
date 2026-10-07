@@ -1,9 +1,29 @@
 using SignalMe.Converters;
+using SignalMe.Runtime;
 using SignalMe.Services;
 
 namespace SignalMe.Tests;
 
 public sealed class ConverterTests {
+
+    /// <summary>
+    ///     What the device shows is named like the status it comes from, so "Effective status: busy" and
+    ///     "Status: busy" spell it alike; "off" is the one word for a dark device.
+    /// </summary>
+    [Theory]
+    [InlineData(EffectiveStatus.Off, "off")]
+    [InlineData(EffectiveStatus.Away, "away")]
+    [InlineData(EffectiveStatus.Available, "available")]
+    [InlineData(EffectiveStatus.Busy, "busy")]
+    [InlineData(EffectiveStatus.DoNotDisturb, "do-not-disturb")]
+    public void An_effective_status_is_printed_as_the_status_it_comes_from(EffectiveStatus status, string expected) {
+        Assert.Equal(expected, EffectiveStatusConverter.ToCanonicalValue(status));
+    }
+
+    [Fact]
+    public void Every_effective_status_of_the_enum_has_a_printed_value() {
+        Assert.All(Enum.GetValues<EffectiveStatus>(), status => Assert.NotEmpty(EffectiveStatusConverter.ToCanonicalValue(status)));
+    }
 
     [Theory]
     [InlineData("available", UserStatus.Available)]

@@ -27,9 +27,11 @@ Press Ctrl+C to stop.
 
 > busy
 Status: busy
+
 > happy
 Playing: happy
 Restored: busy
+
 > 
 Windows session locked.
 Effective status: away

@@ -52,10 +52,10 @@ case, and the next status you type replaces the file.
 
 ## Temporary signals
 
-A signal plays over the durable status you have at that moment: the animations start from that status
-colour and the status is what comes back when they end. A signal therefore needs a durable
-status, and SignalMe refuses one when it is off, or while the session is locked, without touching the
-device:
+A signal plays over the durable status you have at that moment. `happy` and `bored` fade from its colour
+and back to it; `desperate`, `warning` and `alerting` blink or flash instead, and the status is displayed
+again once they are over. A signal therefore needs a durable status, and SignalMe refuses one when it is
+off, or while the session is locked, without touching the device:
 
 ```text
 SignalMe is off: 'happy' is not played.
