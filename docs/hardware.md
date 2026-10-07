@@ -33,19 +33,30 @@ SignalMe drives one device per run, and looks for devices once, at startup. With
 it is used without a question. With several, SignalMe asks which one:
 
 ```text
+$ signalme
+SignalMe 2.0.0
+
 2 Luxafor devices detected.
+
 ┌───┬──────────────────────────────┐
 │ # │ Id                           │
 ├───┼──────────────────────────────┤
 │ 1 │ <device-id-1>                │
 │ 2 │ <device-id-2>                │
 └───┴──────────────────────────────┘
+
 Select device: 1
+
 Identifying device #1...
+
 Use this device? [Y/N]: n
+
 Select device: 2
+
 Identifying device #2...
+
 Use this device? [Y/N]: y
+
 Device selected: <device-id-2>
 ```
 

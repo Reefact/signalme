@@ -19,6 +19,9 @@ public sealed class ManualModeTests {
 
     private static readonly string[] Hints = ["Commands: help", "Press Ctrl+C to stop.", ""];
 
+    /// <summary>The blank line that closes each exchange, before the next prompt: not an answer to anything.</summary>
+    private const string Separator = "";
+
     /// <summary>The block of spec §16, as the user must see it.</summary>
     private static readonly string HelpText = string.Join(NewLine, [
         "Statuses:",
@@ -69,6 +72,33 @@ public sealed class ManualModeTests {
         await RunAsync(console, new FakeSignalMeContext());
 
         Assert.Equal(["line: Commands: help", "line: Press Ctrl+C to stop.", "line: ", "prompt: > ", "read: <end of input>"], console.Transcript);
+    }
+
+    /// <summary>
+    ///     Spec §42: a blank line closes every exchange, so that the next prompt never runs into what
+    ///     answered the previous line.
+    /// </summary>
+    [Fact]
+    public async Task A_blank_line_separates_each_exchange_from_the_next_prompt() {
+        FakeConsole console = new("busy", "status");
+
+        await RunAsync(console, new FakeSignalMeContext());
+
+        string[] expected = [
+            "line: Commands: help",
+            "line: Press Ctrl+C to stop.",
+            "line: ",
+            "prompt: > ",
+            "read: busy",
+            "line: ",
+            "prompt: > ",
+            "read: status",
+            "line: Mode: manual" + NewLine + "Desired status: none" + NewLine + "Effective status: off" + NewLine + "Session: active",
+            "line: ",
+            "prompt: > ",
+            "read: <end of input>"
+        ];
+        Assert.Equal(expected, console.Transcript);
     }
 
     #endregion
@@ -138,7 +168,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal(Hints, console.Output);
+        Assert.Equal([.. Hints, Separator, Separator, Separator], console.Output);
         Assert.Empty(console.Error);
     }
 
@@ -164,6 +194,10 @@ public sealed class ManualModeTests {
         Assert.Equal(2, context.Intents.Count);
     }
 
+    /// <summary>
+    ///     Spec §11: an empty line is ignored. Nothing answers it, so no separator closes it either: the
+    ///     prompt comes straight back rather than under a doubled gap.
+    /// </summary>
     [Fact]
     public async Task An_empty_line_is_ignored() {
         FakeConsole         console = new("", "   ", "busy");
@@ -174,7 +208,8 @@ public sealed class ManualModeTests {
         Assert.Equal([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)], context.Intents);
         // One prompt per line, the last one answered by the end of input; nothing said about the blank ones.
         Assert.Equal(["> ", "> ", "> ", "> "], console.Prompts);
-        Assert.Equal(Hints, console.Output);
+        Assert.Equal([.. Hints, Separator], console.Output);
+        Assert.Equal(["prompt: > ", "read: ", "prompt: > ", "read:    ", "prompt: > ", "read: busy", "line: ", "prompt: > ", "read: <end of input>"], console.Transcript.Skip(Hints.Length));
     }
 
     #endregion
@@ -267,7 +302,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal([.. Hints, "Unknown command: 'buzy'." + NewLine + "Type 'help' to list available commands."], console.Output);
+        Assert.Equal([.. Hints, "Unknown command: 'buzy'." + NewLine + "Type 'help' to list available commands.", Separator, Separator], console.Output);
         Assert.Equal([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)], context.Intents);
         Assert.Equal(["> ", "> ", "> "], console.Prompts);
     }
@@ -380,6 +415,19 @@ public sealed class ManualModeTests {
         Assert.IsType<ManualMode>(mode);
     }
 
+    /// <summary>
+    ///     "Mode: manual" and the status report spell the mode the way the factory advertises it, whatever
+    ///     spacing or capitals the user typed on the command line.
+    /// </summary>
+    [Theory]
+    [InlineData("manual")]
+    [InlineData("MANUAL")]
+    [InlineData(" Manual ")]
+    public void The_factory_resolves_the_advertised_name_whatever_the_spelling(string name) {
+        Assert.True(SignalMeModeFactory.TryResolve(name, out string? canonicalName));
+        Assert.Equal("manual", canonicalName);
+    }
+
     [Fact]
     public void Manual_is_the_one_known_mode() {
         Assert.Equal(["manual"], SignalMeModeFactory.KnownModes);
@@ -387,13 +435,18 @@ public sealed class ManualModeTests {
 
     /// <summary>
     ///     The usage message advertises the known modes, so every one of them must be creatable, whatever
-    ///     spelling of it the user types.
+    ///     spelling of it the user types; and whatever the factory creates, it must also name, since the
+    ///     command line prints the name it resolved and then creates the mode from it.
     /// </summary>
     [Fact]
-    public void Every_known_mode_can_be_created() {
+    public void Every_known_mode_can_be_created_and_resolved() {
         foreach (string name in SignalMeModeFactory.KnownModes) {
+            string spelling = $" {name.ToUpperInvariant()} ";
+
             Assert.True(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out _), $"'{name}' is advertised but cannot be created.");
-            Assert.True(SignalMeModeFactory.TryCreate($" {name.ToUpperInvariant()} ", new FakeConsole(), out _), $"'{name}' is not created when typed in capitals with spaces around.");
+            Assert.True(SignalMeModeFactory.TryCreate(spelling, new FakeConsole(), out _), $"'{name}' is not created when typed in capitals with spaces around.");
+            Assert.True(SignalMeModeFactory.TryResolve(spelling, out string? canonicalName), $"'{name}' is not resolved when typed in capitals with spaces around.");
+            Assert.Equal(name, canonicalName);
         }
     }
 
@@ -404,6 +457,15 @@ public sealed class ManualModeTests {
     public void An_unknown_name_creates_nothing(string name) {
         Assert.False(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out ISignalMeMode? mode));
         Assert.Null(mode);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("teams")]
+    [InlineData("manual mode")]
+    public void An_unknown_name_resolves_to_nothing(string name) {
+        Assert.False(SignalMeModeFactory.TryResolve(name, out string? canonicalName));
+        Assert.Null(canonicalName);
     }
 
     [Fact]

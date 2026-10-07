@@ -53,10 +53,11 @@ démarre alors éteint, et le prochain statut que vous tapez remplace le fichier
 
 ## Signaux temporaires
 
-Un signal se joue par-dessus le statut durable que vous avez à ce moment-là : les animations partent de
-sa couleur et c'est lui qui revient quand elles se terminent. Un signal a donc
-besoin d'un statut durable, et SignalMe en refuse un quand il est éteint, ou pendant que la session est
-verrouillée, sans toucher au périphérique :
+Un signal se joue par-dessus le statut durable que vous avez à ce moment-là. `happy` et `bored` partent
+de sa couleur en fondu et y reviennent ; `desperate`, `warning` et `alerting` clignotent ou flashent, et
+le statut est de nouveau affiché une fois qu'ils sont terminés. Un signal a donc besoin d'un statut
+durable, et SignalMe en refuse un quand il est éteint, ou pendant que la session est verrouillée, sans
+toucher au périphérique :
 
 ```text
 SignalMe is off: 'happy' is not played.

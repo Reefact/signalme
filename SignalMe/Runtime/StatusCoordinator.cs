@@ -59,17 +59,6 @@ public sealed class StatusCoordinator : ISignalMeContext, IDisposable {
         return status is null ? "off" : UserStatusConverter.ToCanonicalValue(status.Value);
     }
 
-    private static string Describe(EffectiveStatus status) {
-        return status switch {
-            EffectiveStatus.Off          => "off",
-            EffectiveStatus.Away         => UserStatusConverter.ToCanonicalValue(UserStatus.Away),
-            EffectiveStatus.Available    => UserStatusConverter.ToCanonicalValue(UserStatus.Available),
-            EffectiveStatus.Busy         => UserStatusConverter.ToCanonicalValue(UserStatus.Busy),
-            EffectiveStatus.DoNotDisturb => UserStatusConverter.ToCanonicalValue(UserStatus.DoNotDisturb),
-            _                            => throw new InvalidEnumArgumentException(nameof(status), (int)status, typeof(EffectiveStatus))
-        };
-    }
-
     /// <summary>
     ///     The error an animation died of, or null when it ran to its end or was merely cancelled: an
     ///     async method turns an <see cref="OperationCanceledException" /> into a cancelled task, but a
@@ -365,7 +354,7 @@ public sealed class StatusCoordinator : ISignalMeContext, IDisposable {
 
         // One block, so that a console repeating a pending prompt does so once, after both lines.
         string header = session == SessionState.Locked ? "Windows session locked." : "Windows session unlocked.";
-        _console.WriteLine($"{header}{Environment.NewLine}Effective status: {Describe(_state.Effective)}");
+        _console.WriteLine($"{header}{Environment.NewLine}Effective status: {EffectiveStatusConverter.ToCanonicalValue(_state.Effective)}");
     }
 
     /// <summary>
@@ -437,7 +426,7 @@ public sealed class StatusCoordinator : ISignalMeContext, IDisposable {
         if (effective == EffectiveStatus.Off) {
             _device.TurnOffOrThrow();
         } else {
-            _device.SetColorOrThrow(StatusColors.For(effective), $"display the '{Describe(effective)}' status");
+            _device.SetColorOrThrow(StatusColors.For(effective), $"display the '{EffectiveStatusConverter.ToCanonicalValue(effective)}' status");
         }
     }
 

@@ -63,17 +63,6 @@ public sealed class ManualMode : ISignalMeMode {
         return status is null ? "none" : UserStatusConverter.ToCanonicalValue(status.Value);
     }
 
-    private static string Describe(EffectiveStatus status) {
-        return status switch {
-            EffectiveStatus.Off          => "off",
-            EffectiveStatus.Away         => UserStatusConverter.ToCanonicalValue(UserStatus.Away),
-            EffectiveStatus.Available    => UserStatusConverter.ToCanonicalValue(UserStatus.Available),
-            EffectiveStatus.Busy         => UserStatusConverter.ToCanonicalValue(UserStatus.Busy),
-            EffectiveStatus.DoNotDisturb => UserStatusConverter.ToCanonicalValue(UserStatus.DoNotDisturb),
-            _                            => throw new InvalidEnumArgumentException(nameof(status), (int)status, typeof(EffectiveStatus))
-        };
-    }
-
     private static string Describe(SessionState session) {
         return session switch {
             SessionState.Active => "active",
@@ -117,7 +106,15 @@ public sealed class ManualMode : ISignalMeMode {
             string? line = await _console.ReadLineAsync(cancellationToken).ConfigureAwait(false);
             if (line is null) { return; }
 
-            await HandleAsync(ManualCommandParser.Parse(line), context, cancellationToken).ConfigureAwait(false);
+            ManualCommand command = ManualCommandParser.Parse(line);
+            await HandleAsync(command, context, cancellationToken).ConfigureAwait(false);
+
+            // A blank line closes each exchange, so that the next prompt does not run into whatever answered
+            // this one (spec §42); the start-up block ends with one for the same reason. An empty line is
+            // no exchange at all (spec §11): nothing answered it, so the prompt simply comes back.
+            if (command is not ManualCommand.Empty) {
+                _console.WriteLine(string.Empty);
+            }
         }
     }
 
@@ -162,7 +159,7 @@ public sealed class ManualMode : ISignalMeMode {
         _console.WriteLine(string.Join(Environment.NewLine, [
             $"Mode: {context.ModeName}",
             $"Desired status: {Describe(state.DesiredStatus)}",
-            $"Effective status: {Describe(state.Effective)}",
+            $"Effective status: {EffectiveStatusConverter.ToCanonicalValue(state.Effective)}",
             $"Session: {Describe(state.Session)}"
         ]));
     }

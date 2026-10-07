@@ -3,7 +3,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Threading;
 
 using Microsoft.Win32;
 
@@ -24,11 +23,7 @@ namespace SignalMe.Sessions;
 ///     <para>
 ///         The event is raised on the library's own ".NET System Events" thread, which it spawns and pumps
 ///         by itself since .NET 6 whatever the apartment of the caller, so SignalMe needs no message loop
-///         and <see cref="Start" /> may run from any thread. Main must never be <c>[STAThread]</c> all the
-///         same: the older SystemEvents shared an STA caller's thread and counted on it to pump messages,
-///         which a console application never does, so the events simply never came. <see cref="Start" />
-///         refuses an STA thread for that reason: the failure is loud and at start-up, instead of an
-///         "away" that never shows up should the library ever share the thread again.
+///         and <see cref="Start" /> may run from any thread.
 ///     </para>
 ///     <para>
 ///         The handler must never block, never touch the device, and above all never throw:
@@ -108,11 +103,9 @@ public sealed class WindowsSessionMonitor : ISessionMonitor {
     public event EventHandler<SessionState>? StateChanged;
 
     /// <inheritdoc />
-    /// <exception cref="InvalidOperationException">Called from an STA thread; see the class remarks.</exception>
     /// <exception cref="ExternalException">The library could not create the hidden window it receives the notifications through.</exception>
     public void Start() {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA) { throw new InvalidOperationException("Windows session events cannot be watched from an STA thread: the entry point must not be marked [STAThread]."); }
 
         // Subscribed before the state is read, so that a lock happening right now is either seen by the
         // query or delivered as an event. The other order would leave a hole between the two.

@@ -64,9 +64,12 @@ public sealed class LuxaforDeviceSelectorTests {
 
         await SelectAsync(console, [first, second]);
 
-        Assert.Equal("2 Luxafor devices detected.", console.Output[0]);
-        Assert.Contains(FirstId, console.Output[1]);
-        Assert.Contains(SecondId, console.Output[1]);
+        // Under a blank line: the banner is the caller's last word before the dialog starts (spec §43).
+        Assert.Equal("", console.Output[0]);
+        Assert.Equal("2 Luxafor devices detected.", console.Output[1]);
+        Assert.Equal("", console.Output[2]);
+        Assert.Contains(FirstId, console.Output[3]);
+        Assert.Contains(SecondId, console.Output[3]);
     }
 
     [Fact]
@@ -85,7 +88,7 @@ public sealed class LuxaforDeviceSelectorTests {
             "│ 2 │ LONGER-ID │",
             "└───┴───────────┘"
         ];
-        Assert.Equal(string.Join(Environment.NewLine, expected), console.Output[1]);
+        Assert.Equal(string.Join(Environment.NewLine, expected), console.Output[3]);
     }
 
     [Fact]
@@ -96,9 +99,9 @@ public sealed class LuxaforDeviceSelectorTests {
         ILuxaforDevice selected = await SelectAsync(console, devices);
 
         Assert.Same(devices[9], selected);
-        Assert.Contains("│  # │ Id    │", console.Output[1]);
-        Assert.Contains("│  1 │ dev1  │", console.Output[1]);
-        Assert.Contains("│ 10 │ dev10 │", console.Output[1]);
+        Assert.Contains("│  # │ Id    │", console.Output[3]);
+        Assert.Contains("│  1 │ dev1  │", console.Output[3]);
+        Assert.Contains("│ 10 │ dev10 │", console.Output[3]);
     }
 
     #endregion
@@ -113,19 +116,30 @@ public sealed class LuxaforDeviceSelectorTests {
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
         Assert.Same(second, selected);
+        // Spaced as spec §43 draws it: a blank line under the banner, before the table, each question and
+        // each announcement.
         string[] expected = [
+            "line: ",
             "line: 2 Luxafor devices detected.",
-            $"line: {console.Output[1]}",
+            "line: ",
+            $"line: {console.Output[3]}",
+            "line: ",
             "prompt: Select device: ",
             "read: 1",
+            "line: ",
             "line: Identifying device #1...",
+            "line: ",
             "prompt: Use this device? [Y/N]: ",
             "read: n",
+            "line: ",
             "prompt: Select device: ",
             "read: 2",
+            "line: ",
             "line: Identifying device #2...",
+            "line: ",
             "prompt: Use this device? [Y/N]: ",
             "read: y",
+            "line: ",
             $"line: Device selected: {SecondId}"
         ];
         Assert.Equal(expected, console.Transcript);
@@ -166,7 +180,9 @@ public sealed class LuxaforDeviceSelectorTests {
 
         Assert.Same(second, selected);
         Assert.Equal(["Select device: ", "Select device: ", "Use this device? [Y/N]: "], console.Prompts);
-        Assert.Equal(["Invalid device number.", "Identifying device #2...", $"Device selected: {SecondId}"], console.Output.Skip(2));
+        // The refusal follows the answer directly; the question comes back under a blank line (spec §7.2).
+        Assert.Equal(["prompt: Select device: ", $"read: {input}", "line: Invalid device number.", "line: ", "prompt: Select device: ", "read: 2"], console.Transcript.Skip(5).Take(6));
+        Assert.Equal(["Invalid device number.", "Identifying device #2...", $"Device selected: {SecondId}"], console.Output.Skip(4).Where(block => block.Length > 0));
         // Nothing was identified on a refused number: no wave went out.
         Assert.Empty(first.Commands);
     }
@@ -242,7 +258,7 @@ public sealed class LuxaforDeviceSelectorTests {
         Assert.Equal(["Select device: ", "Select device: ", "Use this device? [Y/N]: "], console.Prompts);
         string error = Assert.Single(console.Error);
         Assert.Contains("USB write failed", error);
-        Assert.Equal(["line: Identifying device #1...", $"error: {error}", "prompt: Select device: "], console.Transcript.Skip(4).Take(3));
+        Assert.Equal(["line: Identifying device #1...", $"error: {error}", "line: ", "prompt: Select device: "], console.Transcript.Skip(8).Take(4));
         Assert.True(first.IsDisposed);
     }
 
