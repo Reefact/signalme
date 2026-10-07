@@ -3,8 +3,10 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 using SignalMe.Infrastructure;
+using SignalMe.Modes.Manual;
 
 #endregion
 
@@ -18,10 +20,21 @@ public static class SignalMeModeFactory {
     #region Statics members declarations
 
     /// <summary>
-    ///     The names <see cref="TryCreate" /> accepts, in display order. Advertised and accepted from the
-    ///     same list, so the usage message cannot promise a mode the factory does not know.
+    ///     Every mode by name, with how to build it, in display order.
     /// </summary>
-    public static ReadOnlyCollection<string> KnownModes { get; } = new(["manual"]);
+    /// <remarks>
+    ///     The single source of truth: <see cref="TryCreate" /> looks up this table and
+    ///     <see cref="KnownModes" /> is projected from it, so the usage message cannot promise a mode the
+    ///     factory does not create.
+    /// </remarks>
+    private static readonly (string Name, Func<IConsole, ISignalMeMode> Create)[] _modes = [
+        ("manual", console => new ManualMode(console))
+    ];
+
+    /// <summary>
+    ///     The names <see cref="TryCreate" /> accepts, in display order.
+    /// </summary>
+    public static ReadOnlyCollection<string> KnownModes { get; } = new(_modes.Select(mode => mode.Name).ToArray());
 
     /// <summary>
     ///     Creates the mode called <paramref name="name" />, compared trimmed and regardless of case, so that
@@ -31,10 +44,15 @@ public static class SignalMeModeFactory {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(console);
 
-        // The manual lot wires "manual" to ManualMode here (matched on name.Trim() with
-        // StringComparison.OrdinalIgnoreCase) and adds a test creating every name of KnownModes, " MANUAL "
-        // included, so that the usage message can never promise a mode this method does not create. Until
-        // then no mode can be created.
+        string wanted = name.Trim();
+        foreach ((string candidate, Func<IConsole, ISignalMeMode> create) in _modes) {
+            if (string.Equals(candidate, wanted, StringComparison.OrdinalIgnoreCase)) {
+                mode = create(console);
+
+                return true;
+            }
+        }
+
         mode = null;
 
         return false;
