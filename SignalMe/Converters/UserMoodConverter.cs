@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -37,6 +38,17 @@ public static class UserMoodConverter {
     ///     The accepted values, in display order.
     /// </summary>
     public static ReadOnlyCollection<string> KnownValues { get; } = new(_moods.Select(mood => mood.Value).ToArray());
+
+    /// <summary>
+    ///     The value signalme prints for a mood, the same one the user types.
+    /// </summary>
+    public static string ToCanonicalValue(UserMood mood) {
+        foreach ((string value, UserMood candidate) in _moods) {
+            if (candidate == mood) { return value; }
+        }
+
+        throw new InvalidEnumArgumentException(nameof(mood), (int)mood, typeof(UserMood));
+    }
 
     public static bool TryConvert(string input, [NotNullWhen(true)] out UserMood? userMood) {
         ArgumentNullException.ThrowIfNull(input);

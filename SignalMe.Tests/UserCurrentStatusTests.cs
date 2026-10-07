@@ -1,4 +1,3 @@
-using SignalMe.Infrastructure;
 using SignalMe.Services;
 using SignalMe.Tests.Fakes;
 
@@ -16,7 +15,6 @@ public sealed class UserCurrentStatusTests {
     [Theory]
     [InlineData(UserStatus.Available)]
     [InlineData(UserStatus.Busy)]
-    [InlineData(UserStatus.Away)]
     [InlineData(UserStatus.DoNotDisturb)]
     public void A_status_survives_a_round_trip(UserStatus status) {
         using TemporaryStatusStore statuses = new();
@@ -24,6 +22,39 @@ public sealed class UserCurrentStatusTests {
         statuses.Store.Set(status);
 
         Assert.Equal(status, statuses.Store.Get());
+    }
+
+    /// <summary>
+    ///     Away is what the device shows while the session is locked, never a status to come back to. A V1
+    ///     install may have written it; V2 reads it as "nothing to restore".
+    /// </summary>
+    [Fact]
+    public void A_file_left_by_v1_saying_away_reads_as_no_status() {
+        using TemporaryStatusStore statuses = new();
+        Directory.CreateDirectory(statuses.Directory);
+        File.WriteAllText(statuses.FilePath, "away");
+
+        Assert.Null(statuses.Store.Get());
+    }
+
+    [Fact]
+    public void Away_cannot_be_remembered() {
+        using TemporaryStatusStore statuses = new();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => statuses.Store.Set(UserStatus.Away));
+
+        // Rejected before anything touched the disk.
+        Assert.False(Directory.Exists(statuses.Directory));
+    }
+
+    [Fact]
+    public void Away_does_not_overwrite_the_remembered_status() {
+        using TemporaryStatusStore statuses = new();
+        statuses.Store.Set(UserStatus.Busy);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => statuses.Store.Set(UserStatus.Away));
+
+        Assert.Equal(UserStatus.Busy, statuses.Store.Get());
     }
 
     [Fact]
@@ -78,9 +109,9 @@ public sealed class UserCurrentStatusTests {
         using TemporaryStatusStore statuses = new();
         statuses.Store.Set(UserStatus.Busy);
 
-        statuses.Store.Set(UserStatus.Away);
+        statuses.Store.Set(UserStatus.DoNotDisturb);
 
-        Assert.Equal(UserStatus.Away, statuses.Store.Get());
+        Assert.Equal(UserStatus.DoNotDisturb, statuses.Store.Get());
         // No scratch file is left behind next to it.
         Assert.Equal([statuses.FilePath], Directory.GetFiles(statuses.Directory));
     }
@@ -89,7 +120,7 @@ public sealed class UserCurrentStatusTests {
     public void A_leftover_temporary_file_is_ignored() {
         using TemporaryStatusStore statuses = new();
         statuses.Store.Set(UserStatus.Busy);
-        File.WriteAllText(statuses.FilePath + ".tmp", "away");
+        File.WriteAllText(statuses.FilePath + ".tmp", "do-not-disturb");
 
         // A crash between the write and the move must not change what signalme remembers.
         Assert.Equal(UserStatus.Busy, statuses.Store.Get());
@@ -100,7 +131,7 @@ public sealed class UserCurrentStatusTests {
         using TemporaryStatusStore statuses = new();
         Assert.False(Directory.Exists(statuses.Directory));
 
-        statuses.Store.Set(UserStatus.Away);
+        statuses.Store.Set(UserStatus.Busy);
 
         Assert.True(File.Exists(statuses.FilePath));
     }

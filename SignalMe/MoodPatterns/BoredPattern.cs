@@ -16,9 +16,10 @@ using SignalMe.Services;
 namespace SignalMe.MoodPatterns;
 
 /// <summary>
-///     Idles through deep purples, LED by LED and out of order, then fades back to the durable status.
+///     Idles through deep purples, LED by LED and out of order, then fades back to the colour of the
+///     durable status.
 /// </summary>
-public sealed class BoredPattern {
+public sealed class BoredPattern : IMoodPattern {
 
     private const int LedCount   = 6;
     private const int RoundCount = 25;
@@ -53,41 +54,41 @@ public sealed class BoredPattern {
 
     #region Fields declarations
 
-    private readonly ILuxaforDevice       _luxaforDevice;
-    private readonly UserStatusController _userStatusController;
-    private readonly IDelay               _delay;
+    private readonly ILuxaforDevice _luxaforDevice;
+    private readonly IDelay         _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public BoredPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
+    public BoredPattern(ILuxaforDevice luxaforDevice, IDelay delay) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
+        ArgumentNullException.ThrowIfNull(delay);
 
-        _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
-        _delay                = delay ?? RealDelay.Instance;
+        _luxaforDevice = luxaforDevice;
+        _delay         = delay;
     }
 
     #endregion
 
-    public Task PlayAsync(CancellationToken cancellationToken) {
-        UserStatus? userCurrentStatus = _userStatusController.GetUserCurrentStatus();
-
-        return _userStatusController.PlayAndRestoreAsync(userCurrentStatus, async () => {
-            BrightColor[] currentColors = new BrightColor[LedCount];
-            for (int round = 0; round < RoundCount; round++) {
-                foreach (byte luxCode in GetRandomLedOrder()) {
-                    BrightColor boredColor = ComputeBoredColor();
-                    currentColors[luxCode - 1] = boredColor;
-                    _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(luxCode), boredColor));
-                    await _delay.WaitAsync(Random.Shared.Next(0, 25), cancellationToken).ConfigureAwait(false);
-                }
-                await _delay.WaitAsync(Random.Shared.Next(0, 100), cancellationToken).ConfigureAwait(false);
+    /// <inheritdoc />
+    public async Task<UserStatus?> PlayAsync(UserStatus? baseStatus, CancellationToken cancellationToken) {
+        BrightColor[] currentColors = new BrightColor[LedCount];
+        for (int round = 0; round < RoundCount; round++) {
+            foreach (byte luxCode in GetRandomLedOrder()) {
+                BrightColor boredColor = ComputeBoredColor();
+                currentColors[luxCode - 1] = boredColor;
+                _luxaforDevice.SendOrThrow(LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(luxCode), boredColor));
+                await _delay.WaitAsync(Random.Shared.Next(0, 25), cancellationToken).ConfigureAwait(false);
             }
+            await _delay.WaitAsync(Random.Shared.Next(0, 100), cancellationToken).ConfigureAwait(false);
+        }
 
-            TransitionToColorPerLed(currentColors, UserStatusController.GetUserStatusColor(userCurrentStatus));
-        });
+        // The fade back is part of the animation, not a restore: the coordinator renders the status
+        // afterwards anyway, this just keeps the LEDs from snapping.
+        TransitionToColorPerLed(currentColors, StatusColors.For(baseStatus));
+
+        return baseStatus;
     }
 
     /// <summary>

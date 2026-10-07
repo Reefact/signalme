@@ -10,9 +10,15 @@ using SignalMe.Services;
 namespace SignalMe.Infrastructure;
 
 /// <summary>
-///     Remembers the last durable status signalme was asked to display, so that an animation can put it
-///     back once it is over.
+///     Remembers the last durable status signalme displayed successfully, so that the next run starts from
+///     it.
 /// </summary>
+/// <remarks>
+///     The file holds the desired status, never the effective one: a session lock shows "away" on the
+///     device but leaves the file untouched. "away" is still understood on read, because a V1 install may
+///     have written it, and it then means "nothing to restore": V2 never asks for away, it applies it by
+///     itself while the session is locked. Writing it is a programming error and throws.
+/// </remarks>
 public sealed class UserCurrentStatus {
 
     private const string FileName      = "signalme.ini";
@@ -34,7 +40,6 @@ public sealed class UserCurrentStatus {
     /// </remarks>
     private static UserStatus? DeSerialize(string serializedStatus) {
         return serializedStatus switch {
-            UserStatusSerializedValue.Away         => UserStatus.Away,
             UserStatusSerializedValue.Available    => UserStatus.Available,
             UserStatusSerializedValue.Busy         => UserStatus.Busy,
             UserStatusSerializedValue.DoNotDisturb => UserStatus.DoNotDisturb,
@@ -44,11 +49,10 @@ public sealed class UserCurrentStatus {
 
     private static string Serialize(UserStatus status) {
         string serializedStatus = status switch {
-            UserStatus.Away         => UserStatusSerializedValue.Away,
             UserStatus.Available    => UserStatusSerializedValue.Available,
             UserStatus.Busy         => UserStatusSerializedValue.Busy,
             UserStatus.DoNotDisturb => UserStatusSerializedValue.DoNotDisturb,
-            _                       => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+            _                       => throw new ArgumentOutOfRangeException(nameof(status), status, "Only a durable status can be remembered; away is a presence override, never a desired status.")
         };
 
         return serializedStatus;
@@ -98,6 +102,7 @@ public sealed class UserCurrentStatus {
         return DeSerialize(rawStatus);
     }
 
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="status" /> is <see cref="UserStatus.Away" />.</exception>
     public void Set(UserStatus? status) {
         string filePath = GetFilePath();
         if (status == null) {
@@ -106,13 +111,16 @@ public sealed class UserCurrentStatus {
             return;
         }
 
+        // Serialized before the directory is touched, so a rejected status leaves no trace behind.
+        string serializedStatus = Serialize(status.Value);
+
         Directory.CreateDirectory(_directory);
 
         // Written aside and moved into place, so an interruption mid-write leaves the previous status
         // intact rather than a half-written file. The move is atomic within a volume, and both paths sit
         // in the same directory.
         string temporaryPath = filePath + ".tmp";
-        File.WriteAllText(temporaryPath, Serialize(status.Value));
+        File.WriteAllText(temporaryPath, serializedStatus);
         File.Move(temporaryPath, filePath, overwrite: true);
     }
 
@@ -124,7 +132,6 @@ public sealed class UserCurrentStatus {
 
     private static class UserStatusSerializedValue {
 
-        public const string Away         = "away";
         public const string Available    = "available";
         public const string Busy         = "busy";
         public const string DoNotDisturb = "do-not-disturb";

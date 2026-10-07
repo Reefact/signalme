@@ -15,59 +15,54 @@ namespace SignalMe.MoodPatterns;
 
 /// <summary>
 ///     Announces that the user has become available: steps down from do-not-disturb through busy, blinks
-///     green, and settles on the available status.
+///     green, and ends on the available status.
 /// </summary>
 /// <remarks>
-///     The one pattern that deliberately changes the durable status instead of restoring it.
+///     The one pattern that deliberately changes the durable status instead of leaving it as it was.
 /// </remarks>
-public sealed class ReadyPattern {
+public sealed class ReadyPattern : IMoodPattern {
 
     #region Fields declarations
 
-    private readonly ILuxaforDevice       _luxaforDevice;
-    private readonly UserStatusController _userStatusController;
-    private readonly IDelay               _delay;
+    private readonly ILuxaforDevice _luxaforDevice;
+    private readonly IDelay         _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public ReadyPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
+    public ReadyPattern(ILuxaforDevice luxaforDevice, IDelay delay) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
+        ArgumentNullException.ThrowIfNull(delay);
 
-        _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
-        _delay                = delay ?? RealDelay.Instance;
+        _luxaforDevice = luxaforDevice;
+        _delay         = delay;
     }
 
     #endregion
 
-    public Task PlayAsync(CancellationToken cancellationToken) {
-        UserStatus? previousStatus = _userStatusController.GetUserCurrentStatus();
+    /// <inheritdoc />
+    public async Task<UserStatus?> PlayAsync(UserStatus? baseStatus, CancellationToken cancellationToken) {
+        UserStatus? displayedStatus = baseStatus;
 
-        // Until the sequence reaches "available", the status to fall back on is the previous one.
-        return _userStatusController.PlayAndRestoreAsync(previousStatus, async () => {
-            UserStatus? displayedStatus = previousStatus;
+        if (displayedStatus == UserStatus.DoNotDisturb) {
+            await _delay.WaitAsync(1000, cancellationToken).ConfigureAwait(false);
+            _luxaforDevice.SetColorOrThrow(PredefinedColor.Busy);
+            displayedStatus = UserStatus.Busy;
+        }
 
-            if (displayedStatus == UserStatus.DoNotDisturb) {
-                await _delay.WaitAsync(1000, cancellationToken).ConfigureAwait(false);
-                _luxaforDevice.SetColorOrThrow(PredefinedColor.Busy);
-                displayedStatus = UserStatus.Busy;
-            }
+        if (displayedStatus == UserStatus.Busy) {
+            await _delay.WaitAsync(2000, cancellationToken).ConfigureAwait(false);
+        }
 
-            if (displayedStatus == UserStatus.Busy) {
-                await _delay.WaitAsync(2000, cancellationToken).ConfigureAwait(false);
-            }
+        for (int i = 0; i < 15; i++) {
+            _luxaforDevice.TurnOffOrThrow();
+            await _delay.WaitAsync(10, cancellationToken).ConfigureAwait(false);
+            _luxaforDevice.SetColorOrThrow(PredefinedColor.Available);
+            await _delay.WaitAsync(50, cancellationToken).ConfigureAwait(false);
+        }
 
-            for (int i = 0; i < 15; i++) {
-                _luxaforDevice.TurnOffOrThrow();
-                await _delay.WaitAsync(10, cancellationToken).ConfigureAwait(false);
-                _luxaforDevice.SetColorOrThrow(PredefinedColor.Available);
-                await _delay.WaitAsync(50, cancellationToken).ConfigureAwait(false);
-            }
-
-            return UserStatus.Available;
-        });
+        return UserStatus.Available;
     }
 
 }
