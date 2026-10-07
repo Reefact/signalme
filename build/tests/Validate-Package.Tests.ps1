@@ -126,7 +126,8 @@ Describe 'Validate-Package' {
             'tools/net10.0/any/SignalMe.runtimeconfig.json',
             'tools/net10.0/any/Reefact.LuxaforLightingDeviceController.dll',
             'tools/net10.0/any/HidLibrary.dll',
-            'tools/net10.0/any/Spectre.Console.Cli.dll'
+            'tools/net10.0/any/Spectre.Console.Cli.dll',
+            'tools/net10.0/any/Microsoft.Win32.SystemEvents.dll'
         ) {
             { Invoke-Validation @{ Omit = @($_) } } | Should -Throw "*missing '$_'*"
         }

@@ -21,7 +21,8 @@ $script:ToolFiles     = @(
     'SignalMe.runtimeconfig.json',
     'Reefact.LuxaforLightingDeviceController.dll',
     'HidLibrary.dll',
-    'Spectre.Console.Cli.dll'
+    'Spectre.Console.Cli.dll',
+    'Microsoft.Win32.SystemEvents.dll'
 )
 
 function New-TestPackage {
