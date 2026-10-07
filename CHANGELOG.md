@@ -9,8 +9,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+The next release is a new major version. SignalMe stops being a one-shot command and becomes a resident
+process: it runs in your terminal, you type statuses and signals at its prompt, and it switches the device
+to `away` by itself while your Windows session is locked. The command line of 1.x no longer exists, which
+is what the major version is for.
+
 ### Added
 
+- **Automatic `away` on session lock.** SignalMe watches the Windows session it runs in: a lock shows
+  `away` on the device, an unlock brings your status back, and the status you asked for is never changed
+  by either. A lock interrupts a signal that is playing, which does not resume. Only the session SignalMe
+  runs in is watched: started as a service or in a background session, it sees no lock.
+- **Device selection.** With several Luxafor devices plugged in, SignalMe lists them, plays a short white
+  wave on the one you pick so you can see which it is, and asks for a confirmation before using it. The
+  devices not retained are released. With one device nothing is asked, as before.
+- **The `manual` mode**, the default and the only one for now, in which the status is typed at SignalMe's
+  prompt: the statuses and signals of 1.x, plus `status` (mode, desired status, effective status, session
+  state), `off` and `help`. Unknown input is reported and SignalMe keeps running. `--mode <MODE>` names
+  the mode, so that other sources of status can be added later without changing the core.
+- **`--version`**, which prints the version and exits, like `--help` without touching a device.
+- **A clean stop on end of input.** Closing the console input stops SignalMe the same way Ctrl+C does:
+  device off, exit code `0`.
 - **Package validation now checks the icon against nuget.org's 1 MB limit.** The constraint was written
   down in the development guide but nothing enforced it, and nuget.org only applies it when the package is
   pushed — after the tag is cut and the release job is already running. It is now a build failure, where a
@@ -20,6 +39,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   published version, and it only earns that place if it actually fails: the suite hands it synthetic
   packages that are wrong in exactly one way — an icon of exactly 1 MB, a missing assembly, a renamed
   command, a leaked source file — and checks it rejects each of them.
+
+### Changed
+
+- **SignalMe is resident.** `signalme` starts it and it stays until Ctrl+C: it finds the device once,
+  shows the status remembered from the last run, then applies what you type and what the session does.
+  It turns the device off when it stops, so that a lit device never suggests it is still watching your
+  presence. One component writes to the device, ever; a signal, a status change and a lock can no longer
+  race each other.
+- **The command line is incompatible with 1.x.** `signalme [--mode <MODE>]`, `--help` and `--version` are
+  all it accepts; an unknown option, an unexpected argument or a missing option value is a usage error.
+  Statuses and signals are now interactive commands.
+- **A signal needs a durable status.** With SignalMe off, a signal is refused with
+  `SignalMe is off: '<signal>' is not played.` rather than played over a dark device, and `ready` can no
+  longer turn "no status" into `available`. Off has priority over everything, the lock comes next: a
+  signal is refused while the session is locked too.
+- **A signal interrupted is not restored by the signal.** Restoration belongs to the runtime: whatever
+  interrupts a signal — a lock, Ctrl+C, a new request from the mode — decides what the device shows next.
+  `ready` still ends on `available`, and still only when it completes.
+- **Exit codes.** Ctrl+C now exits with `0`: stopping SignalMe is the normal way to use it, not an
+  interruption. `1` covers every command-line error (unknown mode included), `2` every device failure,
+  before or during the run, and `3` the unexpected.
+- **A device failure during the run stops SignalMe**, with exit code `2`, after turning the device off
+  as far as it still can. A status the device refused is not remembered.
+- **The status file is read more carefully.** It still holds the last durable status the device showed,
+  never the `away` a lock produces. A file left by 1.x that says `away` is read as "no status".
+- **The package description** now describes a resident presence runtime.
+
+### Removed
+
+- **The `as`, `status` and `off` commands** of the command line, and the `switch-off` alias. Their job
+  is done at SignalMe's prompt: a status or a signal by its name, `status` and `off`.
+- **Exit code `4`** (interrupted by the user). Ctrl+C exits with `0`.
+- **`away` as a status you set.** It is the presence override SignalMe applies while the session is
+  locked; typed at the prompt it is an unknown command.
 
 ## [1.0.2] - 2026-08-07
 
