@@ -57,7 +57,8 @@ public static class SignalMeCommandApp {
 
                         return ExitCode.UsageError;
                     case OperationCanceledException:
-                        console.WriteError("SignalMe stopped.");
+                        // A clean stop, not a failure: the same line the runtime prints, on the same stream.
+                        console.WriteLine("SignalMe stopped.");
 
                         return ExitCode.Success;
                     case DeviceCommandFailedException:

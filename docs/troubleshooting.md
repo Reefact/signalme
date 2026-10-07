@@ -15,16 +15,21 @@ which is also the default.
 
 **What to do:** run `signalme` with no option, or `signalme --mode manual`.
 
-## Unknown option, unexpected argument
+## Unknown option, unknown command (command line)
 
-**Symptom:** `Unknown option: '--bogus'.` or `Unexpected argument: 'extra'.`, followed by
-`Type 'signalme --help' for usage.`, exit code `1`. A `--mode` with no value gets the same hint.
+**Symptom:** `Unknown option: '--bogus'.` or `Unknown command 'extra'.` (no colon), followed by
+`Type 'signalme --help' for usage.`, exit code `1`. A `--mode` with no value gets the same hint, and an
+argument placed after `--` reads `Unexpected argument: 'extra'.`.
 
 **Cause:** the command line is not one SignalMe accepts. The only option is `--mode <MODE>`, with `-m` as
-its short form; there are no arguments.
+its short form; there are no arguments — and no sub-commands either, which is why a stray argument is
+reported as an unknown command. This is not the [`Unknown command: 'buzy'.`](#unknown-command) of the
+prompt, which has a colon, is followed by `Type 'help' to list available commands.` and leaves SignalMe
+running.
 
 **What to do:** `signalme --help` prints the usage. The commands you may be thinking of — `as`, `status`,
-`off` — were the SignalMe 1.x command line; in 2.0, statuses and signals are typed once SignalMe runs, see
+`off` — were the SignalMe 1.x command line (`signalme as busy` now prints `Unknown command 'as'.`); in
+2.0, statuses and signals are typed once SignalMe runs, see
 [Command reference](commands.md#interactive-commands).
 
 ## No Luxafor device detected

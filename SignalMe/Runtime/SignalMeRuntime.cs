@@ -8,7 +8,6 @@ using Reefact.LuxaforLightingDeviceController;
 
 using SignalMe.Infrastructure;
 using SignalMe.Modes;
-using SignalMe.Services;
 using SignalMe.Sessions;
 
 #endregion

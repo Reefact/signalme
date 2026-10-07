@@ -17,8 +17,8 @@ public static class UserMoodConverter {
     #region Statics members declarations
 
     /// <summary>
-    ///     Every value the CLI accepts for a temporary mood, in the order they are offered to the user, and
-    ///     the mood each one means.
+    ///     Every value signalme accepts at its prompt for a signal, and the mood each one means. The order
+    ///     is this table's own: the prompt's help lists the signals in the spec's order, not this one.
     /// </summary>
     /// <remarks>
     ///     The single source of truth: <see cref="TryConvert" /> parses from this table and
@@ -35,7 +35,7 @@ public static class UserMoodConverter {
     ];
 
     /// <summary>
-    ///     The accepted values, in display order.
+    ///     The values the user may type.
     /// </summary>
     public static ReadOnlyCollection<string> KnownValues { get; } = new(_moods.Select(mood => mood.Value).ToArray());
 

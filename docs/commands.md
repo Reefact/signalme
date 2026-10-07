@@ -56,9 +56,13 @@ Unknown option: '--bogus'.
 Type 'signalme --help' for usage.
 
 $ signalme extra
-Unexpected argument: 'extra'.
+Unknown command 'extra'.
 Type 'signalme --help' for usage.
 ```
+
+SignalMe has no sub-commands: `Unknown command` on the command line means an argument it did not expect
+(one placed after `--` is reported as `Unexpected argument: 'extra'.` instead). It is not the
+`Unknown command: '…'.` of the prompt, which is about a line typed once SignalMe runs.
 
 ## Startup
 

@@ -83,6 +83,33 @@ public sealed class SystemConsoleTests {
     }
 
     /// <summary>
+    ///     End of input while the prompt waits, as with a redirected stdin: nothing echoed an Enter, so the
+    ///     console ends the line itself, as it does for a cancelled read, and the stop line starts on a line
+    ///     of its own.
+    /// </summary>
+    [Fact]
+    public async Task A_read_that_hits_the_end_of_the_input_ends_the_prompt_line_and_forgets_the_prompt() {
+        TextWriter   originalOut = Console.Out;
+        TextReader   originalIn  = Console.In;
+        StringWriter output      = new();
+        Console.SetOut(output);
+        Console.SetIn(new StringReader(string.Empty));
+        try {
+            SystemConsole console = new();
+
+            console.Write("> ");
+            string? line = await console.ReadLineAsync(CancellationToken.None);
+            console.WriteLine("Stopping SignalMe...");
+
+            Assert.Null(line);
+            Assert.Equal("> " + NewLine + "Stopping SignalMe..." + NewLine, output.ToString());
+        } finally {
+            Console.SetOut(originalOut);
+            Console.SetIn(originalIn);
+        }
+    }
+
+    /// <summary>
     ///     A reader that blocks like a keyboard nobody types on, until released. Gated by a task rather than
     ///     an event: the abandoned read thread may still be inside <see cref="ReadLine" /> when the test
     ///     ends, and a task has nothing to dispose from under it.

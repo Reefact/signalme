@@ -17,17 +17,22 @@ Les messages de SignalMe sont en anglais ; ils sont repris tels quels ci-dessous
 
 **Que faire :** lancez `signalme` sans option, ou `signalme --mode manual`.
 
-## Unknown option, Unexpected argument
+## Unknown option, Unknown command (ligne de commande)
 
-**Symptôme :** `Unknown option: '--bogus'.` ou `Unexpected argument: 'extra'.`, suivi de
-`Type 'signalme --help' for usage.`, code de sortie `1`. Un `--mode` sans valeur reçoit la même indication.
+**Symptôme :** `Unknown option: '--bogus'.` ou `Unknown command 'extra'.` (sans deux-points), suivi de
+`Type 'signalme --help' for usage.`, code de sortie `1`. Un `--mode` sans valeur reçoit la même indication,
+et un argument placé après `--` donne `Unexpected argument: 'extra'.`.
 
 **Cause :** la ligne de commande n'est pas une de celles que SignalMe accepte. La seule option est
-`--mode <MODE>`, avec `-m` pour forme courte ; il n'y a pas d'argument.
+`--mode <MODE>`, avec `-m` pour forme courte ; il n'y a pas d'argument — ni de sous-commande, c'est
+pourquoi un argument en trop est signalé comme une commande inconnue. Ce n'est pas le
+[`Unknown command: 'buzy'.`](#unknown-command) de l'invite, qui a un deux-points, est suivi de
+`Type 'help' to list available commands.` et laisse SignalMe tourner.
 
 **Que faire :** `signalme --help` affiche l'usage. Les commandes auxquelles vous pensez peut-être — `as`,
-`status`, `off` — étaient la ligne de commande de SignalMe 1.x ; en 2.0, statuts et signaux se tapent une
-fois SignalMe lancé, voir [Référence des commandes](commands-FR.md#commandes-interactives).
+`status`, `off` — étaient la ligne de commande de SignalMe 1.x (`signalme as busy` affiche désormais
+`Unknown command 'as'.`) ; en 2.0, statuts et signaux se tapent une fois SignalMe lancé, voir
+[Référence des commandes](commands-FR.md#commandes-interactives).
 
 ## No Luxafor device detected
 

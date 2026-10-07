@@ -58,8 +58,12 @@ public sealed class SystemConsole : IConsole {
             throw;
         }
 
-        // On a completed read the user pressed Enter (or the input ended), which already ended the line.
-        lock (_lock) { _pendingPrompt = null; }
+        // On a line the user pressed Enter, which ended the prompt line. At the end of the input nothing
+        // did (a redirected stdin echoes nothing), so the line is ended here, as on the cancelled path.
+        lock (_lock) {
+            if (line is null && _pendingPrompt is not null) { Console.Out.WriteLine(); }
+            _pendingPrompt = null;
+        }
 
         return line;
     }
