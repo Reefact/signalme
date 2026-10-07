@@ -46,7 +46,8 @@ try {
         'tools/net10.0/any/SignalMe.runtimeconfig.json',
         'tools/net10.0/any/Reefact.LuxaforLightingDeviceController.dll',
         'tools/net10.0/any/HidLibrary.dll',
-        'tools/net10.0/any/Spectre.Console.Cli.dll'
+        'tools/net10.0/any/Spectre.Console.Cli.dll',
+        'tools/net10.0/any/Microsoft.Win32.SystemEvents.dll'
     )
     foreach ($entry in $expected) {
         $path = Join-Path $extracted ($entry -replace '/', [System.IO.Path]::DirectorySeparatorChar)
