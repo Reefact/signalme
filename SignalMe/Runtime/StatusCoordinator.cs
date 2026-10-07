@@ -161,6 +161,13 @@ public sealed class StatusCoordinator : ISignalMeContext, IDisposable {
         try {
             while (true) {
                 Message message = await _channel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                // A read that completed just before the stop came in: handled like a message found in the
+                // drain, so that nothing is started once the runtime asked the loop to stop.
+                if (cancellationToken.IsCancellationRequested) {
+                    if (message is Message.Intent intent) { intent.Completion.TrySetCanceled(cancellationToken); }
+
+                    throw new OperationCanceledException(cancellationToken);
+                }
                 await HandleAsync(message, cancellationToken).ConfigureAwait(false);
             }
         } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {

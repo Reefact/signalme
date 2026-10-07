@@ -422,6 +422,50 @@ public sealed class StatusCoordinatorTests {
         Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
     }
 
+    /// <summary>
+    ///     The read may complete with a message just before the stop comes in, so that the loop looks at it
+    ///     with its token already cancelled. It is then treated like a message found in the drain: cancelled,
+    ///     never applied.
+    /// </summary>
+    /// <remarks>
+    ///     The callback is registered after the loop parked in its read, so on Cancel it runs before the
+    ///     read's own registration: the read completes with the intent while the token is already cancelled,
+    ///     the window a mode sending an intent at the moment of Ctrl+C falls into. Were the callbacks ever
+    ///     run the other way round, the read would be cancelled and the intent drained: cancelled either way.
+    /// </remarks>
+    [Fact]
+    public async Task An_intent_read_just_before_the_stop_is_cancelled_not_applied() {
+        await using Harness signalme = new(UserStatus.Busy);
+        Task<IntentOutcome>? queued = null;
+        using CancellationTokenRegistration registration = signalme.Cancellation.Token.Register(() => queued = signalme.SetAsync(UserStatus.Available));
+
+        Assert.Null(await signalme.StopAsync());
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued!);
+        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Assert.Equal([Busy], signalme.Device.Commands);
+        Assert.DoesNotContain("Status: available", signalme.Console.Output);
+    }
+
+    /// <summary>
+    ///     Same window, with a signal: the animation must not start after the stop, or its "Playing:" line
+    ///     would land between "Stopping SignalMe..." and "SignalMe stopped." and its frames on the LEDs.
+    /// </summary>
+    [Fact]
+    public async Task A_signal_read_just_before_the_stop_is_not_started() {
+        await using Harness signalme = new(UserStatus.Busy);
+        Task<IntentOutcome>? queued = null;
+        using CancellationTokenRegistration registration = signalme.Cancellation.Token.Register(() => queued = signalme.PlayAsync(UserMood.Happy));
+
+        Assert.Null(await signalme.StopAsync());
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued!);
+        Assert.Equal([Busy], signalme.Device.Commands);
+        Assert.DoesNotContain("Playing: happy", signalme.Console.Output);
+        Assert.Equal(0, signalme.Delay.Waits);
+        Assert.Null(signalme.State.PlayingSignal);
+    }
+
     [Fact]
     public async Task An_intent_posted_after_the_loop_stopped_is_refused() {
         await using Harness signalme = new(UserStatus.Busy);

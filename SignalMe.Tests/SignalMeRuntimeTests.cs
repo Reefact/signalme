@@ -1,4 +1,3 @@
-using SignalMe.Infrastructure;
 using SignalMe.Modes;
 using SignalMe.Runtime;
 using SignalMe.Services;

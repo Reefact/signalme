@@ -118,6 +118,11 @@ public sealed class CommandLineTests {
         Assert.Equal(0, signalme.Discovery.Calls);
     }
 
+    /// <summary>
+    ///     A bare argument is a parse error worded by Spectre, which cannot tell it from the name of a
+    ///     sub-command signalme does not have. The docs quote that text, so it is pinned here: a Spectre
+    ///     upgrade that rewords it fails this test rather than silently breaking the docs.
+    /// </summary>
     [Fact]
     public async Task A_stray_argument_is_a_usage_error() {
         using Harness signalme = new(new FakeConsole(), new FakeLuxaforDevice());
@@ -125,8 +130,7 @@ public sealed class CommandLineTests {
         int exitCode = await signalme.RunAsync("extra");
 
         Assert.Equal(ExitCode.UsageError, exitCode);
-        Assert.Equal(2, signalme.Console.Error.Count);
-        Assert.Equal(UsageHint, signalme.Console.Error[^1]);
+        Assert.Equal(["Unknown command 'extra'.", UsageHint], signalme.Console.Error);
         Assert.Equal(0, signalme.Discovery.Calls);
     }
 
@@ -289,7 +293,8 @@ public sealed class CommandLineTests {
         int exitCode = await signalme.RunAsync();
 
         Assert.Equal(ExitCode.Success, exitCode);
-        Assert.Equal(["SignalMe stopped."], signalme.Console.Error);
+        Assert.Equal("SignalMe stopped.", signalme.Console.Output[^1]);
+        Assert.Empty(signalme.Console.Error);
         Assert.DoesNotContain("Mode: manual", signalme.Console.Output);
         Assert.True(first.IsDisposed);
         Assert.True(second.IsDisposed);
