@@ -28,24 +28,82 @@ dotnet test -c Release
 dotnet pack -c Release -o artifacts
 ```
 
+## Comment ça s'assemble
+
+SignalMe 2.0 est un processus résident construit autour d'une règle : **un seul composant écrit sur le
+périphérique.**
+
+- Un **mode** (`Modes/`) est une source d'intentions — définir un statut durable, jouer un signal,
+  éteindre. Le mode manuel les lit dans la console ; un futur mode pourrait les tirer d'un service de
+  présence. Un mode ne connaît ni le périphérique ni les couleurs.
+- Le **moniteur de session** (`Sessions/`) rapporte le verrouillage et le déverrouillage de la session
+  Windows, depuis le thread sur lequel Windows les délivre.
+- Le **coordinateur de statut** (`Runtime/StatusCoordinator.cs`) reçoit les deux par un seul canal et les
+  traite un par un. Il calcule le statut effectif (éteint, puis `away` pendant le verrouillage, puis un
+  signal, puis le statut demandé), écrit sur le périphérique, persiste le statut demandé une fois que le
+  périphérique a obéi, et affiche ce qui a changé. Les animations sont des tâches filles de sa boucle,
+  lancées et attendues par elle, si bien qu'une image ne peut jamais arriver après l'écriture d'un
+  statut.
+- Le **runtime** (`Runtime/SignalMeRuntime.cs`) porte le cycle de vie : il démarre le moniteur, affiche le
+  statut initial avant que le mode ne démarre, fait tourner le coordinateur et le mode côte à côte, et
+  éteint puis libère le périphérique quoi qu'il soit arrivé.
+- La **ligne de commande** (`Commands/`) analyse `--mode`, découvre et sélectionne le périphérique, puis
+  le confie au runtime et traduit son issue en code de sortie.
+
 ## Tests
 
-La suite tourne en moins d'une seconde et ne demande aucun matériel.
+La suite tourne en quelques secondes et ne demande aucun matériel. Tout ce que le vrai programme touche
+est derrière un point d'injection que les tests remplacent :
 
 - **`FakeLuxaforDevice`** implémente `ILuxaforDevice`, l'interface que la librairie de pilotage expose
-  déjà : aucune surcouche n'a été nécessaire pour rendre SignalMe testable. Il enregistre les commandes
-  qu'il accepte et peut se voir demander de les refuser ou de lever une exception, ce qui couvre les
-  chemins d'échec du périphérique.
+  déjà : aucune surcouche n'a été nécessaire. Il enregistre les commandes qu'il accepte et peut se voir
+  demander de les refuser ou de lever une exception, ce qui couvre les chemins d'échec du périphérique ;
+  son `Path` est modifiable, pour que les tests de sélection distinguent deux périphériques.
+- **`IConsole`** / **`FakeConsole`** : chaque interaction avec la console passe par `IConsole`. Le faux
+  répond aux lectures à partir d'un script, puis annonce la fin de l'entrée — ou laisse une lecture en
+  attente jusqu'à l'annulation du jeton, comme un utilisateur qui n'appuie jamais sur Entrée avant
+  Ctrl+C. Il capture la sortie, les invites et les erreurs, et tient une transcription des lectures et
+  des écritures dans l'ordre où elles ont eu lieu : c'est ainsi qu'un test vérifie que le statut initial
+  a été affiché avant la première invite du mode.
+- **`ISessionMonitor`** / **`FakeSessionMonitor`** : le test déclenche un verrouillage ou un
+  déverrouillage à la main, depuis n'importe quel thread, et peut faire en sorte que `Start()` bascule
+  l'état, le déclenche, ou lève une exception — les trois choses que fait le vrai moniteur quand il
+  comble l'écart entre sa construction et son abonnement.
+- **`ILuxaforDeviceDiscovery`** / **`FakeDiscovery`**, qui renvoie une liste de faux ou lève une
+  exception. Les tests de la ligne de commande font tourner la vraie ligne de commande, de `--help` au
+  code de sortie, à travers un sac de faux `SignalMeServices`.
 - **`IDelay`** est le point d'injection par lequel les animations attendent. En production l'attente est
-  réelle ; dans les tests elle est immédiate. C'est ce qui garde la suite rapide, et c'est aussi ce qui
-  rend l'annulation testable — un test annule à une attente choisie.
+  réelle ; `InstantDelay` revient aussitôt, et `ControllableDelay` retient une attente choisie, pour qu'un
+  test obtienne une animation réellement en cours quand un verrouillage, une autre intention ou l'arrêt
+  arrive. C'est ce qui rend les règles d'interruption testables.
+- **`IMoodPattern`** : une animation est une fonction pure du périphérique, du délai et du statut d'où
+  elle part. Elle ne persiste rien et ne rétablit rien, si bien que les règles du coordinateur se testent
+  sans se soucier des images qu'un motif envoie.
 - **`UserCurrentStatus`** prend son répertoire en argument, si bien que les tests utilisent un dossier
   temporaire plutôt que le vrai profil utilisateur.
 
-Les tests vérifient le contrat, pas les images : aucun ne fige une frame d'animation précise.
+Les tests vérifient le contrat, pas les images : aucun ne fige une frame d'animation précise. Les messages
+que SignalMe affiche font partie de ce contrat et sont vérifiés à la lettre.
 
-La parallélisation des tests est désactivée pour une seule raison — plusieurs tests redirigent
-`Console.Error` pour vérifier ce que SignalMe rapporte, ce qui est un état global au processus.
+La parallélisation des tests est désactivée pour une seule raison — quelques tests redirigent la console
+du processus pour vérifier ce que SignalMe rapporte, ce qui est un état global au processus.
+
+### Ce que les tests ne peuvent pas couvrir
+
+`WindowsSessionMonitor` s'abonne aux notifications de changement de session de Windows, qu'aucun test ne
+sait déclencher. Il n'a pas de test unitaire ; le coordinateur et le runtime sont testés contre le faux
+moniteur, il ne reste donc à vérifier à la main que ceci : le vrai délivre bien. Après avoir installé un
+build (ci-dessous), périphérique branché :
+
+1. lancez `signalme`, tapez `busy` : le périphérique est jaune ;
+2. verrouillez la session (Win+L) : le périphérique passe au violet ;
+3. déverrouillez-la : le périphérique est de nouveau jaune, et la console affiche
+   `Windows session locked.` / `Effective status: away`, puis `Windows session unlocked.` /
+   `Effective status: busy` ;
+4. `status` annonce `Session: active`.
+
+À faire une fois par release, et après tout changement du moniteur ou du package
+`Microsoft.Win32.SystemEvents` sur lequel il repose.
 
 ### Les scripts de build
 
@@ -66,7 +124,7 @@ d'exactement 1 Mo, une assembly manquante, une commande renommée — et vérifi
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 1.0.2
+dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0
 ```
 
 Utilisez `--tool-path ./tmp-tool` au lieu de `--global` pour l'essayer sans toucher à vos outils globaux.
@@ -100,20 +158,23 @@ appliqués.
 Les étapes d'empaquetage comptent plus qu'il n'y paraît. `build/Validate-Package.ps1` lit le `.nupkg` et
 vérifie qu'il s'agit bien d'un package d'outil installable — le marqueur `DotnetTool`, le nom de la
 commande, les assemblies attendues, le README, une icône sous la limite de 1 Mo de nuget.org, aucun
-fichier source parasite. `build/Test-ToolInstall.ps1` l'installe ensuite pour de vrai et exécute les
-commandes qui fonctionnent sans périphérique, y compris le chemin « aucun périphérique ». L'étape qui
-les précède fait tourner les tests du validateur : un validateur qui ne refuserait plus rien est repéré
-avant de laisser passer un package cassé.
+fichier source parasite. `build/Test-ToolInstall.ps1` l'installe ensuite pour de vrai et exécute ce qui
+fonctionne sans périphérique : `--help` doit mentionner `--mode`, `--version` doit afficher la version, un
+mode inconnu et une option inconnue doivent être des erreurs d'utilisation (code `1`, le premier citant
+`manual`), et `signalme` sans argument doit sortir en `2` avec un message — l'agent n'a ni périphérique ni
+entrée interactive, et SignalMe doit le dire plutôt que d'attendre une ligne qui ne viendra jamais.
+L'étape qui les précède fait tourner les tests du validateur : un validateur qui ne refuserait plus rien
+est repéré avant de laisser passer un package cassé.
 
 ## Publier une release
 
 Les releases sont publiées par `.github/workflows/release.yml`, déclenché par un tag de version.
 
 ```shell
-# 1. définir <Version> dans SignalMe/SignalMe.csproj, par exemple 1.0.0
+# 1. définir <Version> dans SignalMe/SignalMe.csproj, par exemple 2.0.0
 # 2. mettre à jour CHANGELOG.md, tout merger dans main
-git tag v1.0.0
-git push origin v1.0.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
 
 Le job refuse de publier quand le tag ne correspond pas à la version du projet : un tag mal saisi ne peut

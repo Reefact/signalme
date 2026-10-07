@@ -27,23 +27,77 @@ dotnet test -c Release
 dotnet pack -c Release -o artifacts
 ```
 
+## How it fits together
+
+SignalMe 2.0 is a resident process with one rule at its centre: **one component writes to the device.**
+
+- A **mode** (`Modes/`) is a source of intents — set a durable status, play a signal, turn off. The manual
+  mode reads them from the console; a future mode could get them from a presence service. A mode knows
+  neither the device nor the colours.
+- The **session monitor** (`Sessions/`) reports the lock and unlock of the Windows session, from the
+  thread Windows delivers them on.
+- The **status coordinator** (`Runtime/StatusCoordinator.cs`) takes both through a single channel and
+  handles them one at a time. It computes the effective status (off, then away while locked, then a
+  signal, then the desired status), writes to the device, persists the desired status once the device
+  obeyed, and prints what changed. Animations are child tasks of its loop, started and awaited by it, so
+  a frame can never land after a status write.
+- The **runtime** (`Runtime/SignalMeRuntime.cs`) owns the lifecycle: it starts the monitor, renders the
+  initial status before the mode starts, runs the coordinator and the mode side by side, and turns the
+  device off and disposes it whatever happened.
+- The **command line** (`Commands/`) parses `--mode`, discovers and selects the device, then hands it to
+  the runtime and maps its outcome to an exit code.
+
 ## Tests
 
-The suite runs in under a second and needs no hardware.
+The suite runs in a few seconds and needs no hardware. Everything the real program touches is behind a
+seam the tests replace:
 
 - **`FakeLuxaforDevice`** implements `ILuxaforDevice`, the interface the controller library already
-  exposes, so no wrapper was needed to make SignalMe testable. It records the commands it accepts and can
-  be told to refuse them or to throw, which is how the device-failure paths are covered.
-- **`IDelay`** is the seam the animations wait through. Production waits for real; the tests return
-  immediately. That is what keeps the suite fast, and it is also what makes cancellation testable at all —
-  a test cancels at a chosen wait.
+  exposes, so no wrapper was needed. It records the commands it accepts and can be told to refuse them
+  or to throw, which is how the device-failure paths are covered; its `Path` is settable, so the
+  selection tests can tell two devices apart.
+- **`IConsole`** / **`FakeConsole`**: every console interaction goes through `IConsole`. The fake answers
+  reads from a script, then reports the end of input — or leaves a read pending until the token is
+  cancelled, like a user who never presses Enter before Ctrl+C. It captures the output, the prompts and
+  the errors, and keeps a transcript of reads and writes in the order they happened, which is how a test
+  checks that the initial status was printed before the mode's first prompt.
+- **`ISessionMonitor`** / **`FakeSessionMonitor`**: the test raises a lock or an unlock by hand, from any
+  thread, and can make `Start()` flip the state, raise it, or throw — the three things the real monitor
+  does when it closes the gap between construction and subscription.
+- **`ILuxaforDeviceDiscovery`** / **`FakeDiscovery`**, returning a list of fakes or throwing. The
+  command-line tests run the real command line, `--help` to the exit code, through a `SignalMeServices`
+  bag of fakes.
+- **`IDelay`** is the seam the animations wait through. Production waits for real; `InstantDelay` returns
+  at once, and `ControllableDelay` holds one chosen wait, so a test gets an animation that is genuinely
+  running when a lock, another intent or the shutdown arrives. That is what makes the interruption rules
+  testable at all.
+- **`IMoodPattern`**: an animation is a pure function of the device, the delay and the status it starts
+  from. It persists nothing and restores nothing, so the coordinator's rules can be tested without caring
+  which frames a pattern sends.
 - **`UserCurrentStatus`** takes its directory as an argument, so tests use a temporary folder instead of
   the real user profile.
 
-Tests assert the contract, not the frames: none of them pins a specific animation frame.
+Tests assert the contract, not the frames: none of them pins a specific animation frame. The messages
+SignalMe prints are part of that contract and are asserted exactly.
 
-Test parallelisation is disabled for one reason — several tests redirect `Console.Error` to assert on what
-SignalMe reports, which is process-wide state.
+Test parallelisation is disabled for one reason — a few tests redirect the process console to assert on
+what SignalMe reports, which is process-wide state.
+
+### What the tests cannot cover
+
+`WindowsSessionMonitor` subscribes to the session switch notifications of Windows, which no test can
+raise. It has no unit test; the coordinator and the runtime are tested against the fake monitor, so what
+is left to check by hand is only that the real one delivers. After installing a build (below), with a
+device plugged in:
+
+1. run `signalme`, type `busy`: the device is yellow;
+2. lock the session (Win+L): the device turns purple;
+3. unlock it: the device is yellow again, and the console shows `Windows session locked.` /
+   `Effective status: away`, then `Windows session unlocked.` / `Effective status: busy`;
+4. `status` reports `Session: active`.
+
+Worth doing once per release, and after any change to the monitor or to the `Microsoft.Win32.SystemEvents`
+package it relies on.
 
 ### The build scripts
 
@@ -64,7 +118,7 @@ command renamed — and checks the validator rejects it.
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 1.0.2
+dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0
 ```
 
 Use `--tool-path ./tmp-tool` instead of `--global` to try it without touching your global tools.
@@ -97,19 +151,22 @@ enforced.
 The packaging steps matter more than they look. `build/Validate-Package.ps1` reads the `.nupkg` and checks
 it really is an installable tool package — the `DotnetTool` marker, the command name, the expected
 assemblies, the README, an icon within nuget.org's 1 MB limit, no stray source files.
-`build/Test-ToolInstall.ps1` then installs it for real and runs the commands that work without a device,
-including the no-device path. The step before them runs the validator's own tests, so a validator that
-stopped rejecting anything is caught before it waves a broken package through.
+`build/Test-ToolInstall.ps1` then installs it for real and runs what works without a device: `--help`
+must mention `--mode`, `--version` must print the version, an unknown mode and an unknown option must be
+usage errors (exit `1`, the first one naming `manual`), and `signalme` with no arguments must exit `2`
+with a message — the agent has no device and no interactive input, and SignalMe must say so rather than
+wait for a line that will never come. The step before them runs the validator's own tests, so a validator
+that stopped rejecting anything is caught before it waves a broken package through.
 
 ## Releasing SignalMe
 
 Releases are published by `.github/workflows/release.yml`, triggered by a version tag.
 
 ```shell
-# 1. set <Version> in SignalMe/SignalMe.csproj, e.g. 1.0.0
+# 1. set <Version> in SignalMe/SignalMe.csproj, e.g. 2.0.0
 # 2. update CHANGELOG.md, merge everything into main
-git tag v1.0.0
-git push origin v1.0.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
 
 The job refuses to publish when the tag does not match the project version, so a mistyped tag cannot

@@ -1,13 +1,14 @@
 <#
 .SYNOPSIS
-    Installs the packaged tool and runs the commands that work without a Luxafor device.
+    Installs the packaged tool and runs the command lines that work without a Luxafor device.
 
 .DESCRIPTION
     Reading the archive proves the files are there; this proves the thing actually runs. Installed to a
     throwaway tool path so the agent's global tools are left alone.
 
-    No Luxafor device is ever needed. The device commands are expected to fail here with the documented
-    device error code, which is exactly what a user without a device plugged in should see.
+    No Luxafor device is ever needed. The agent has no device and no interactive input either, so
+    launching signalme for real must stop at the device discovery with the documented device error, and
+    never reach the prompt: a read of the console input here would wait for a line that never comes.
 #>
 [CmdletBinding()]
 param(
@@ -41,24 +42,27 @@ try {
         return $output
     }
 
+    # The help and the version are rendered by the command-line library itself; the unit tests only see
+    # their exit codes, because that library prints nothing when the output is redirected on Linux. This
+    # Windows agent is where their text is checked.
     $help = Invoke-SignalMe -Arguments @('--help') -ExpectedExitCode 0 -What 'help'
-    foreach ($command in @('as', 'off', 'status')) {
-        if ($help -notmatch $command) { throw "The help does not mention the '$command' command.`n$help" }
-    }
+    if ($help -notmatch '--mode') { throw "The help does not mention the '--mode' option.`n$help" }
 
-    $usage = Invoke-SignalMe -Arguments @('as', 'not-a-real-status') -ExpectedExitCode 1 -What 'usage error'
-    foreach ($value in @('available', 'dnd', 'happy', 'ready')) {
-        if ($usage -notmatch $value) { throw "The usage error does not list '$value'.`n$usage" }
-    }
+    $printedVersion = Invoke-SignalMe -Arguments @('--version') -ExpectedExitCode 0 -What 'version'
+    if ($printedVersion -notmatch [regex]::Escape($version)) { throw "'--version' does not print the version '$version'.`n$printedVersion" }
 
-    # Reads the local status file only, so it works with no device attached.
-    Invoke-SignalMe -Arguments @('status') -ExpectedExitCode 0 -What 'status' | Out-Null
+    # Usage errors are reported before any device is looked for, so they behave the same with or without one.
+    $unknownMode = Invoke-SignalMe -Arguments @('--mode', 'not-a-real-mode') -ExpectedExitCode 1 -What 'unknown mode'
+    if ($unknownMode -notmatch 'manual') { throw "The unknown-mode error does not list the 'manual' mode.`n$unknownMode" }
 
-    # No device on a CI agent: this is the documented device error, reported rather than swallowed.
-    $noDevice = Invoke-SignalMe -Arguments @('off') -ExpectedExitCode 2 -What 'no device attached'
+    Invoke-SignalMe -Arguments @('--bogus') -ExpectedExitCode 1 -What 'unknown option' | Out-Null
+
+    # No device on a CI agent: this is the documented device error, reported rather than swallowed, and
+    # reached before signalme ever reads its input.
+    $noDevice = Invoke-SignalMe -Arguments @() -ExpectedExitCode 2 -What 'no device attached'
     if ([string]::IsNullOrWhiteSpace($noDevice)) { throw 'signalme exited with a device error but said nothing.' }
 
-    Write-Host 'The installed tool runs: help, usage error, status and the no-device path all behave as documented.'
+    Write-Host 'The installed tool runs: help, version, usage errors and the no-device path all behave as documented.'
 } finally {
     dotnet tool uninstall SignalMe --tool-path $toolPath 2>&1 | Out-Null
     Remove-Item $toolPath -Recurse -Force -ErrorAction SilentlyContinue
