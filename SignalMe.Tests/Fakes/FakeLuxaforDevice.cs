@@ -32,7 +32,9 @@ public sealed class FakeLuxaforDevice : ILuxaforDevice {
     public string? LastCommand => Commands.Count == 0 ? null : Commands[^1];
 
     public string Description => "fake Luxafor device";
-    public string Path        => @"\\?\fake";
+
+    /// <summary>Settable, so that a selection test can tell several devices apart by their id.</summary>
+    public string Path { get; set; } = @"\\?\fake";
 
     public bool SetColor(BrightColor color)                              => Accept($"SetColor({color})");
     public bool SetColor(TargetedLeds targetedLeds, BrightColor color)   => Accept($"SetColor({targetedLeds}, {color})");

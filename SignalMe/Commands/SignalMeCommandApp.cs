@@ -27,45 +27,30 @@ public static class SignalMeCommandApp {
         app.Configure(config => {
             config.SetApplicationName("signalme");
 
-            // Show every example on the root help page rather than the first few.
-            config.Settings.MaximumIndirectExamples = 16;
-
             // Without a handler, Spectre swallows an unhandled exception whole: no message on any stream,
             // and a -1 exit code. Anything reaching this point is reported before signalme gives up.
             config.SetExceptionHandler((exception, _) => {
                 switch (exception) {
-                    case OperationCanceledException:
-                        Console.Error.WriteLine("Interrupted. The previous status was restored.");
-
-                        return ExitCode.Cancelled;
-                    case DeviceCommandFailedException:
+                    case CommandParseException:
+                    case CommandRuntimeException:
                         Console.Error.WriteLine(exception.Message);
+                        Console.Error.WriteLine("Type 'signalme --help' for usage.");
+
+                        return ExitCode.UsageError;
+                    case OperationCanceledException:
+                        Console.Error.WriteLine("SignalMe stopped.");
+
+                        return ExitCode.Success;
+                    case DeviceCommandFailedException:
+                        Console.Error.WriteLine(ErrorReporting.Describe(exception));
 
                         return ExitCode.DeviceError;
                     default:
-                        Console.Error.WriteLine($"signalme: {exception.GetType().Name}: {exception.Message}");
+                        Console.Error.WriteLine(ErrorReporting.Describe(exception));
 
                         return ExitCode.UnexpectedError;
                 }
             });
-
-            config.AddCommand<AsCommand>("as")
-                  .WithDescription("Set a durable status, or play a temporary light signal.")
-                  .WithExample("as", "available")
-                  .WithExample("as", "busy")
-                  .WithExample("as", "dnd")
-                  .WithExample("as", "away")
-                  .WithExample("as", "happy")
-                  .WithExample("as", "ready");
-
-            config.AddCommand<OffCommand>("off")
-                  .WithAlias("switch-off")
-                  .WithDescription("Turn every LED off and forget the durable status.")
-                  .WithExample("off");
-
-            config.AddCommand<StatusCommand>("status")
-                  .WithDescription("Print the durable status signalme last set.")
-                  .WithExample("status");
         });
 
         return app;

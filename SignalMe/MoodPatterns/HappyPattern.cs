@@ -17,7 +17,7 @@ namespace SignalMe.MoodPatterns;
 /// <summary>
 ///     Fades to a pastel version of the durable status color, runs a pastel rainbow wave, then fades back.
 /// </summary>
-public sealed class HappyPattern {
+public sealed class HappyPattern : IMoodPattern {
 
     private const int LedCount        = 6;
     private const int WaveSteps       = 30;
@@ -26,35 +26,33 @@ public sealed class HappyPattern {
 
     #region Fields declarations
 
-    private readonly ILuxaforDevice       _luxaforDevice;
-    private readonly UserStatusController _userStatusController;
-    private readonly IDelay               _delay;
+    private readonly ILuxaforDevice _luxaforDevice;
+    private readonly IDelay         _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public HappyPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
+    public HappyPattern(ILuxaforDevice luxaforDevice, IDelay delay) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
+        ArgumentNullException.ThrowIfNull(delay);
 
-        _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
-        _delay                = delay ?? RealDelay.Instance;
+        _luxaforDevice = luxaforDevice;
+        _delay         = delay;
     }
 
     #endregion
 
-    public Task PlayAsync(CancellationToken cancellationToken) {
-        UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
+    /// <inheritdoc />
+    public async Task<UserStatus?> PlayAsync(UserStatus? baseStatus, CancellationToken cancellationToken) {
+        BrightColor userStatusColor = StatusColors.For(baseStatus);
+        BrightColor pastelColor     = userStatusColor.GetPastel();
 
-        return _userStatusController.PlayAndRestoreAsync(currentUserStatus, async () => {
-            BrightColor userStatusColor = UserStatusController.GetUserStatusColor(currentUserStatus);
-            BrightColor pastelColor     = userStatusColor.GetPastel();
+        await FadeAsync(userStatusColor, pastelColor, cancellationToken).ConfigureAwait(false);
+        await PlayRainbowWaveAsync(cancellationToken).ConfigureAwait(false);
+        await FadeAsync(pastelColor, userStatusColor, cancellationToken).ConfigureAwait(false);
 
-            await FadeAsync(userStatusColor, pastelColor, cancellationToken).ConfigureAwait(false);
-            await PlayRainbowWaveAsync(cancellationToken).ConfigureAwait(false);
-            await FadeAsync(pastelColor, userStatusColor, cancellationToken).ConfigureAwait(false);
-        });
+        return baseStatus;
     }
 
     private async Task PlayRainbowWaveAsync(CancellationToken cancellationToken) {

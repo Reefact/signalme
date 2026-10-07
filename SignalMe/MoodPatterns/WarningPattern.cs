@@ -14,10 +14,9 @@ using SignalMe.Services;
 namespace SignalMe.MoodPatterns;
 
 /// <summary>
-///     Alternates red and blue between the front and back LEDs, like an emergency light, then goes back to
-///     the durable status.
+///     Alternates red and blue between the front and back LEDs, like an emergency light.
 /// </summary>
-public sealed class WarningPattern {
+public sealed class WarningPattern : IMoodPattern {
 
     private const int RepeatCount = 5;
     /// <summary>How long one side holds its color, split across the three back LEDs.</summary>
@@ -27,42 +26,40 @@ public sealed class WarningPattern {
 
     #region Fields declarations
 
-    private readonly ILuxaforDevice       _luxaforDevice;
-    private readonly UserStatusController _userStatusController;
-    private readonly IDelay               _delay;
+    private readonly ILuxaforDevice _luxaforDevice;
+    private readonly IDelay         _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public WarningPattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
+    public WarningPattern(ILuxaforDevice luxaforDevice, IDelay delay) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
+        ArgumentNullException.ThrowIfNull(delay);
 
-        _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
-        _delay                = delay ?? RealDelay.Instance;
+        _luxaforDevice = luxaforDevice;
+        _delay         = delay;
     }
 
     #endregion
 
-    public Task PlayAsync(CancellationToken cancellationToken) {
-        UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
+    /// <inheritdoc />
+    public async Task<UserStatus?> PlayAsync(UserStatus? baseStatus, CancellationToken cancellationToken) {
+        for (int i = 0; i < RepeatCount; i++) {
+            // Blue at the front while red sweeps the back...
+            SetFrontLeds(BrightColor.Blue);
+            await SweepBackLedsAsync(BrightColor.Red, cancellationToken).ConfigureAwait(false);
+            TurnAllLedsOff();
+            await _delay.WaitAsync(OffDurationMs, cancellationToken).ConfigureAwait(false);
 
-        return _userStatusController.PlayAndRestoreAsync(currentUserStatus, async () => {
-            for (int i = 0; i < RepeatCount; i++) {
-                // Blue at the front while red sweeps the back...
-                SetFrontLeds(BrightColor.Blue);
-                await SweepBackLedsAsync(BrightColor.Red, cancellationToken).ConfigureAwait(false);
-                TurnAllLedsOff();
-                await _delay.WaitAsync(OffDurationMs, cancellationToken).ConfigureAwait(false);
+            // ... then the other way round.
+            SetFrontLeds(BrightColor.Red);
+            await SweepBackLedsAsync(BrightColor.Blue, cancellationToken).ConfigureAwait(false);
+            TurnAllLedsOff();
+            await _delay.WaitAsync(OffDurationMs, cancellationToken).ConfigureAwait(false);
+        }
 
-                // ... then the other way round.
-                SetFrontLeds(BrightColor.Red);
-                await SweepBackLedsAsync(BrightColor.Blue, cancellationToken).ConfigureAwait(false);
-                TurnAllLedsOff();
-                await _delay.WaitAsync(OffDurationMs, cancellationToken).ConfigureAwait(false);
-            }
-        });
+        return baseStatus;
     }
 
     /// <summary>Lights LEDs 1 to 3, the front of the device, in a single color.</summary>

@@ -14,9 +14,9 @@ using SignalMe.Services;
 namespace SignalMe.MoodPatterns;
 
 /// <summary>
-///     Blinks S-O-S in white, then goes back to the durable status.
+///     Blinks S-O-S in white.
 /// </summary>
-public sealed class DesperatePattern {
+public sealed class DesperatePattern : IMoodPattern {
 
     private const int ShortBlinkMs = 100;
     private const int LongBlinkMs  = 500;
@@ -24,40 +24,38 @@ public sealed class DesperatePattern {
 
     #region Fields declarations
 
-    private readonly ILuxaforDevice       _luxaforDevice;
-    private readonly UserStatusController _userStatusController;
-    private readonly IDelay               _delay;
+    private readonly ILuxaforDevice _luxaforDevice;
+    private readonly IDelay         _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public DesperatePattern(ILuxaforDevice luxaforDevice, UserCurrentStatus? userCurrentStatus = null, IDelay? delay = null) {
+    public DesperatePattern(ILuxaforDevice luxaforDevice, IDelay delay) {
         ArgumentNullException.ThrowIfNull(luxaforDevice);
+        ArgumentNullException.ThrowIfNull(delay);
 
-        _luxaforDevice        = luxaforDevice;
-        _userStatusController = new UserStatusController(luxaforDevice, userCurrentStatus);
-        _delay                = delay ?? RealDelay.Instance;
+        _luxaforDevice = luxaforDevice;
+        _delay         = delay;
     }
 
     #endregion
 
-    public Task PlayAsync(CancellationToken cancellationToken) {
-        UserStatus? currentUserStatus = _userStatusController.GetUserCurrentStatus();
+    /// <inheritdoc />
+    public async Task<UserStatus?> PlayAsync(UserStatus? baseStatus, CancellationToken cancellationToken) {
+        await _delay.WaitAsync(1000, cancellationToken).ConfigureAwait(false);
+        _luxaforDevice.TurnOffOrThrow();
+        await _delay.WaitAsync(GapMs, cancellationToken).ConfigureAwait(false);
 
-        return _userStatusController.PlayAndRestoreAsync(currentUserStatus, async () => {
-            await _delay.WaitAsync(1000, cancellationToken).ConfigureAwait(false);
-            _luxaforDevice.TurnOffOrThrow();
-            await _delay.WaitAsync(GapMs, cancellationToken).ConfigureAwait(false);
+        await BlinkAsync(3, ShortBlinkMs, cancellationToken).ConfigureAwait(false); // S
+        await _delay.WaitAsync(GapMs, cancellationToken).ConfigureAwait(false);
+        await BlinkAsync(3, LongBlinkMs, cancellationToken).ConfigureAwait(false); // O
+        await _delay.WaitAsync(GapMs, cancellationToken).ConfigureAwait(false);
+        await BlinkAsync(3, ShortBlinkMs, cancellationToken).ConfigureAwait(false); // S
 
-            await BlinkAsync(3, ShortBlinkMs, cancellationToken).ConfigureAwait(false); // S
-            await _delay.WaitAsync(GapMs, cancellationToken).ConfigureAwait(false);
-            await BlinkAsync(3, LongBlinkMs, cancellationToken).ConfigureAwait(false); // O
-            await _delay.WaitAsync(GapMs, cancellationToken).ConfigureAwait(false);
-            await BlinkAsync(3, ShortBlinkMs, cancellationToken).ConfigureAwait(false); // S
+        await _delay.WaitAsync(1000, cancellationToken).ConfigureAwait(false);
 
-            await _delay.WaitAsync(1000, cancellationToken).ConfigureAwait(false);
-        });
+        return baseStatus;
     }
 
     private async Task BlinkAsync(int count, int onDurationMs, CancellationToken cancellationToken) {
