@@ -118,7 +118,7 @@ command renamed — and checks the validator rejects it.
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0
+dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.1
 ```
 
 Use `--tool-path ./tmp-tool` instead of `--global` to try it without touching your global tools.

@@ -12,10 +12,18 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
-La prochaine version est une nouvelle version majeure. SignalMe cesse d'être une commande « one shot »
+## [2.0.0-preview.1] - 2026-10-08
+
+Première préversion d'une nouvelle version majeure. SignalMe cesse d'être une commande « one shot »
 pour devenir un processus résident : il tourne dans votre terminal, vous tapez statuts et signaux à son
 invite, et il passe de lui-même le périphérique en `away` pendant que votre session Windows est
 verrouillée. La ligne de commande de la 1.x n'existe plus, et c'est à cela que sert la version majeure.
+
+Une préversion plutôt qu'une 2.0.0, parce que le comportement est complet et testé, mais sans matériel :
+la suite pilote un faux périphérique et une fausse session. Cette version existe pour être essayée sur de
+vrais Luxafor et de vrais écrans de verrouillage avant que la version ne soit rendue définitive. Elle est
+publiée comme préversion : `dotnet tool install --global SignalMe` continue d'installer la 1.x tant que
+`--prerelease` n'est pas ajouté.
 
 ### Ajouté
 
@@ -160,7 +168,8 @@ l'outil a cessé d'évoluer.
 - Seul le Luxafor Orb a été testé. Voir [Matériel et plateformes](docs/hardware-FR.md) pour ce qui devrait
   fonctionner et ce qui n'est pas supporté.
 
-[Non publié]: https://github.com/Reefact/signalme/compare/v1.0.2...HEAD
+[Non publié]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...HEAD
+[2.0.0-preview.1]: https://github.com/Reefact/signalme/compare/v1.0.2...v2.0.0-preview.1
 [1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Reefact/signalme/releases/tag/v1.0.0

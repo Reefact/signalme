@@ -124,7 +124,7 @@ d'exactement 1 Mo, une assembly manquante, une commande renommée — et vérifi
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0
+dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.1
 ```
 
 Utilisez `--tool-path ./tmp-tool` au lieu de `--global` pour l'essayer sans toucher à vos outils globaux.
