@@ -119,15 +119,16 @@ jobs:
         run: |
           $tag    = '${{ github.ref_name }}'
           $assets = (Get-ChildItem artifacts -File | ForEach-Object { $_.FullName })
+          # A tag carrying a pre-release suffix (v2.0.0-preview.1) is published as a GitHub pre-release, so
+          # GitHub keeps pointing "latest" at the last stable version, as nuget.org does. The state follows
+          # the tag on both paths: a release created by hand before the tag was pushed is corrected too.
+          $prerelease = if ($tag -match '-') { '--prerelease' } else { '--prerelease=false' }
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Release $tag already exists, uploading the packages to it."
+            gh release edit $tag $prerelease
             gh release upload $tag $assets --clobber
           } else {
             Write-Host "Creating release $tag."
-            # A tag carrying a pre-release suffix (v2.0.0-preview.1) is published as a GitHub pre-release,
-            # so GitHub keeps pointing "latest" at the last stable version, as nuget.org does.
-            $options = @()
-            if ($tag -match '-') { $options += '--prerelease' }
-            gh release create $tag $assets --title $tag --generate-notes @options
+            gh release create $tag $assets --title $tag --generate-notes $prerelease
           }

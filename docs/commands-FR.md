@@ -69,7 +69,7 @@ pas le `Unknown command: '…'.` de l'invite, qui concerne une ligne tapée une 
 
 ```text
 $ signalme
-SignalMe 2.0.0
+SignalMe 2.0.0-preview.1
 Luxafor device detected.
 Mode: manual
 Status: busy
@@ -307,7 +307,7 @@ signalme || echo "SignalMe ne s'est pas arrêté proprement"
 
 ```text
 $ signalme
-SignalMe 2.0.0
+SignalMe 2.0.0-preview.1
 Luxafor device detected.
 Mode: manual
 Status: busy
