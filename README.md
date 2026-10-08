@@ -60,11 +60,13 @@ SignalMe targets .NET 10 and runs on Windows. Installing it as a global .NET too
 not with the runtime alone.
 
 ```shell
-dotnet tool install --global SignalMe
+dotnet tool install --global SignalMe --prerelease
 ```
 
-Then use `signalme` from any shell. `dotnet tool update --global SignalMe` to update,
-`dotnet tool uninstall --global SignalMe` to remove.
+SignalMe 2.0 is in preview: without `--prerelease`, `dotnet tool install` picks the latest stable version,
+which is still the 1.x command-line tool. Then use `signalme` from any shell.
+`dotnet tool update --global SignalMe --prerelease` to update, `dotnet tool uninstall --global SignalMe`
+to remove.
 
 ## Quick start
 
