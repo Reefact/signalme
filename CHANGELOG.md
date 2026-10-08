@@ -9,10 +9,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
-The next release is a new major version. SignalMe stops being a one-shot command and becomes a resident
+## [2.0.0-preview.1] - 2026-10-08
+
+The first preview of a new major version. SignalMe stops being a one-shot command and becomes a resident
 process: it runs in your terminal, you type statuses and signals at its prompt, and it switches the device
 to `away` by itself while your Windows session is locked. The command line of 1.x no longer exists, which
 is what the major version is for.
+
+A preview rather than 2.0.0 because the behaviour is complete and tested, but without hardware: the suite
+drives a fake device and a fake session. This release exists to be run against real Luxafor devices and
+real lock screens before the version is made final. It is published as a pre-release, so
+`dotnet tool install --global SignalMe` keeps installing 1.x unless `--prerelease` is added.
 
 ### Added
 
@@ -143,7 +150,8 @@ new major version. It is not a claim that the tool has stopped evolving.
   [Hardware and platform support](docs/hardware.md) for what is expected to work and what is not
   supported.
 
-[Unreleased]: https://github.com/Reefact/signalme/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...HEAD
+[2.0.0-preview.1]: https://github.com/Reefact/signalme/compare/v1.0.2...v2.0.0-preview.1
 [1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Reefact/signalme/releases/tag/v1.0.0

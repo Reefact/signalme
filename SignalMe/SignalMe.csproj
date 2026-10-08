@@ -13,7 +13,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>signalme</ToolCommandName>
     <PackageId>SignalMe</PackageId>
-    <Version>2.0.0</Version>
+    <Version>2.0.0-preview.1</Version>
     <!-- The banner and -&#45;version print the informational version. Without this, SourceLink appends the
          commit ("2.0.0+<sha>"), which is more than the user needs and not what the docs show. -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
