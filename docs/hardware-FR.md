@@ -34,7 +34,7 @@ Avec un seul périphérique branché, il est utilisé sans question. Avec plusie
 
 ```text
 $ signalme
-SignalMe 2.0.0
+SignalMe 2.0.0-preview.1
 
 2 Luxafor devices detected.
 
