@@ -12,6 +12,13 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
+## [2.0.0-preview.2] - 2026-10-09
+
+Deuxième préversion de la 2.0. SignalMe remarque désormais de lui-même un périphérique débranché, en deux
+secondes au plus, au lieu de le découvrir à l'écriture suivante. Comme la première préversion, elle est
+publiée comme préversion : `dotnet tool install --global SignalMe --prerelease` l'installe, et
+`dotnet tool update --global SignalMe --prerelease` met à jour une préversion déjà installée.
+
 ### Ajouté
 
 - **Un périphérique débranché est remarqué tout de suite.** SignalMe vérifie toutes les deux secondes que
@@ -27,6 +34,8 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - **Reposé sur Reefact.LuxaforLightingDeviceController 2.1.0**, dont `ILuxaforDevice.IsConnected` est ce
   que la vérification ci-dessus interroge : le chemin du périphérique figure-t-il encore parmi les
   périphériques HID présents, sans rien ouvrir ni écrire.
+- La suite de tests fait ses assertions avec NFluent, comme celle de la librairie Luxafor, au lieu de
+  l'`Assert` de xUnit.
 
 ## [2.0.0-preview.1] - 2026-10-08
 
@@ -184,7 +193,8 @@ l'outil a cessé d'évoluer.
 - Seul le Luxafor Orb a été testé. Voir [Matériel et plateformes](docs/hardware-FR.md) pour ce qui devrait
   fonctionner et ce qui n'est pas supporté.
 
-[Non publié]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...HEAD
+[Non publié]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.2...HEAD
+[2.0.0-preview.2]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...v2.0.0-preview.2
 [2.0.0-preview.1]: https://github.com/Reefact/signalme/compare/v1.0.2...v2.0.0-preview.1
 [1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1

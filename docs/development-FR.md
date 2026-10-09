@@ -116,6 +116,18 @@ build (ci-dessous), périphérique branché :
 À faire une fois par release, et après tout changement du moniteur ou du package
 `Microsoft.Win32.SystemEvents` sur lequel il repose.
 
+`LuxaforDeviceConnectionMonitor` est dans la même situation : il est testé sur une vérification que le
+test contrôle, et seul un vrai périphérique dit si `ILuxaforDevice.IsConnected` suit un vrai
+débranchement. Périphérique branché :
+
+1. lancez `signalme`, tapez `busy` : le périphérique est jaune ;
+2. débranchez le périphérique : en deux secondes au plus, sans rien taper, la console affiche
+   `Luxafor device disconnected.`, puis `Stopping SignalMe...` et `SignalMe stopped.`, sans erreur
+   d'extinction ;
+3. le code de sortie est `2` (`echo $LASTEXITCODE` dans PowerShell).
+
+Une fois par release également, et après tout changement du moniteur ou de la librairie Luxafor.
+
 ### Les scripts de build
 
 `build/Validate-Package.ps1` garde une porte à sens unique — une version publiée sur nuget.org est
@@ -135,7 +147,7 @@ d'exactement 1 Mo, une assembly manquante, une commande renommée — et vérifi
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.1
+dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.2
 ```
 
 Utilisez `--tool-path ./tmp-tool` au lieu de `--global` pour l'essayer sans toucher à vos outils globaux.

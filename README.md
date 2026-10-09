@@ -17,7 +17,7 @@ recording of a device.</sub>
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.1
+SignalMe 2.0.0-preview.2
 Luxafor device detected.
 Mode: manual
 Status: off

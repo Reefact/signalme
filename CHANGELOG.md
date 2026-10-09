@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [2.0.0-preview.2] - 2026-10-09
+
+The second preview of 2.0. SignalMe now notices an unplugged device on its own, within two seconds,
+instead of finding out at the next write. Like the first preview, it is published as a pre-release:
+`dotnet tool install --global SignalMe --prerelease` installs it, and
+`dotnet tool update --global SignalMe --prerelease` updates a preview already installed.
+
 ### Added
 
 - **An unplugged device is noticed at once.** SignalMe checks every two seconds that the device it drives
@@ -22,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - **Built on Reefact.LuxaforLightingDeviceController 2.1.0**, whose `ILuxaforDevice.IsConnected` is what
   the check above asks: whether the device path is still among the HID devices present, without opening
   or writing anything.
+- The test suite asserts with NFluent, like the Luxafor library's, instead of xUnit's `Assert`.
 
 ## [2.0.0-preview.1] - 2026-10-08
 
@@ -164,7 +172,8 @@ new major version. It is not a claim that the tool has stopped evolving.
   [Hardware and platform support](docs/hardware.md) for what is expected to work and what is not
   supported.
 
-[Unreleased]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...HEAD
+[Unreleased]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.2...HEAD
+[2.0.0-preview.2]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...v2.0.0-preview.2
 [2.0.0-preview.1]: https://github.com/Reefact/signalme/compare/v1.0.2...v2.0.0-preview.1
 [1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Reefact/signalme/compare/v1.0.0...v1.0.1

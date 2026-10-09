@@ -34,7 +34,7 @@ it is used without a question. With several, SignalMe asks which one:
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.1
+SignalMe 2.0.0-preview.2
 
 2 Luxafor devices detected.
 
