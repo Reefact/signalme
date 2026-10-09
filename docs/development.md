@@ -109,6 +109,18 @@ device plugged in:
 Worth doing once per release, and after any change to the monitor or to the `Microsoft.Win32.SystemEvents`
 package it relies on.
 
+`LuxaforDeviceConnectionMonitor` is in the same position: it is tested over a check the test controls,
+and only a real device tells whether `ILuxaforDevice.IsConnected` follows a real unplug. With a device
+plugged in:
+
+1. run `signalme`, type `busy`: the device is yellow;
+2. unplug the device: within two seconds, and without typing anything, the console shows
+   `Luxafor device disconnected.`, then `Stopping SignalMe...` and `SignalMe stopped.`, and no turn-off
+   error;
+3. the exit code is `2` (`echo $LASTEXITCODE` in PowerShell).
+
+Once per release as well, and after any change to the monitor or to the Luxafor library.
+
 ### The build scripts
 
 `build/Validate-Package.ps1` guards a one-way door — a version published to nuget.org is immutable — so it
@@ -128,7 +140,7 @@ command renamed — and checks the validator rejects it.
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.1
+dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.2
 ```
 
 Use `--tool-path ./tmp-tool` instead of `--global` to try it without touching your global tools.

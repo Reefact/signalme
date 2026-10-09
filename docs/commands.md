@@ -68,7 +68,7 @@ SignalMe has no sub-commands: `Unknown command` on the command line means an arg
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.1
+SignalMe 2.0.0-preview.2
 Luxafor device detected.
 Mode: manual
 Status: busy
@@ -305,7 +305,7 @@ signalme || echo "SignalMe did not stop cleanly"
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.1
+SignalMe 2.0.0-preview.2
 Luxafor device detected.
 Mode: manual
 Status: busy
