@@ -116,6 +116,7 @@ public sealed class SignalMeRuntimeTests {
         Assert.Equal(["TurnOff"], signalme.Device.Commands);
         Assert.True(signalme.Device.IsDisposed);
         Assert.True(signalme.Monitor.IsDisposed);
+        Assert.True(signalme.DeviceMonitor.IsDisposed);
     }
 
     #endregion
@@ -139,6 +140,9 @@ public sealed class SignalMeRuntimeTests {
         Assert.True(signalme.Device.IsDisposed);
         Assert.True(signalme.Monitor.Started);
         Assert.True(signalme.Monitor.IsDisposed);
+        Assert.True(signalme.DeviceMonitor.Started);
+        Assert.True(signalme.DeviceMonitor.IsDisposed);
+        Assert.False(signalme.DeviceMonitor.IsSubscribed);
         Assert.Empty(signalme.Console.Error);
     }
 
@@ -209,6 +213,26 @@ public sealed class SignalMeRuntimeTests {
     }
 
     [Fact]
+    public async Task A_device_found_unplugged_ends_the_run_as_a_device_failure_without_writing_to_it() {
+        using Fixture signalme = new(UserStatus.Busy);
+        FakeMode mode = new((_, cancellationToken) => {
+            signalme.DeviceMonitor.Disconnect();
+
+            return Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        });
+
+        RuntimeOutcome outcome = await signalme.RunAsync(mode);
+
+        Assert.Equal(RuntimeOutcome.DeviceFailed, outcome);
+        Assert.Equal(["line: Status: busy", "error: Luxafor device disconnected.", "line: Stopping SignalMe...", "line: SignalMe stopped."], signalme.Console.Transcript);
+        // No final turn-off: it could only fail on a device that is gone, and add a second error.
+        Assert.Equal(["SetColor(#FFFF00)"], signalme.Device.Commands);
+        Assert.True(signalme.Device.IsDisposed);
+        Assert.True(signalme.DeviceMonitor.IsDisposed);
+        Assert.False(signalme.DeviceMonitor.IsSubscribed);
+    }
+
+    [Fact]
     public async Task A_mode_that_fails_ends_the_run_as_faulted_and_reports_it() {
         using Fixture signalme = new(UserStatus.Busy);
 
@@ -261,15 +285,16 @@ public sealed class SignalMeRuntimeTests {
             Monitor = new FakeSessionMonitor(session);
         }
 
-        public FakeLuxaforDevice       Device       { get; } = new();
-        public TemporaryStatusStore    Statuses     { get; } = new();
-        public FakeConsole             Console      { get; } = new();
-        public InstantDelay            Delay        { get; } = new();
-        public FakeSessionMonitor      Monitor      { get; }
-        public CancellationTokenSource Cancellation { get; } = new();
+        public FakeLuxaforDevice           Device        { get; } = new();
+        public TemporaryStatusStore        Statuses      { get; } = new();
+        public FakeConsole                 Console       { get; } = new();
+        public InstantDelay                Delay         { get; } = new();
+        public FakeSessionMonitor          Monitor       { get; }
+        public FakeDeviceConnectionMonitor DeviceMonitor { get; } = new();
+        public CancellationTokenSource     Cancellation  { get; } = new();
 
         public Task<RuntimeOutcome> RunAsync(ISignalMeMode mode) {
-            return new SignalMeRuntime("manual", mode, Device, Monitor, Statuses.Store, Console, Delay).RunAsync(Cancellation.Token);
+            return new SignalMeRuntime("manual", mode, Device, DeviceMonitor, Monitor, Statuses.Store, Console, Delay).RunAsync(Cancellation.Token);
         }
 
         public void Dispose() {

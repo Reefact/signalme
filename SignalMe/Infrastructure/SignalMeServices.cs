@@ -2,6 +2,8 @@
 
 using System;
 
+using Reefact.LuxaforLightingDeviceController;
+
 using SignalMe.Devices;
 using SignalMe.Sessions;
 
@@ -34,10 +36,11 @@ public sealed class SignalMeServices {
 
     #endregion
 
-    public IConsole                Console               { get; init; } = SystemConsole.Instance;
-    public IDelay                  Delay                 { get; init; } = RealDelay.Instance;
-    public ILuxaforDeviceDiscovery Discovery             { get; init; } = LuxaforDeviceDiscovery.Instance;
-    public UserCurrentStatus       Store                 { get; init; } = UserCurrentStatus.Default;
-    public Func<ISessionMonitor>   SessionMonitorFactory { get; init; } = CreateDefaultSessionMonitor;
+    public IConsole                                       Console               { get; init; } = SystemConsole.Instance;
+    public IDelay                                         Delay                 { get; init; } = RealDelay.Instance;
+    public ILuxaforDeviceDiscovery                        Discovery             { get; init; } = LuxaforDeviceDiscovery.Instance;
+    public UserCurrentStatus                              Store                 { get; init; } = UserCurrentStatus.Default;
+    public Func<ISessionMonitor>                          SessionMonitorFactory { get; init; } = CreateDefaultSessionMonitor;
+    public Func<ILuxaforDevice, IDeviceConnectionMonitor> DeviceMonitorFactory  { get; init; } = device => new LuxaforDeviceConnectionMonitor(device);
 
 }

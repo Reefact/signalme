@@ -119,8 +119,9 @@ public sealed class RunCommand : AsyncCommand<RunCommand.Settings> {
 
         console.WriteLine($"Mode: {modeName}");
 
-        ISessionMonitor sessionMonitor = services.SessionMonitorFactory();
-        SignalMeRuntime runtime        = new(modeName, mode, device, sessionMonitor, services.Store, console, services.Delay);
+        IDeviceConnectionMonitor deviceMonitor  = services.DeviceMonitorFactory(device);
+        ISessionMonitor          sessionMonitor = services.SessionMonitorFactory();
+        SignalMeRuntime          runtime        = new(modeName, mode, device, deviceMonitor, sessionMonitor, services.Store, console, services.Delay);
 
         RuntimeOutcome outcome = await runtime.RunAsync(cancellation.Token).ConfigureAwait(false);
 

@@ -554,6 +554,56 @@ public sealed class StatusCoordinatorTests {
     }
 
     [Fact]
+    public async Task A_disconnection_faults_the_loop_without_writing_to_the_device() {
+        await using Harness signalme = new(UserStatus.Busy);
+        int written = signalme.Device.Commands.Count;
+
+        signalme.Coordinator.OnDeviceDisconnected();
+
+        Assert.IsType<DeviceDisconnectedException>(await Record.ExceptionAsync(() => signalme.Loop.WaitAsync(TimeSpan.FromSeconds(10))));
+        Assert.Equal(["Luxafor device disconnected."], signalme.Console.Error);
+        Assert.Equal(written, signalme.Device.Commands.Count);
+    }
+
+    [Fact]
+    public async Task A_disconnection_during_a_signal_stops_it_without_a_restore_frame() {
+        await using Harness signalme = new(UserStatus.Busy);
+        ControllableDelay.Hold hold = signalme.Delay.HoldAt(3);
+
+        Task<IntentOutcome> signal = signalme.PlayAsync(UserMood.Happy);
+        await hold.Reached;
+        int framesSent = signalme.Device.Commands.Count;
+        signalme.Coordinator.OnDeviceDisconnected();
+
+        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
+        Assert.IsType<DeviceDisconnectedException>(await Record.ExceptionAsync(() => signalme.Loop.WaitAsync(TimeSpan.FromSeconds(10))));
+        Assert.Equal(framesSent, signalme.Device.Commands.Count);
+        Assert.Null(signalme.State.PlayingSignal);
+    }
+
+    [Fact]
+    public async Task An_intent_queued_behind_a_disconnection_completes_with_it_and_is_not_applied() {
+        await using Harness  signalme = new(UserStatus.Busy);
+        Task<IntentOutcome>? queued   = null;
+        // Held, so the animation is still running when the loop gets to the disconnection.
+        signalme.Delay.HoldAt(3);
+        // Both queued from inside the animation, so the loop finds them in this order once it is free.
+        signalme.Delay.OnWait = wait => {
+            if (wait != 2) { return; }
+
+            signalme.Coordinator.OnDeviceDisconnected();
+            queued = signalme.SetAsync(UserStatus.Available);
+        };
+
+        Task<IntentOutcome> signal = signalme.PlayAsync(UserMood.Happy);
+
+        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
+        await Assert.ThrowsAsync<DeviceDisconnectedException>(() => queued!);
+        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Assert.Single(signalme.Console.Error);
+    }
+
+    [Fact]
     public async Task Turning_off_quietly_reports_a_refusal_instead_of_throwing() {
         await using Harness signalme = new(UserStatus.Busy);
         await signalme.StopAsync();

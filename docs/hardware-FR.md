@@ -99,6 +99,10 @@ façon la découverte du périphérique qui arrête SignalMe là-bas.
 - **Une application à la fois.** Le périphérique est tenu pendant toute l'exécution. Si une autre
   application le détient au démarrage de SignalMe, SignalMe signale une erreur périphérique plutôt que
   d'attendre ; pendant que SignalMe tourne, cette autre application ne peut pas le piloter.
-- **Pas de reconnexion.** Un périphérique débranché, ou repris, pendant l'exécution y met fin : SignalMe
-  signale l'échec et sort sur une erreur périphérique. Rebranchez le périphérique et relancez SignalMe.
+- **Pas de reconnexion.** Un périphérique débranché pendant l'exécution y met fin : SignalMe vérifie
+  toutes les deux secondes que le périphérique est toujours branché, affiche
+  `Luxafor device disconnected.` et sort sur une erreur périphérique, sans attendre la commande suivante.
+  Un périphérique repris par une autre application, ou débranché et rebranché entre deux vérifications,
+  met fin à l'exécution à l'écriture suivante : le handle que tient SignalMe ne survit pas, même à une
+  absence brève. Rebranchez le périphérique et relancez SignalMe.
 - **Pas de contrôle de luminosité.** Le protocole expose des couleurs, pas des niveaux de luminosité.

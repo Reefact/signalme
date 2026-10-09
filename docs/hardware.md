@@ -95,6 +95,9 @@ is what stops SignalMe there anyway.
 - **One application at a time.** The device is held for the whole run. If another application owns it
   when SignalMe starts, SignalMe reports a device error rather than waiting; while SignalMe runs, that
   other application cannot drive it.
-- **No reconnection.** A device unplugged, or taken over, during the run ends it: SignalMe reports the
-  failure and exits with a device error. Plug the device back and start SignalMe again.
+- **No reconnection.** A device unplugged during the run ends it: SignalMe checks every two seconds that
+  the device is still plugged in, prints `Luxafor device disconnected.` and exits with a device error,
+  without waiting for the next command. A device taken over by another application, or unplugged and
+  plugged back between two checks, ends the run at the next write instead: the handle SignalMe holds
+  does not survive even a short absence. Plug the device back and start SignalMe again.
 - **No brightness control.** The protocol exposes colours, not brightness levels.

@@ -290,12 +290,17 @@ code `0` lui aussi.
 | ---: | --- |
 | `0` | SignalMe a tourné et s'est arrêté proprement : Ctrl+C, ou entrée fermée |
 | `1` | Erreur d'utilisation — mode inconnu, option inconnue, valeur d'option manquante, argument inattendu |
-| `2` | Erreur périphérique — aucun trouvé, découverte en échec, ou commande refusée par le périphérique pendant l'exécution |
+| `2` | Erreur périphérique — aucun trouvé, découverte en échec, ou périphérique débranché ou ayant refusé une commande pendant l'exécution |
 | `3` | Erreur inattendue |
 
 Un périphérique qui cesse de répondre pendant que SignalMe tourne met fin à l'exécution : l'échec est
 signalé, le périphérique est éteint dans la mesure où il le peut encore, et SignalMe sort avec le code `2`
 plutôt que de prétendre que le dernier changement a été appliqué.
+
+Un périphérique débranché est remarqué en deux secondes au plus, sans attendre la commande suivante :
+SignalMe vérifie qu'il est toujours branché, affiche `Luxafor device disconnected.` sur stderr et sort
+avec le code `2`. Rien n'est écrit sur un périphérique disparu, si bien qu'aucune erreur d'extinction ne
+suit.
 
 Scripter en s'appuyant sur les codes de sortie :
 

@@ -9,6 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **An unplugged device is noticed at once.** SignalMe checks every two seconds that the device it drives
+  is still plugged in. When it is gone, SignalMe prints `Luxafor device disconnected.` and exits with the
+  device error code `2`, instead of carrying on until the next command, lock or signal failed with a
+  `refused` error that did not say why. Nothing is written to the device on the way out, so no turn-off
+  error follows. There is still no reconnection: plug the device back and start SignalMe again.
+
+### Changed
+
+- **Built on Reefact.LuxaforLightingDeviceController 2.1.0**, whose `ILuxaforDevice.IsConnected` is what
+  the check above asks: whether the device path is still among the HID devices present, without opening
+  or writing anything.
+
 ## [2.0.0-preview.1] - 2026-10-08
 
 The first preview of a new major version. SignalMe stops being a one-shot command and becomes a resident

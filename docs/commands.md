@@ -284,12 +284,16 @@ during the device selection prints `SignalMe stopped.` and exits with `0` too.
 | ---: | --- |
 | `0` | SignalMe ran and stopped cleanly: Ctrl+C, or the input was closed |
 | `1` | Usage error — unknown mode, unknown option, missing option value, unexpected argument |
-| `2` | Device error — no device found, discovery failed, or the device refused a command during the run |
+| `2` | Device error — no device found, discovery failed, or the device was unplugged or refused a command during the run |
 | `3` | Unexpected error |
 
 A device that stops answering while SignalMe runs ends the run: the failure is reported, the device is
 turned off as far as it still can be, and SignalMe exits with `2` rather than pretending the last change
 was applied.
+
+An unplugged device is noticed within two seconds, without waiting for the next command: SignalMe checks
+that it is still plugged in, prints `Luxafor device disconnected.` on stderr and exits with `2`. Nothing
+is written to a device that is gone, so no turn-off error follows.
 
 Scripting against the exit codes:
 

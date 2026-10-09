@@ -12,6 +12,22 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
+### Ajouté
+
+- **Un périphérique débranché est remarqué tout de suite.** SignalMe vérifie toutes les deux secondes que
+  le périphérique qu'il pilote est toujours branché. S'il a disparu, SignalMe affiche
+  `Luxafor device disconnected.` et sort avec le code d'erreur périphérique `2`, au lieu de continuer
+  jusqu'à ce que la commande, le verrouillage ou le signal suivant échoue sur une erreur `refused` qui
+  n'en disait pas la cause. Rien n'est écrit sur le périphérique en sortant, si bien qu'aucune erreur
+  d'extinction ne suit. Il n'y a toujours pas de reconnexion : rebranchez le périphérique et relancez
+  SignalMe.
+
+### Modifié
+
+- **Reposé sur Reefact.LuxaforLightingDeviceController 2.1.0**, dont `ILuxaforDevice.IsConnected` est ce
+  que la vérification ci-dessus interroge : le chemin du périphérique figure-t-il encore parmi les
+  périphériques HID présents, sans rien ouvrir ni écrire.
+
 ## [2.0.0-preview.1] - 2026-10-08
 
 Première préversion d'une nouvelle version majeure. SignalMe cesse d'être une commande « one shot »

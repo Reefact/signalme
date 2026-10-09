@@ -191,6 +191,15 @@ public sealed class StatusCoordinator : ISignalMeContext, IDisposable {
     }
 
     /// <summary>
+    ///     Queues the news that the device is gone, which stops the loop once handled. Thread-safe, never
+    ///     throws, ignored once the loop has stopped: like a session change, it comes from a monitor's
+    ///     thread.
+    /// </summary>
+    public void OnDeviceDisconnected() {
+        _channel.Writer.TryWrite(new Message.DeviceDisconnected());
+    }
+
+    /// <summary>
     ///     Turns the device off, best effort: a refusal or an exception is reported on the error output and
     ///     never thrown, since this runs at shutdown where there is nothing left to do about it. The runtime
     ///     calls it only once the loop has completed (or when it never ran), which keeps the device to a
@@ -242,6 +251,12 @@ public sealed class StatusCoordinator : ISignalMeContext, IDisposable {
                 case Message.SessionChanged changed when changed.State == _session:
                     // A duplicate carries no information, and in particular must not interrupt a signal.
                     return;
+                case Message.DeviceDisconnected:
+                    // Nothing is written to a device that is gone. A running signal is left to the shutdown,
+                    // which stops it without a restore frame, rather than settled here: settling would
+                    // rethrow a frame that failed meanwhile, and the loop would die of that frame instead
+                    // of the disconnection.
+                    throw new DeviceDisconnectedException();
             }
 
             // Anything else takes the device over: a running signal is stopped first and awaited, so that
@@ -487,6 +502,8 @@ public sealed class StatusCoordinator : ISignalMeContext, IDisposable {
         public sealed record SessionChanged(SessionState State) : Message;
 
         public sealed record SignalEnded(long SignalId, Task<UserStatus?> Animation) : Message;
+
+        public sealed record DeviceDisconnected : Message;
 
         #endregion
 

@@ -107,13 +107,27 @@ compris. Dans SignalMe 1.x un signal se jouait par-dessus un périphérique éte
 
 **Que faire :** tapez d'abord un statut — `busy`, par exemple — puis le signal.
 
+## Luxafor device disconnected
+
+**Symptôme :** `Luxafor device disconnected.`, puis `Stopping SignalMe...` et `SignalMe stopped.`, code
+de sortie `2`.
+
+**Cause :** SignalMe vérifie toutes les deux secondes que le périphérique qu'il pilote est toujours
+branché, et il ne l'était plus : débranché, derrière un hub USB ou une station d'accueil privés de
+courant, ou coupé par la mise en veille du portable. SignalMe s'arrête plutôt que d'annoncer un statut
+qu'aucun périphérique n'affiche, et n'écrit rien sur le périphérique en sortant, puisqu'il a disparu.
+
+**Que faire :** rebranchez le périphérique et relancez SignalMe. Il repart du dernier statut que le
+périphérique a réellement affiché.
+
 ## Le périphérique a refusé une commande, ou n'a pas pu être joint, pendant l'exécution
 
 **Symptôme :** `The Luxafor device refused to ...` ou `The Luxafor device could not be reached: ...`, puis
 `Stopping SignalMe...` et `SignalMe stopped.`, code de sortie `2`.
 
 **Cause :** le périphérique a été trouvé au démarrage, mais une écriture ultérieure a échoué — typiquement
-débranché en cours d'exécution, ou repris par une autre application. SignalMe ne continue pas sans
+repris par une autre application, ou débranché trop brièvement pour que la vérification le voie partir :
+le handle que tient SignalMe ne survit pas, même à une absence brève. SignalMe ne continue pas sans
 périphérique à piloter, et ne prétend pas que le dernier changement a été appliqué : un statut refusé
 n'est pas mémorisé.
 

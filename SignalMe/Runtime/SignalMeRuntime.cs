@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Reefact.LuxaforLightingDeviceController;
 
+using SignalMe.Devices;
 using SignalMe.Infrastructure;
 using SignalMe.Modes;
 using SignalMe.Sessions;
@@ -15,8 +16,8 @@ using SignalMe.Sessions;
 namespace SignalMe.Runtime;
 
 /// <summary>
-///     The lifecycle of one run: starts the session monitor, renders the initial status, runs the
-///     coordinator and the mode side by side, and whatever happens turns the device off and disposes it
+///     The lifecycle of one run: starts the session and device monitors, renders the initial status, runs
+///     the coordinator and the mode side by side, and whatever happens turns the device off and disposes it
 ///     before returning.
 /// </summary>
 public sealed class SignalMeRuntime {
@@ -52,29 +53,31 @@ public sealed class SignalMeRuntime {
     }
 
     private static RuntimeOutcome Classify(Exception failure) {
-        return failure is DeviceCommandFailedException ? RuntimeOutcome.DeviceFailed : RuntimeOutcome.Faulted;
+        return failure is DeviceCommandFailedException or DeviceDisconnectedException ? RuntimeOutcome.DeviceFailed : RuntimeOutcome.Faulted;
     }
 
     #endregion
 
     #region Fields declarations
 
-    private readonly string            _modeName;
-    private readonly ISignalMeMode     _mode;
-    private readonly ILuxaforDevice    _device;
-    private readonly ISessionMonitor   _sessionMonitor;
-    private readonly UserCurrentStatus _store;
-    private readonly IConsole          _console;
-    private readonly IDelay            _delay;
+    private readonly string                   _modeName;
+    private readonly ISignalMeMode            _mode;
+    private readonly ILuxaforDevice           _device;
+    private readonly IDeviceConnectionMonitor _deviceMonitor;
+    private readonly ISessionMonitor          _sessionMonitor;
+    private readonly UserCurrentStatus        _store;
+    private readonly IConsole                 _console;
+    private readonly IDelay                   _delay;
 
     #endregion
 
     #region Constructors declarations
 
-    public SignalMeRuntime(string modeName, ISignalMeMode mode, ILuxaforDevice device, ISessionMonitor sessionMonitor, UserCurrentStatus store, IConsole console, IDelay delay) {
+    public SignalMeRuntime(string modeName, ISignalMeMode mode, ILuxaforDevice device, IDeviceConnectionMonitor deviceMonitor, ISessionMonitor sessionMonitor, UserCurrentStatus store, IConsole console, IDelay delay) {
         ArgumentNullException.ThrowIfNull(modeName);
         ArgumentNullException.ThrowIfNull(mode);
         ArgumentNullException.ThrowIfNull(device);
+        ArgumentNullException.ThrowIfNull(deviceMonitor);
         ArgumentNullException.ThrowIfNull(sessionMonitor);
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(console);
@@ -83,6 +86,7 @@ public sealed class SignalMeRuntime {
         _modeName       = modeName;
         _mode           = mode;
         _device         = device;
+        _deviceMonitor  = deviceMonitor;
         _sessionMonitor = sessionMonitor;
         _store          = store;
         _console        = console;
@@ -104,6 +108,10 @@ public sealed class SignalMeRuntime {
             coordinator?.OnSessionChanged(state);
         }
 
+        void OnDeviceDisconnected(object? sender, EventArgs e) {
+            coordinator?.OnDeviceDisconnected();
+        }
+
         try {
             coordinator = new StatusCoordinator(_modeName, _device, _store, _console, _delay, _store.Get());
 
@@ -111,6 +119,10 @@ public sealed class SignalMeRuntime {
             // loop drops it if it duplicates the state Initialize() renders from.
             _sessionMonitor.StateChanged += OnSessionChanged;
             _sessionMonitor.Start();
+
+            // Queued like a lock: a device found missing before the loop runs is the first thing it handles.
+            _deviceMonitor.Disconnected += OnDeviceDisconnected;
+            _deviceMonitor.Start();
 
             // Read after Start(), so the first render reflects the session as the OS reports it now.
             coordinator.Initialize(_sessionMonitor.Current);
@@ -131,19 +143,23 @@ public sealed class SignalMeRuntime {
             _console.WriteLine("Stopping SignalMe...");
             coordinatorFailure = await AwaitStoppedAsync(coordinatorTask).ConfigureAwait(false);
         } catch (Exception exception) {
-            // Only the start-up steps reach here: the store, the monitor's Start() or the first render.
+            // Only the start-up steps reach here: the store, a monitor's Start() or the first render.
             // Nothing has printed the error yet, and nothing else has started.
             coordinatorFailure = exception;
             _console.WriteError(ErrorReporting.Describe(exception));
         } finally {
+            _deviceMonitor.Disconnected -= OnDeviceDisconnected;
+            _deviceMonitor.Dispose();
             _sessionMonitor.StateChanged -= OnSessionChanged;
             _sessionMonitor.Dispose();
 
             // Reached only once the loop has completed, or when it never ran: the device has one writer.
+            // A device found unplugged is not written to again: the turn-off could only fail, and its error
+            // would come after the one that says why SignalMe stopped.
             if (coordinator is null) {
                 _device.TurnOffQuietly(_console);
             } else {
-                coordinator.TurnOffQuietly();
+                if (coordinatorFailure is not DeviceDisconnectedException) { coordinator.TurnOffQuietly(); }
                 coordinator.Dispose();
             }
             _device.Dispose();
