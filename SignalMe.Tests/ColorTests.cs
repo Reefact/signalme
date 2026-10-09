@@ -20,26 +20,26 @@ public sealed class ColorTests {
 
     [Fact]
     public void Two_rgb_of_the_same_components_are_equal() {
-        Assert.Equal(new Rgb(1, 2, 3), new Rgb(1, 2, 3));
-        Assert.True(new Rgb(1, 2, 3) == new Rgb(1, 2, 3));
-        Assert.False(new Rgb(1, 2, 3) != new Rgb(1, 2, 3));
-        Assert.NotEqual(new Rgb(1, 2, 3), new Rgb(3, 2, 1));
-        Assert.Equal(new Rgb(1, 2, 3).GetHashCode(), new Rgb(1, 2, 3).GetHashCode());
+        Check.That(new Rgb(1, 2, 3)).IsEqualTo(new Rgb(1, 2, 3));
+        Check.That(new Rgb(1, 2, 3) == new Rgb(1, 2, 3)).IsTrue();
+        Check.That(new Rgb(1, 2, 3) != new Rgb(1, 2, 3)).IsFalse();
+        Check.That(new Rgb(3, 2, 1)).IsNotEqualTo(new Rgb(1, 2, 3));
+        Check.That(new Rgb(1, 2, 3).GetHashCode()).IsEqualTo(new Rgb(1, 2, 3).GetHashCode());
     }
 
     [Fact]
     public void Two_hsv_of_the_same_components_are_equal() {
-        Assert.Equal(new Hsv(10f, 0.5f, 0.5f), new Hsv(10f, 0.5f, 0.5f));
-        Assert.True(new Hsv(10f, 0.5f, 0.5f) == new Hsv(10f, 0.5f, 0.5f));
-        Assert.NotEqual(new Hsv(10f, 0.5f, 0.5f), new Hsv(11f, 0.5f, 0.5f));
-        Assert.Equal(new Hsv(10f, 0.5f, 0.5f).GetHashCode(), new Hsv(10f, 0.5f, 0.5f).GetHashCode());
+        Check.That(new Hsv(10f, 0.5f, 0.5f)).IsEqualTo(new Hsv(10f, 0.5f, 0.5f));
+        Check.That(new Hsv(10f, 0.5f, 0.5f) == new Hsv(10f, 0.5f, 0.5f)).IsTrue();
+        Check.That(new Hsv(11f, 0.5f, 0.5f)).IsNotEqualTo(new Hsv(10f, 0.5f, 0.5f));
+        Check.That(new Hsv(10f, 0.5f, 0.5f).GetHashCode()).IsEqualTo(new Hsv(10f, 0.5f, 0.5f).GetHashCode());
     }
 
     [Fact]
     public void Colors_work_as_dictionary_keys() {
         Dictionary<Rgb, string> byColor = new() { { new Rgb(9, 8, 7), "seven" } };
 
-        Assert.Equal("seven", byColor[new Rgb(9, 8, 7)]);
+        Check.That(byColor[new Rgb(9, 8, 7)]).IsEqualTo("seven");
     }
 
     #endregion
@@ -55,7 +55,7 @@ public sealed class ColorTests {
     [InlineData(10f, 0.5f, -0.1f)]
     [InlineData(10f, 0.5f, 1.1f)]
     public void Hsv_refuses_components_out_of_range(float hue, float saturation, float value) {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Hsv(hue, saturation, value));
+        Check.ThatCode(() => new Hsv(hue, saturation, value)).Throws<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -72,15 +72,15 @@ public sealed class ColorTests {
     public void The_default_hsv_is_a_legal_color() {
         Hsv uninitialized = default;
 
-        Assert.InRange(uninitialized.Hue, 0f, 359.999f);
-        Assert.InRange(uninitialized.Saturation, 0f, 1f);
-        Assert.InRange(uninitialized.Value, 0f, 1f);
-        Assert.Equal(new Rgb(0, 0, 0), uninitialized.ToRgb());
+        Check.That(uninitialized.Hue).IsGreaterOrEqualThan(0f).And.IsLessOrEqualThan(359.999f);
+        Check.That(uninitialized.Saturation).IsGreaterOrEqualThan(0f).And.IsLessOrEqualThan(1f);
+        Check.That(uninitialized.Value).IsGreaterOrEqualThan(0f).And.IsLessOrEqualThan(1f);
+        Check.That(uninitialized.ToRgb()).IsEqualTo(new Rgb(0, 0, 0));
     }
 
     [Fact]
     public void The_default_rgb_is_black() {
-        Assert.Equal("#000000", default(Rgb).ToString());
+        Check.That(default(Rgb).ToString()).IsEqualTo("#000000");
     }
 
     #endregion
@@ -92,7 +92,7 @@ public sealed class ColorTests {
     public void A_color_survives_the_trip_through_BrightColor(byte red, byte green, byte blue) {
         Rgb rgb = BrightColor.From(red, green, blue).ToRgb();
 
-        Assert.Equal(new Rgb(red, green, blue), rgb);
+        Check.That(rgb).IsEqualTo(new Rgb(red, green, blue));
     }
 
     [Theory]
@@ -103,22 +103,22 @@ public sealed class ColorTests {
         Rgb roundTripped = ColorService.GetBrightFromHsv(original.ToHsv()).ToRgb();
 
         // HSV stores hue in degrees and saturation/value as floats, so a byte can come back off by one.
-        Assert.InRange(Math.Abs(roundTripped.Red   - red), 0, 1);
-        Assert.InRange(Math.Abs(roundTripped.Green - green), 0, 1);
-        Assert.InRange(Math.Abs(roundTripped.Blue  - blue), 0, 1);
+        Check.That(Math.Abs(roundTripped.Red   - red)).IsGreaterOrEqualThan(0).And.IsLessOrEqualThan(1);
+        Check.That(Math.Abs(roundTripped.Green - green)).IsGreaterOrEqualThan(0).And.IsLessOrEqualThan(1);
+        Check.That(Math.Abs(roundTripped.Blue  - blue)).IsGreaterOrEqualThan(0).And.IsLessOrEqualThan(1);
     }
 
     [Fact]
     public void Grey_and_black_have_no_saturation() {
-        Assert.Equal(0f, BrightColor.From(128, 128, 128).ToHsv().Saturation);
-        Assert.Equal(0f, BrightColor.Black.ToHsv().Saturation);
-        Assert.Equal(0f, BrightColor.White.ToHsv().Saturation);
+        Check.That(BrightColor.From(128, 128, 128).ToHsv().Saturation).IsEqualTo(0f);
+        Check.That(BrightColor.Black.ToHsv().Saturation).IsEqualTo(0f);
+        Check.That(BrightColor.White.ToHsv().Saturation).IsEqualTo(0f);
     }
 
     [Fact]
     public void White_is_full_brightness_and_black_none() {
-        Assert.Equal(1f, BrightColor.White.ToHsv().Value);
-        Assert.Equal(0f, BrightColor.Black.ToHsv().Value);
+        Check.That(BrightColor.White.ToHsv().Value).IsEqualTo(1f);
+        Check.That(BrightColor.Black.ToHsv().Value).IsEqualTo(0f);
     }
 
     #endregion
@@ -127,14 +127,14 @@ public sealed class ColorTests {
 
     [Fact]
     public void Interpolating_to_zero_or_one_lands_on_the_endpoints() {
-        Assert.Equal(BrightColor.Red, BrightColor.Red.LerpTo(BrightColor.Blue, 0f));
-        Assert.Equal(BrightColor.Blue, BrightColor.Red.LerpTo(BrightColor.Blue, 1f));
+        Check.That(BrightColor.Red.LerpTo(BrightColor.Blue, 0f)).IsEqualTo(BrightColor.Red);
+        Check.That(BrightColor.Red.LerpTo(BrightColor.Blue, 1f)).IsEqualTo(BrightColor.Blue);
     }
 
     [Fact]
     public void Interpolation_clamps_instead_of_overshooting() {
-        Assert.Equal(BrightColor.Red, BrightColor.Red.LerpTo(BrightColor.Blue, -5f));
-        Assert.Equal(BrightColor.Blue, BrightColor.Red.LerpTo(BrightColor.Blue, 5f));
+        Check.That(BrightColor.Red.LerpTo(BrightColor.Blue, -5f)).IsEqualTo(BrightColor.Red);
+        Check.That(BrightColor.Red.LerpTo(BrightColor.Blue, 5f)).IsEqualTo(BrightColor.Blue);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public sealed class ColorTests {
         // 350° to 10° is 20° apart through 0°, not 340° the other way.
         Hsv midway = new Hsv(350f, 1f, 1f).LerpTo(new Hsv(10f, 1f, 1f), 0.5f);
 
-        Assert.True(midway.Hue is >= 359f or <= 1f, $"expected the hue to pass through 0°, got {midway.Hue}°.");
+        Check.WithCustomMessage($"expected the hue to pass through 0°, got {midway.Hue}°.").That(midway.Hue is >= 359f or <= 1f).IsTrue();
     }
 
     /// <summary>
@@ -158,7 +158,7 @@ public sealed class ColorTests {
             float t = step / 20000f;
             Hsv   result = from.LerpTo(to, t);
 
-            Assert.InRange(result.Hue, 0f, 359.9999f);
+            Check.That(result.Hue).IsGreaterOrEqualThan(0f).And.IsLessOrEqualThan(359.9999f);
         }
     }
 
@@ -166,8 +166,9 @@ public sealed class ColorTests {
     public void A_pastel_keeps_the_hue_but_drops_the_saturation() {
         BrightColor pastel = BrightColor.Red.GetPastel();
 
-        Assert.Equal(0.5f, pastel.ToHsv().Saturation, 2);
-        Assert.Equal(0.7f, pastel.ToHsv().Value, 2);
+        // Compared to two decimal places, the precision the conversion promises.
+        Check.That(MathF.Round(pastel.ToHsv().Saturation, 2)).IsEqualTo(0.5f);
+        Check.That(MathF.Round(pastel.ToHsv().Value, 2)).IsEqualTo(0.7f);
     }
 
     #endregion

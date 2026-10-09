@@ -32,8 +32,8 @@ public sealed class LuxaforDeviceConnectionMonitorTests {
         // Long enough for several more ticks, had the watch gone on.
         await Task.Delay(Interval * 10);
 
-        Assert.Equal(1, Volatile.Read(ref raised));
-        Assert.Equal(3, Volatile.Read(ref checks));
+        Check.That(Volatile.Read(ref raised)).IsEqualTo(1);
+        Check.That(Volatile.Read(ref checks)).IsEqualTo(3);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public sealed class LuxaforDeviceConnectionMonitorTests {
         device.IsConnected = false;
         await disconnected.Task.WaitAsync(Bound);
 
-        Assert.Empty(device.Commands);
+        Check.That(device.Commands).IsEmpty();
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class LuxaforDeviceConnectionMonitorTests {
         await disconnected.Task.WaitAsync(Bound);
 
         // The watch survived the failed check and went on until the device was really found missing.
-        Assert.Equal(3, Volatile.Read(ref checks));
+        Check.That(Volatile.Read(ref checks)).IsEqualTo(3);
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public sealed class LuxaforDeviceConnectionMonitorTests {
         Volatile.Write(ref connected, false);
         await Task.Delay(Interval * 10);
 
-        Assert.False(Volatile.Read(ref raised));
+        Check.That(Volatile.Read(ref raised)).IsFalse();
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class LuxaforDeviceConnectionMonitorTests {
         monitor.Dispose();
         monitor.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(monitor.Start);
+        Check.ThatCode(monitor.Start).Throws<ObjectDisposedException>();
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public sealed class LuxaforDeviceConnectionMonitorTests {
         using LuxaforDeviceConnectionMonitor monitor = new(() => true, Bound);
         monitor.Start();
 
-        Assert.Throws<InvalidOperationException>(monitor.Start);
+        Check.ThatCode(monitor.Start).Throws<InvalidOperationException>();
     }
 
 }

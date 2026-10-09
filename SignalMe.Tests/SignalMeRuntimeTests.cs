@@ -30,8 +30,8 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(FakeMode.Returning());
 
-        Assert.Equal(RuntimeOutcome.Stopped, outcome);
-        Assert.Equal(expected, signalme.Device.Commands[0]);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Stopped);
+        Check.That(signalme.Device.Commands[0]).IsEqualTo(expected);
     }
 
     [Fact]
@@ -50,9 +50,9 @@ public sealed class SignalMeRuntimeTests {
 
         await signalme.RunAsync(mode);
 
-        Assert.Equal(["Status: busy"], outputAtStart);
-        Assert.Equal(["SetColor(#FFFF00)"], commandsAtStart);
-        Assert.Equal(["line: Status: busy", "line: Commands: help", "prompt: > ", "read: <end of input>", "line: Stopping SignalMe...", "line: SignalMe stopped."], signalme.Console.Transcript);
+        Check.That(outputAtStart).ContainsExactly(["Status: busy"]);
+        Check.That(commandsAtStart).ContainsExactly(["SetColor(#FFFF00)"]);
+        Check.That(signalme.Console.Transcript).ContainsExactly(["line: Status: busy", "line: Commands: help", "prompt: > ", "read: <end of input>", "line: Stopping SignalMe...", "line: SignalMe stopped."]);
     }
 
     [Fact]
@@ -63,12 +63,12 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(mode);
 
-        Assert.Equal(RuntimeOutcome.DeviceFailed, outcome);
-        Assert.False(mode.Started);
-        Assert.Contains("The Luxafor device refused to display the 'busy' status.", signalme.Console.Error);
-        Assert.Equal(["SignalMe stopped."], signalme.Console.Output);
-        Assert.True(signalme.Device.IsDisposed);
-        Assert.True(signalme.Monitor.IsDisposed);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.DeviceFailed);
+        Check.That(mode.Started).IsFalse();
+        Check.That(signalme.Console.Error).Contains("The Luxafor device refused to display the 'busy' status.");
+        Check.That(signalme.Console.Output).ContainsExactly(["SignalMe stopped."]);
+        Check.That(signalme.Device.IsDisposed).IsTrue();
+        Check.That(signalme.Monitor.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public sealed class SignalMeRuntimeTests {
 
         await signalme.RunAsync(FakeMode.Returning());
 
-        Assert.Equal("SetColor(#9932CC)", signalme.Device.Commands[0]);
-        Assert.Equal(["Status: busy", "Effective status: away", "Stopping SignalMe...", "SignalMe stopped."], signalme.Console.Output);
+        Check.That(signalme.Device.Commands[0]).IsEqualTo("SetColor(#9932CC)");
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Effective status: away", "Stopping SignalMe...", "SignalMe stopped."]);
     }
 
     /// <summary>
@@ -97,9 +97,9 @@ public sealed class SignalMeRuntimeTests {
 
         await signalme.RunAsync(mode);
 
-        Assert.Equal([IntentOutcome.SignalRefusedSessionLocked], mode.Outcomes);
-        Assert.Equal(["SetColor(#9932CC)", "TurnOff"], signalme.Device.Commands);
-        Assert.Equal(["Status: busy", "Effective status: away", "Session locked: 'happy' is not played.", "Stopping SignalMe...", "SignalMe stopped."], signalme.Console.Output);
+        Check.That(mode.Outcomes).ContainsExactly([IntentOutcome.SignalRefusedSessionLocked]);
+        Check.That(signalme.Device.Commands).ContainsExactly(["SetColor(#9932CC)", "TurnOff"]);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Effective status: away", "Session locked: 'happy' is not played.", "Stopping SignalMe...", "SignalMe stopped."]);
     }
 
     [Fact]
@@ -110,13 +110,13 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(mode);
 
-        Assert.Equal(RuntimeOutcome.Faulted, outcome);
-        Assert.False(mode.Started);
-        Assert.Equal(["signalme: InvalidOperationException: no window"], signalme.Console.Error);
-        Assert.Equal(["TurnOff"], signalme.Device.Commands);
-        Assert.True(signalme.Device.IsDisposed);
-        Assert.True(signalme.Monitor.IsDisposed);
-        Assert.True(signalme.DeviceMonitor.IsDisposed);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Faulted);
+        Check.That(mode.Started).IsFalse();
+        Check.That(signalme.Console.Error).ContainsExactly(["signalme: InvalidOperationException: no window"]);
+        Check.That(signalme.Device.Commands).ContainsExactly(["TurnOff"]);
+        Check.That(signalme.Device.IsDisposed).IsTrue();
+        Check.That(signalme.Monitor.IsDisposed).IsTrue();
+        Check.That(signalme.DeviceMonitor.IsDisposed).IsTrue();
     }
 
     #endregion
@@ -134,16 +134,16 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(mode);
 
-        Assert.Equal(RuntimeOutcome.Stopped, outcome);
-        Assert.Equal(["Status: busy", "Stopping SignalMe...", "SignalMe stopped."], signalme.Console.Output);
-        Assert.Equal(["SetColor(#FFFF00)", "TurnOff"], signalme.Device.Commands);
-        Assert.True(signalme.Device.IsDisposed);
-        Assert.True(signalme.Monitor.Started);
-        Assert.True(signalme.Monitor.IsDisposed);
-        Assert.True(signalme.DeviceMonitor.Started);
-        Assert.True(signalme.DeviceMonitor.IsDisposed);
-        Assert.False(signalme.DeviceMonitor.IsSubscribed);
-        Assert.Empty(signalme.Console.Error);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Stopped);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Stopping SignalMe...", "SignalMe stopped."]);
+        Check.That(signalme.Device.Commands).ContainsExactly(["SetColor(#FFFF00)", "TurnOff"]);
+        Check.That(signalme.Device.IsDisposed).IsTrue();
+        Check.That(signalme.Monitor.Started).IsTrue();
+        Check.That(signalme.Monitor.IsDisposed).IsTrue();
+        Check.That(signalme.DeviceMonitor.Started).IsTrue();
+        Check.That(signalme.DeviceMonitor.IsDisposed).IsTrue();
+        Check.That(signalme.DeviceMonitor.IsSubscribed).IsFalse();
+        Check.That(signalme.Console.Error).IsEmpty();
     }
 
     [Theory]
@@ -154,12 +154,12 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(FakeMode.Sending(new SignalMeIntent.PlaySignal(mood)));
 
-        Assert.Equal(RuntimeOutcome.Stopped, outcome);
-        Assert.Equal("TurnOff", signalme.Device.Commands[^1]);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Stopped);
+        Check.That(signalme.Device.Commands[^1]).IsEqualTo("TurnOff");
         // No restore frame and no second turn-off: the animation stopped, then the device was turned off, once.
-        Assert.NotEqual("TurnOff", signalme.Device.Commands[^2]);
-        Assert.Equal(3, signalme.Delay.Waits);
-        Assert.True(signalme.Device.IsDisposed);
+        Check.That(signalme.Device.Commands[^2]).IsNotEqualTo("TurnOff");
+        Check.That(signalme.Delay.Waits).IsEqualTo(3);
+        Check.That(signalme.Device.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -169,11 +169,11 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(mode);
 
-        Assert.Equal(RuntimeOutcome.Stopped, outcome);
-        Assert.Equal([IntentOutcome.Applied, IntentOutcome.SignalCompleted], mode.Outcomes);
-        Assert.Equal("TurnOff", signalme.Device.Commands[^1]);
-        Assert.Equal(UserStatus.Available, signalme.Statuses.Store.Get());
-        Assert.Equal("SignalMe stopped.", signalme.Console.Output[^1]);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Stopped);
+        Check.That(mode.Outcomes).ContainsExactly([IntentOutcome.Applied, IntentOutcome.SignalCompleted]);
+        Check.That(signalme.Device.Commands[^1]).IsEqualTo("TurnOff");
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Available);
+        Check.That(signalme.Console.Output[^1]).IsEqualTo("SignalMe stopped.");
     }
 
     [Fact]
@@ -182,14 +182,14 @@ public sealed class SignalMeRuntimeTests {
         FakeMode mode = new(async (context, _) => {
             signalme.Monitor.Raise(SessionState.Locked);
             await signalme.Console.WaitForOutputAsync(2);
-            Assert.Equal(EffectiveStatus.Away, context.State.Effective);
+            Check.That(context.State.Effective).IsEqualTo(EffectiveStatus.Away);
             signalme.Monitor.Raise(SessionState.Active);
             await signalme.Console.WaitForOutputAsync(3);
         });
 
         await signalme.RunAsync(mode);
 
-        Assert.Equal(["SetColor(#FFFF00)", "SetColor(#9932CC)", "SetColor(#FFFF00)", "TurnOff"], signalme.Device.Commands);
+        Check.That(signalme.Device.Commands).ContainsExactly(["SetColor(#FFFF00)", "SetColor(#9932CC)", "SetColor(#FFFF00)", "TurnOff"]);
     }
 
     #endregion
@@ -204,12 +204,12 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(mode);
 
-        Assert.Equal(RuntimeOutcome.DeviceFailed, outcome);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.DeviceFailed);
         // Reported once by the loop; the mode rethrows the same failure, which must not print it again.
-        Assert.Single(signalme.Console.Error, line => line == "The Luxafor device refused to display the 'busy' status.");
-        Assert.Equal("SignalMe stopped.", signalme.Console.Output[^1]);
-        Assert.True(signalme.Device.IsDisposed);
-        Assert.True(signalme.Monitor.IsDisposed);
+        Check.That(signalme.Console.Error.Where(line => line == "The Luxafor device refused to display the 'busy' status.")).HasSize(1);
+        Check.That(signalme.Console.Output[^1]).IsEqualTo("SignalMe stopped.");
+        Check.That(signalme.Device.IsDisposed).IsTrue();
+        Check.That(signalme.Monitor.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -223,13 +223,13 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(mode);
 
-        Assert.Equal(RuntimeOutcome.DeviceFailed, outcome);
-        Assert.Equal(["line: Status: busy", "error: Luxafor device disconnected.", "line: Stopping SignalMe...", "line: SignalMe stopped."], signalme.Console.Transcript);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.DeviceFailed);
+        Check.That(signalme.Console.Transcript).ContainsExactly(["line: Status: busy", "error: Luxafor device disconnected.", "line: Stopping SignalMe...", "line: SignalMe stopped."]);
         // No final turn-off: it could only fail on a device that is gone, and add a second error.
-        Assert.Equal(["SetColor(#FFFF00)"], signalme.Device.Commands);
-        Assert.True(signalme.Device.IsDisposed);
-        Assert.True(signalme.DeviceMonitor.IsDisposed);
-        Assert.False(signalme.DeviceMonitor.IsSubscribed);
+        Check.That(signalme.Device.Commands).ContainsExactly(["SetColor(#FFFF00)"]);
+        Check.That(signalme.Device.IsDisposed).IsTrue();
+        Check.That(signalme.DeviceMonitor.IsDisposed).IsTrue();
+        Check.That(signalme.DeviceMonitor.IsSubscribed).IsFalse();
     }
 
     [Fact]
@@ -238,10 +238,10 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(FakeMode.Throwing(new InvalidOperationException("boom")));
 
-        Assert.Equal(RuntimeOutcome.Faulted, outcome);
-        Assert.Equal(["signalme: InvalidOperationException: boom"], signalme.Console.Error);
-        Assert.Equal(["SetColor(#FFFF00)", "TurnOff"], signalme.Device.Commands);
-        Assert.True(signalme.Device.IsDisposed);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Faulted);
+        Check.That(signalme.Console.Error).ContainsExactly(["signalme: InvalidOperationException: boom"]);
+        Check.That(signalme.Device.Commands).ContainsExactly(["SetColor(#FFFF00)", "TurnOff"]);
+        Check.That(signalme.Device.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -250,10 +250,10 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(new FakeMode((_, _) => throw new InvalidOperationException("early")));
 
-        Assert.Equal(RuntimeOutcome.Faulted, outcome);
-        Assert.Equal(["signalme: InvalidOperationException: early"], signalme.Console.Error);
-        Assert.Equal("TurnOff", signalme.Device.Commands[^1]);
-        Assert.True(signalme.Device.IsDisposed);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Faulted);
+        Check.That(signalme.Console.Error).ContainsExactly(["signalme: InvalidOperationException: early"]);
+        Check.That(signalme.Device.Commands[^1]).IsEqualTo("TurnOff");
+        Check.That(signalme.Device.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -267,9 +267,9 @@ public sealed class SignalMeRuntimeTests {
 
         RuntimeOutcome outcome = await signalme.RunAsync(mode);
 
-        Assert.Equal(RuntimeOutcome.Stopped, outcome);
-        Assert.Equal(["The Luxafor device refused to turn its LEDs off."], signalme.Console.Error);
-        Assert.True(signalme.Device.IsDisposed);
+        Check.That(outcome).IsEqualTo(RuntimeOutcome.Stopped);
+        Check.That(signalme.Console.Error).ContainsExactly(["The Luxafor device refused to turn its LEDs off."]);
+        Check.That(signalme.Device.IsDisposed).IsTrue();
     }
 
     #endregion

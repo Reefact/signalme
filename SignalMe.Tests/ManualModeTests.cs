@@ -71,7 +71,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, new FakeSignalMeContext());
 
-        Assert.Equal(["line: Commands: help", "line: Press Ctrl+C to stop.", "line: ", "prompt: > ", "read: <end of input>"], console.Transcript);
+        Check.That(console.Transcript).ContainsExactly(["line: Commands: help", "line: Press Ctrl+C to stop.", "line: ", "prompt: > ", "read: <end of input>"]);
     }
 
     /// <summary>
@@ -98,7 +98,7 @@ public sealed class ManualModeTests {
             "prompt: > ",
             "read: <end of input>"
         ];
-        Assert.Equal(expected, console.Transcript);
+        Check.That(console.Transcript).IsEqualTo(expected);
     }
 
     #endregion
@@ -117,7 +117,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal([new SignalMeIntent.SetDesiredStatus(expected)], context.Intents);
+        Check.That(context.Intents).ContainsExactly([new SignalMeIntent.SetDesiredStatus(expected)]);
     }
 
     [Theory]
@@ -133,7 +133,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal([new SignalMeIntent.PlaySignal(expected)], context.Intents);
+        Check.That(context.Intents).ContainsExactly([new SignalMeIntent.PlaySignal(expected)]);
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal([new SignalMeIntent.TurnOff()], context.Intents);
+        Check.That(context.Intents).ContainsExactly([new SignalMeIntent.TurnOff()]);
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public sealed class ManualModeTests {
         await RunAsync(console, context);
 
         SignalMeIntent[] expected = [new SignalMeIntent.SetDesiredStatus(UserStatus.Busy), new SignalMeIntent.PlaySignal(UserMood.Happy), new SignalMeIntent.TurnOff(), new SignalMeIntent.SetDesiredStatus(UserStatus.DoNotDisturb)];
-        Assert.Equal(expected, context.Intents);
+        Check.That(context.Intents).IsEqualTo(expected);
     }
 
     /// <summary>
@@ -168,8 +168,8 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal([.. Hints, Separator, Separator, Separator], console.Output);
-        Assert.Empty(console.Error);
+        Check.That(console.Output).ContainsExactly([.. Hints, Separator, Separator, Separator]);
+        Check.That(console.Error).IsEmpty();
     }
 
     /// <summary>
@@ -184,14 +184,14 @@ public sealed class ManualModeTests {
         Task run = RunAsync(console, context);
         await context.IntentReceived;
 
-        Assert.Equal(["> "], console.Prompts);
-        Assert.Equal(1, console.Reads);
+        Check.That(console.Prompts).ContainsExactly(["> "]);
+        Check.That(console.Reads).IsEqualTo(1);
 
         context.Release();
         await run;
 
-        Assert.Equal(["> ", "> ", "> "], console.Prompts);
-        Assert.Equal(2, context.Intents.Count);
+        Check.That(console.Prompts).ContainsExactly(["> ", "> ", "> "]);
+        Check.That(context.Intents.Count).IsEqualTo(2);
     }
 
     /// <summary>
@@ -205,11 +205,11 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)], context.Intents);
+        Check.That(context.Intents).ContainsExactly([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)]);
         // One prompt per line, the last one answered by the end of input; nothing said about the blank ones.
-        Assert.Equal(["> ", "> ", "> ", "> "], console.Prompts);
-        Assert.Equal([.. Hints, Separator], console.Output);
-        Assert.Equal(["prompt: > ", "read: ", "prompt: > ", "read:    ", "prompt: > ", "read: busy", "line: ", "prompt: > ", "read: <end of input>"], console.Transcript.Skip(Hints.Length));
+        Check.That(console.Prompts).ContainsExactly(["> ", "> ", "> ", "> "]);
+        Check.That(console.Output).ContainsExactly([.. Hints, Separator]);
+        Check.That(console.Transcript.Skip(Hints.Length)).ContainsExactly(["prompt: > ", "read: ", "prompt: > ", "read:    ", "prompt: > ", "read: busy", "line: ", "prompt: > ", "read: <end of input>"]);
     }
 
     #endregion
@@ -224,8 +224,8 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Contains("Mode: manual" + NewLine + expected, console.Output);
-        Assert.Empty(context.Intents);
+        Check.That(console.Output).Contains("Mode: manual" + NewLine + expected);
+        Check.That(context.Intents).IsEmpty();
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Contains(console.Output, block => block.StartsWith("Mode: other" + NewLine, StringComparison.Ordinal));
+        Check.That(console.Output).HasElementThatMatches(block => block.StartsWith("Mode: other" + NewLine, StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -249,7 +249,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Contains("Mode: manual" + NewLine + "Desired status: busy" + NewLine + "Effective status: busy" + NewLine + "Session: active", console.Output);
+        Check.That(console.Output).Contains("Mode: manual" + NewLine + "Desired status: busy" + NewLine + "Effective status: busy" + NewLine + "Session: active");
     }
 
     [Fact]
@@ -259,8 +259,8 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Contains(HelpText, console.Output);
-        Assert.Empty(context.Intents);
+        Check.That(console.Output).Contains(HelpText);
+        Check.That(context.Intents).IsEmpty();
     }
 
     /// <summary>
@@ -273,22 +273,26 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, new FakeSignalMeContext());
 
-        string                                      help     = Assert.Single(console.Output, block => block.StartsWith("Statuses:", StringComparison.Ordinal));
+        string[] helps = console.Output.Where(block => block.StartsWith("Statuses:", StringComparison.Ordinal)).ToArray();
+        Check.That(helps).HasSize(1);
+        string                                    help     = helps[0];
         List<(string Header, List<string> Words)> sections = new();
         foreach (string line in help.Split(NewLine)) {
             if (line.EndsWith(':')) {
                 sections.Add((line, new List<string>()));
             } else if (line.StartsWith("  ", StringComparison.Ordinal)) {
-                Assert.NotEmpty(sections);
+                Check.That(sections).Not.IsEmpty();
                 sections[^1].Words.Add(line.Trim());
             }
         }
 
-        Assert.Equal(["Statuses:", "Signals:", "Commands:"], sections.Select(section => section.Header));
-        Assert.Equal(UserStatusConverter.KnownValues, sections[0].Words);
-        Assert.Equal(UserMoodConverter.KnownValues.Order(), sections[1].Words.Order());
-        Assert.Equal(["status", "off", "help"], sections[2].Words);
-        Assert.All(sections.SelectMany(section => section.Words), word => Assert.IsNotType<ManualCommand.Unknown>(ManualCommandParser.Parse(word)));
+        Check.That(sections.Select(section => section.Header)).ContainsExactly(["Statuses:", "Signals:", "Commands:"]);
+        Check.That(sections[0].Words).IsEqualTo(UserStatusConverter.KnownValues);
+        Check.That(sections[1].Words.Order()).IsEqualTo(UserMoodConverter.KnownValues.Order());
+        Check.That(sections[2].Words).ContainsExactly(["status", "off", "help"]);
+        foreach (string word in sections.SelectMany(section => section.Words)) {
+            Check.That(ManualCommandParser.Parse(word)).IsNotInstanceOf<ManualCommand.Unknown>();
+        }
     }
 
     #endregion
@@ -302,9 +306,9 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Equal([.. Hints, "Unknown command: 'buzy'." + NewLine + "Type 'help' to list available commands.", Separator, Separator], console.Output);
-        Assert.Equal([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)], context.Intents);
-        Assert.Equal(["> ", "> ", "> "], console.Prompts);
+        Check.That(console.Output).ContainsExactly([.. Hints, "Unknown command: 'buzy'." + NewLine + "Type 'help' to list available commands.", Separator, Separator]);
+        Check.That(context.Intents).ContainsExactly([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)]);
+        Check.That(console.Prompts).ContainsExactly(["> ", "> ", "> "]);
     }
 
     [Fact]
@@ -313,7 +317,7 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, new FakeSignalMeContext());
 
-        Assert.Contains("Unknown command: 'Buzy now'." + NewLine + "Type 'help' to list available commands.", console.Output);
+        Check.That(console.Output).Contains("Unknown command: 'Buzy now'." + NewLine + "Type 'help' to list available commands.");
     }
 
     /// <summary>
@@ -326,8 +330,8 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Contains("Unknown command: 'away'." + NewLine + "Type 'help' to list available commands.", console.Output);
-        Assert.Empty(context.Intents);
+        Check.That(console.Output).Contains("Unknown command: 'away'." + NewLine + "Type 'help' to list available commands.");
+        Check.That(context.Intents).IsEmpty();
     }
 
     #endregion
@@ -341,8 +345,8 @@ public sealed class ManualModeTests {
 
         await RunAsync(console, context);
 
-        Assert.Empty(context.Intents);
-        Assert.Equal(1, console.Reads);
+        Check.That(context.Intents).IsEmpty();
+        Check.That(console.Reads).IsEqualTo(1);
     }
 
     [Fact]
@@ -355,9 +359,9 @@ public sealed class ManualModeTests {
         await console.InputAwaited.WaitAsync(TimeSpan.FromSeconds(10));
         await cancellation.CancelAsync();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => run);
-        Assert.Empty(context.Intents);
-        Assert.Equal(["> "], console.Prompts);
+        Check.ThatCode(() => run).Throws<OperationCanceledException>();
+        Check.That(context.Intents).IsEmpty();
+        Check.That(console.Prompts).ContainsExactly(["> "]);
     }
 
     [Fact]
@@ -370,8 +374,8 @@ public sealed class ManualModeTests {
         await context.IntentReceived;
         await cancellation.CancelAsync();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => run);
-        Assert.Equal(["> "], console.Prompts);
+        Check.ThatCode(() => run).Throws<OperationCanceledException>();
+        Check.That(console.Prompts).ContainsExactly(["> "]);
     }
 
     /// <summary>
@@ -379,27 +383,27 @@ public sealed class ManualModeTests {
     ///     the runtime classify it.
     /// </summary>
     [Fact]
-    public async Task A_failure_of_the_coordinator_propagates_out_of_the_mode() {
+    public void A_failure_of_the_coordinator_propagates_out_of_the_mode() {
         FakeConsole         console = new("busy", "happy");
         FakeSignalMeContext context = new() { Failure = new DeviceCommandFailedException("The Luxafor device refused to display the 'busy' status.") };
 
-        DeviceCommandFailedException thrown = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => RunAsync(console, context));
+        DeviceCommandFailedException thrown = Check.ThatCode(() => RunAsync(console, context)).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Same(context.Failure, thrown);
-        Assert.Equal([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)], context.Intents);
-        Assert.Equal(1, console.Reads);
-        Assert.Equal(Hints, console.Output);
-        Assert.Empty(console.Error);
+        Check.That(thrown).IsSameReferenceAs(context.Failure);
+        Check.That(context.Intents).ContainsExactly([new SignalMeIntent.SetDesiredStatus(UserStatus.Busy)]);
+        Check.That(console.Reads).IsEqualTo(1);
+        Check.That(console.Output).IsEqualTo(Hints);
+        Check.That(console.Error).IsEmpty();
     }
 
     [Fact]
     public void A_mode_without_a_console_is_refused() {
-        Assert.Throws<ArgumentNullException>(() => new ManualMode(null!));
+        Check.ThatCode(() => new ManualMode(null!)).Throws<ArgumentNullException>();
     }
 
     [Fact]
-    public async Task A_run_without_a_context_is_refused() {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => new ManualMode(new FakeConsole()).RunAsync(null!, CancellationToken.None));
+    public void A_run_without_a_context_is_refused() {
+        Check.ThatCode(() => new ManualMode(new FakeConsole()).RunAsync(null!, CancellationToken.None)).Throws<ArgumentNullException>();
     }
 
     #endregion
@@ -411,8 +415,8 @@ public sealed class ManualModeTests {
     [InlineData("MANUAL")]
     [InlineData(" Manual ")]
     public void The_factory_creates_the_manual_mode_whatever_the_spelling(string name) {
-        Assert.True(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out ISignalMeMode? mode));
-        Assert.IsType<ManualMode>(mode);
+        Check.That(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out ISignalMeMode? mode)).IsTrue();
+        Check.That(mode).IsInstanceOf<ManualMode>();
     }
 
     /// <summary>
@@ -424,13 +428,13 @@ public sealed class ManualModeTests {
     [InlineData("MANUAL")]
     [InlineData(" Manual ")]
     public void The_factory_resolves_the_advertised_name_whatever_the_spelling(string name) {
-        Assert.True(SignalMeModeFactory.TryResolve(name, out string? canonicalName));
-        Assert.Equal("manual", canonicalName);
+        Check.That(SignalMeModeFactory.TryResolve(name, out string? canonicalName)).IsTrue();
+        Check.That(canonicalName).IsEqualTo("manual");
     }
 
     [Fact]
     public void Manual_is_the_one_known_mode() {
-        Assert.Equal(["manual"], SignalMeModeFactory.KnownModes);
+        Check.That(SignalMeModeFactory.KnownModes).ContainsExactly(["manual"]);
     }
 
     /// <summary>
@@ -443,10 +447,10 @@ public sealed class ManualModeTests {
         foreach (string name in SignalMeModeFactory.KnownModes) {
             string spelling = $" {name.ToUpperInvariant()} ";
 
-            Assert.True(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out _), $"'{name}' is advertised but cannot be created.");
-            Assert.True(SignalMeModeFactory.TryCreate(spelling, new FakeConsole(), out _), $"'{name}' is not created when typed in capitals with spaces around.");
-            Assert.True(SignalMeModeFactory.TryResolve(spelling, out string? canonicalName), $"'{name}' is not resolved when typed in capitals with spaces around.");
-            Assert.Equal(name, canonicalName);
+            Check.WithCustomMessage($"'{name}' is advertised but cannot be created.").That(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out _)).IsTrue();
+            Check.WithCustomMessage($"'{name}' is not created when typed in capitals with spaces around.").That(SignalMeModeFactory.TryCreate(spelling, new FakeConsole(), out _)).IsTrue();
+            Check.WithCustomMessage($"'{name}' is not resolved when typed in capitals with spaces around.").That(SignalMeModeFactory.TryResolve(spelling, out string? canonicalName)).IsTrue();
+            Check.That(canonicalName).IsEqualTo(name);
         }
     }
 
@@ -455,8 +459,8 @@ public sealed class ManualModeTests {
     [InlineData("teams")]
     [InlineData("manual mode")]
     public void An_unknown_name_creates_nothing(string name) {
-        Assert.False(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out ISignalMeMode? mode));
-        Assert.Null(mode);
+        Check.That(SignalMeModeFactory.TryCreate(name, new FakeConsole(), out ISignalMeMode? mode)).IsFalse();
+        Check.That(mode).IsNull();
     }
 
     [Theory]
@@ -464,18 +468,19 @@ public sealed class ManualModeTests {
     [InlineData("teams")]
     [InlineData("manual mode")]
     public void An_unknown_name_resolves_to_nothing(string name) {
-        Assert.False(SignalMeModeFactory.TryResolve(name, out string? canonicalName));
-        Assert.Null(canonicalName);
+        Check.That(SignalMeModeFactory.TryResolve(name, out string? canonicalName)).IsFalse();
+        Check.That(canonicalName).IsNull();
     }
 
     [Fact]
     public async Task The_created_mode_talks_through_the_given_console() {
         FakeConsole console = new();
-        Assert.True(SignalMeModeFactory.TryCreate("manual", console, out ISignalMeMode? mode));
+        Check.That(SignalMeModeFactory.TryCreate("manual", console, out ISignalMeMode? mode)).IsTrue();
 
-        await mode.RunAsync(new FakeSignalMeContext(), CancellationToken.None);
+        // NFluent's checks carry no nullability annotation: the compiler cannot tell that TryCreate succeeded.
+        await mode!.RunAsync(new FakeSignalMeContext(), CancellationToken.None);
 
-        Assert.Equal(Hints, console.Output);
+        Check.That(console.Output).IsEqualTo(Hints);
     }
 
     #endregion

@@ -22,7 +22,7 @@ public sealed class DeviceIdentificationWaveTests {
         await DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), CancellationToken.None);
 
         string[] expected = [.. Enumerable.Range(0, FramesPerWave).Select(frame => Frame(frame % 6 + 1)), "TurnOff"];
-        Assert.Equal(expected, device.Commands);
+        Check.That(device.Commands).IsEqualTo(expected);
     }
 
     [Fact]
@@ -31,19 +31,19 @@ public sealed class DeviceIdentificationWaveTests {
 
         await DeviceIdentificationWave.PlayAsync(new FakeLuxaforDevice(), delay, CancellationToken.None);
 
-        Assert.Equal(FramesPerWave, delay.Waits);
+        Check.That(delay.Waits).IsEqualTo(FramesPerWave);
     }
 
     [Fact]
-    public async Task A_wave_cancelled_at_its_third_wait_stops_there_with_the_leds_off() {
+    public void A_wave_cancelled_at_its_third_wait_stops_there_with_the_leds_off() {
         using CancellationTokenSource cancellation = new();
         FakeLuxaforDevice             device       = new();
         InstantDelay                  delay        = new() { OnWait = wait => { if (wait == 3) { cancellation.Cancel(); } } };
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => DeviceIdentificationWave.PlayAsync(device, delay, cancellation.Token));
+        Check.ThatCode(() => DeviceIdentificationWave.PlayAsync(device, delay, cancellation.Token)).Throws<OperationCanceledException>();
 
-        Assert.Equal([Frame(1), Frame(2), Frame(3), "TurnOff"], device.Commands);
-        Assert.Equal(3, delay.Waits);
+        Check.That(device.Commands).ContainsExactly([Frame(1), Frame(2), Frame(3), "TurnOff"]);
+        Check.That(delay.Waits).IsEqualTo(3);
     }
 
     [Fact]
@@ -52,20 +52,20 @@ public sealed class DeviceIdentificationWaveTests {
         await cancellation.CancelAsync();
         FakeLuxaforDevice device = new();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), cancellation.Token));
+        Check.ThatCode(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), cancellation.Token)).Throws<OperationCanceledException>();
 
-        Assert.Equal("TurnOff", device.LastCommand);
+        Check.That(device.LastCommand).IsEqualTo("TurnOff");
     }
 
     [Fact]
-    public async Task A_broken_device_surfaces_as_a_device_failure_with_the_leds_off() {
+    public void A_broken_device_surfaces_as_a_device_failure_with_the_leds_off() {
         FakeLuxaforDevice device = new() { ThrowOnCall = 3 };
 
-        DeviceCommandFailedException thrown = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), CancellationToken.None));
+        DeviceCommandFailedException thrown = Check.ThatCode(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), CancellationToken.None)).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.IsType<InvalidOperationException>(thrown.InnerException);
+        Check.That(thrown.InnerException).IsInstanceOf<InvalidOperationException>();
         // The broken frame is the third call; the clean-up that follows went through.
-        Assert.Equal([Frame(1), Frame(2), "TurnOff"], device.Commands);
+        Check.That(device.Commands).ContainsExactly([Frame(1), Frame(2), "TurnOff"]);
     }
 
     /// <summary>
@@ -73,22 +73,22 @@ public sealed class DeviceIdentificationWaveTests {
     ///     the first refusal and reported it, rather than sending its whole sequence into the void.
     /// </summary>
     [Fact]
-    public async Task A_refused_frame_stops_the_wave() {
+    public void A_refused_frame_stops_the_wave() {
         FakeLuxaforDevice device = new() { RefuseFromCall = 2 };
 
-        await Assert.ThrowsAsync<DeviceCommandFailedException>(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), CancellationToken.None));
+        Check.ThatCode(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), CancellationToken.None)).Throws<DeviceCommandFailedException>();
 
-        Assert.Equal([Frame(1)], device.Commands);
+        Check.That(device.Commands).ContainsExactly([Frame(1)]);
     }
 
     [Fact]
-    public async Task A_device_that_cannot_switch_off_after_a_complete_wave_is_a_device_failure() {
+    public void A_device_that_cannot_switch_off_after_a_complete_wave_is_a_device_failure() {
         FakeLuxaforDevice device = new() { RefuseFromCall = FramesPerWave + 1 };
 
-        DeviceCommandFailedException thrown = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), CancellationToken.None));
+        DeviceCommandFailedException thrown = Check.ThatCode(() => DeviceIdentificationWave.PlayAsync(device, new InstantDelay(), CancellationToken.None)).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Equal("The Luxafor device refused to turn its LEDs off.", thrown.Message);
-        Assert.Equal(FramesPerWave, device.Commands.Count);
+        Check.That(thrown.Message).IsEqualTo("The Luxafor device refused to turn its LEDs off.");
+        Check.That(device.Commands.Count).IsEqualTo(FramesPerWave);
     }
 
 }
