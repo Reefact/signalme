@@ -24,7 +24,7 @@ public sealed class ManualCommandParserTests {
     [InlineData("do-not-disturb", UserStatus.DoNotDisturb)]
     [InlineData("dnd", UserStatus.DoNotDisturb)]
     public void A_status_or_one_of_its_aliases_sets_the_desired_status(string line, UserStatus expected) {
-        Assert.Equal(new ManualCommand.SetStatus(expected), ManualCommandParser.Parse(line));
+        Check.That(ManualCommandParser.Parse(line)).IsEqualTo(new ManualCommand.SetStatus(expected));
     }
 
     [Theory]
@@ -35,19 +35,19 @@ public sealed class ManualCommandParserTests {
     [InlineData("alerting", UserMood.Alerting)]
     [InlineData("ready", UserMood.Ready)]
     public void A_mood_plays_a_signal(string line, UserMood expected) {
-        Assert.Equal(new ManualCommand.PlaySignal(expected), ManualCommandParser.Parse(line));
+        Check.That(ManualCommandParser.Parse(line)).IsEqualTo(new ManualCommand.PlaySignal(expected));
     }
 
     [Theory]
     [MemberData(nameof(SelectableStatuses))]
     public void Every_status_except_away_is_reachable_from_the_prompt(UserStatus status) {
-        Assert.Equal(new ManualCommand.SetStatus(status), ManualCommandParser.Parse(UserStatusConverter.ToCanonicalValue(status)));
+        Check.That(ManualCommandParser.Parse(UserStatusConverter.ToCanonicalValue(status))).IsEqualTo(new ManualCommand.SetStatus(status));
     }
 
     [Theory]
     [MemberData(nameof(AllMoods))]
     public void Every_mood_is_reachable_from_the_prompt(UserMood mood) {
-        Assert.Equal(new ManualCommand.PlaySignal(mood), ManualCommandParser.Parse(UserMoodConverter.ToCanonicalValue(mood)));
+        Check.That(ManualCommandParser.Parse(UserMoodConverter.ToCanonicalValue(mood))).IsEqualTo(new ManualCommand.PlaySignal(mood));
     }
 
     /// <summary>
@@ -56,8 +56,12 @@ public sealed class ManualCommandParserTests {
     /// </summary>
     [Fact]
     public void Every_advertised_status_and_mood_is_a_command() {
-        Assert.All(UserStatusConverter.KnownValues, value => Assert.IsType<ManualCommand.SetStatus>(ManualCommandParser.Parse(value)));
-        Assert.All(UserMoodConverter.KnownValues, value => Assert.IsType<ManualCommand.PlaySignal>(ManualCommandParser.Parse(value)));
+        foreach (string value in UserStatusConverter.KnownValues) {
+            Check.That(ManualCommandParser.Parse(value)).IsInstanceOf<ManualCommand.SetStatus>();
+        }
+        foreach (string value in UserMoodConverter.KnownValues) {
+            Check.That(ManualCommandParser.Parse(value)).IsInstanceOf<ManualCommand.PlaySignal>();
+        }
     }
 
     /// <summary>
@@ -67,7 +71,7 @@ public sealed class ManualCommandParserTests {
     [InlineData("away")]
     [InlineData(" AWAY ")]
     public void Away_is_not_a_command(string line) {
-        Assert.Equal(new ManualCommand.Unknown(line.Trim()), ManualCommandParser.Parse(line));
+        Check.That(ManualCommandParser.Parse(line)).IsEqualTo(new ManualCommand.Unknown(line.Trim()));
     }
 
     #endregion
@@ -76,17 +80,17 @@ public sealed class ManualCommandParserTests {
 
     [Fact]
     public void Status_asks_what_is_shown() {
-        Assert.Equal(new ManualCommand.ShowStatus(), ManualCommandParser.Parse("status"));
+        Check.That(ManualCommandParser.Parse("status")).IsEqualTo(new ManualCommand.ShowStatus());
     }
 
     [Fact]
     public void Off_turns_off() {
-        Assert.Equal(new ManualCommand.TurnOff(), ManualCommandParser.Parse("off"));
+        Check.That(ManualCommandParser.Parse("off")).IsEqualTo(new ManualCommand.TurnOff());
     }
 
     [Fact]
     public void Help_lists_the_commands() {
-        Assert.Equal(new ManualCommand.Help(), ManualCommandParser.Parse("help"));
+        Check.That(ManualCommandParser.Parse("help")).IsEqualTo(new ManualCommand.Help());
     }
 
     #endregion
@@ -98,7 +102,7 @@ public sealed class ManualCommandParserTests {
     [InlineData("   ")]
     [InlineData("\t")]
     public void A_blank_line_is_empty(string line) {
-        Assert.Equal(new ManualCommand.Empty(), ManualCommandParser.Parse(line));
+        Check.That(ManualCommandParser.Parse(line)).IsEqualTo(new ManualCommand.Empty());
     }
 
     [Theory]
@@ -107,21 +111,21 @@ public sealed class ManualCommandParserTests {
     [InlineData("\tDo-Not-Disturb\t", UserStatus.DoNotDisturb)]
     [InlineData("  FREE  ", UserStatus.Available)]
     public void Surrounding_spaces_and_the_case_are_forgiven_for_a_status(string line, UserStatus expected) {
-        Assert.Equal(new ManualCommand.SetStatus(expected), ManualCommandParser.Parse(line));
+        Check.That(ManualCommandParser.Parse(line)).IsEqualTo(new ManualCommand.SetStatus(expected));
     }
 
     [Theory]
     [InlineData("  Happy  ", UserMood.Happy)]
     [InlineData("ALERTING", UserMood.Alerting)]
     public void Surrounding_spaces_and_the_case_are_forgiven_for_a_signal(string line, UserMood expected) {
-        Assert.Equal(new ManualCommand.PlaySignal(expected), ManualCommandParser.Parse(line));
+        Check.That(ManualCommandParser.Parse(line)).IsEqualTo(new ManualCommand.PlaySignal(expected));
     }
 
     [Fact]
     public void Surrounding_spaces_and_the_case_are_forgiven_for_a_keyword() {
-        Assert.Equal(new ManualCommand.ShowStatus(), ManualCommandParser.Parse(" STATUS "));
-        Assert.Equal(new ManualCommand.TurnOff(), ManualCommandParser.Parse("Off"));
-        Assert.Equal(new ManualCommand.Help(), ManualCommandParser.Parse("\tHELP"));
+        Check.That(ManualCommandParser.Parse(" STATUS ")).IsEqualTo(new ManualCommand.ShowStatus());
+        Check.That(ManualCommandParser.Parse("Off")).IsEqualTo(new ManualCommand.TurnOff());
+        Check.That(ManualCommandParser.Parse("\tHELP")).IsEqualTo(new ManualCommand.Help());
     }
 
     [Theory]
@@ -130,7 +134,7 @@ public sealed class ManualCommandParserTests {
     [InlineData("--mode")]
     [InlineData("help me")]
     public void Anything_else_is_unknown(string line) {
-        Assert.Equal(new ManualCommand.Unknown(line), ManualCommandParser.Parse(line));
+        Check.That(ManualCommandParser.Parse(line)).IsEqualTo(new ManualCommand.Unknown(line));
     }
 
     /// <summary>
@@ -139,12 +143,12 @@ public sealed class ManualCommandParserTests {
     /// </summary>
     [Fact]
     public void An_unknown_command_carries_what_was_typed_without_its_surrounding_spaces() {
-        Assert.Equal(new ManualCommand.Unknown("Buzy"), ManualCommandParser.Parse("  Buzy  "));
+        Check.That(ManualCommandParser.Parse("  Buzy  ")).IsEqualTo(new ManualCommand.Unknown("Buzy"));
     }
 
     [Fact]
     public void A_null_line_is_refused() {
-        Assert.Throws<ArgumentNullException>(() => ManualCommandParser.Parse(null!));
+        Check.ThatCode(() => ManualCommandParser.Parse(null!)).Throws<ArgumentNullException>();
     }
 
     #endregion

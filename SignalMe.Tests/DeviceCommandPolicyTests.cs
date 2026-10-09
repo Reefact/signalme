@@ -18,25 +18,25 @@ public sealed class DeviceCommandPolicyTests {
 
         device.SetColorOrThrow(BrightColor.Red);
 
-        Assert.Equal("SetColor(#FF0000)", device.LastCommand);
+        Check.That(device.LastCommand).IsEqualTo("SetColor(#FF0000)");
     }
 
     [Fact]
     public void SetColorOrThrow_throws_when_the_device_refuses() {
         FakeLuxaforDevice device = new() { RefuseFromCall = 1 };
 
-        DeviceCommandFailedException exception = Assert.Throws<DeviceCommandFailedException>(() => device.SetColorOrThrow(BrightColor.Red));
+        DeviceCommandFailedException exception = Check.ThatCode(() => device.SetColorOrThrow(BrightColor.Red)).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Contains("#FF0000", exception.Message);
+        Check.That(exception.Message).Contains("#FF0000");
     }
 
     [Fact]
     public void SetColorOrThrow_names_the_operation_when_the_caller_provides_one() {
         FakeLuxaforDevice device = new() { RefuseFromCall = 1 };
 
-        DeviceCommandFailedException exception = Assert.Throws<DeviceCommandFailedException>(() => device.SetColorOrThrow(BrightColor.Red, "display the 'Busy' status"));
+        DeviceCommandFailedException exception = Check.ThatCode(() => device.SetColorOrThrow(BrightColor.Red, "display the 'Busy' status")).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Equal("The Luxafor device refused to display the 'Busy' status.", exception.Message);
+        Check.That(exception.Message).IsEqualTo("The Luxafor device refused to display the 'Busy' status.");
     }
 
     [Fact]
@@ -45,16 +45,16 @@ public sealed class DeviceCommandPolicyTests {
 
         device.TurnOffOrThrow();
 
-        Assert.Equal("TurnOff", device.LastCommand);
+        Check.That(device.LastCommand).IsEqualTo("TurnOff");
     }
 
     [Fact]
     public void TurnOffOrThrow_throws_when_the_device_refuses() {
         FakeLuxaforDevice device = new() { RefuseFromCall = 1 };
 
-        DeviceCommandFailedException exception = Assert.Throws<DeviceCommandFailedException>(() => device.TurnOffOrThrow());
+        DeviceCommandFailedException exception = Check.ThatCode(() => device.TurnOffOrThrow()).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Equal("The Luxafor device refused to turn its LEDs off.", exception.Message);
+        Check.That(exception.Message).IsEqualTo("The Luxafor device refused to turn its LEDs off.");
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public sealed class DeviceCommandPolicyTests {
 
         device.SendOrThrow(command);
 
-        Assert.Equal($"Send({command})", device.LastCommand);
+        Check.That(device.LastCommand).IsEqualTo($"Send({command})");
     }
 
     [Fact]
@@ -72,19 +72,19 @@ public sealed class DeviceCommandPolicyTests {
         FakeLuxaforDevice device  = new() { RefuseFromCall = 1 };
         LightingCommand   command = LightingCommand.CreateSetColorCommand(TargetedLeds.FromLuxCode(3), BrightColor.Green);
 
-        DeviceCommandFailedException exception = Assert.Throws<DeviceCommandFailedException>(() => device.SendOrThrow(command));
+        DeviceCommandFailedException exception = Check.ThatCode(() => device.SendOrThrow(command)).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Contains(command.ToString(), exception.Message);
+        Check.That(exception.Message).Contains(command.ToString());
     }
 
     [Fact]
     public void A_device_exception_is_wrapped_with_the_cause_inside() {
         FakeLuxaforDevice device = new() { ThrowOnCall = 1 };
 
-        DeviceCommandFailedException exception = Assert.Throws<DeviceCommandFailedException>(() => device.SetColorOrThrow(BrightColor.Red));
+        DeviceCommandFailedException exception = Check.ThatCode(() => device.SetColorOrThrow(BrightColor.Red)).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Equal("The Luxafor device could not be reached: InvalidOperationException: USB write failed", exception.Message);
-        Assert.Same(device.Failure, exception.InnerException);
+        Check.That(exception.Message).IsEqualTo("The Luxafor device could not be reached: InvalidOperationException: USB write failed");
+        Check.That(exception.InnerException).IsSameReferenceAs(device.Failure);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public sealed class DeviceCommandPolicyTests {
     public void A_cancellation_thrown_by_the_device_is_not_a_device_failure() {
         FakeLuxaforDevice device = new() { ThrowOnCall = 1, Failure = new OperationCanceledException() };
 
-        Assert.Throws<OperationCanceledException>(() => device.SetColorOrThrow(BrightColor.Red));
+        Check.ThatCode(() => device.SetColorOrThrow(BrightColor.Red)).Throws<OperationCanceledException>();
     }
 
 }

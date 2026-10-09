@@ -39,9 +39,9 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync(option);
 
-        Assert.Equal(ExitCode.Success, exitCode);
-        Assert.Equal(0, signalme.Discovery.Calls);
-        Assert.Equal(0, signalme.Console.Reads);
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Discovery.Calls).IsEqualTo(0);
+        Check.That(signalme.Console.Reads).IsEqualTo(0);
     }
 
     [Theory]
@@ -52,14 +52,14 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync(option);
 
-        Assert.Equal(ExitCode.Success, exitCode);
-        Assert.Equal(0, signalme.Discovery.Calls);
-        Assert.Equal(0, signalme.Console.Reads);
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Discovery.Calls).IsEqualTo(0);
+        Check.That(signalme.Console.Reads).IsEqualTo(0);
     }
 
     [Fact]
     public void The_version_is_the_informational_version_of_the_assembly() {
-        Assert.StartsWith("2.0.0", RunCommand.Version, StringComparison.Ordinal);
+        Check.That(RunCommand.Version).StartsWith("2.0.0");
     }
 
     #endregion
@@ -74,11 +74,11 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync(option, "foo");
 
-        Assert.Equal(ExitCode.UsageError, exitCode);
-        Assert.Equal(["Unknown mode: 'foo'.", "Available modes: manual"], signalme.Console.Error);
-        Assert.Empty(signalme.Console.Output);
-        Assert.Equal(0, signalme.Discovery.Calls);
-        Assert.Equal(0, signalme.Console.Reads);
+        Check.That(exitCode).IsEqualTo(ExitCode.UsageError);
+        Check.That(signalme.Console.Error).ContainsExactly(["Unknown mode: 'foo'.", "Available modes: manual"]);
+        Check.That(signalme.Console.Output).IsEmpty();
+        Check.That(signalme.Discovery.Calls).IsEqualTo(0);
+        Check.That(signalme.Console.Reads).IsEqualTo(0);
     }
 
     [Fact]
@@ -87,10 +87,10 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync("--bogus");
 
-        Assert.Equal(ExitCode.UsageError, exitCode);
-        Assert.Equal(["Unknown option: '--bogus'.", UsageHint], signalme.Console.Error);
-        Assert.Empty(signalme.Console.Output);
-        Assert.Equal(0, signalme.Discovery.Calls);
+        Check.That(exitCode).IsEqualTo(ExitCode.UsageError);
+        Check.That(signalme.Console.Error).ContainsExactly(["Unknown option: '--bogus'.", UsageHint]);
+        Check.That(signalme.Console.Output).IsEmpty();
+        Check.That(signalme.Discovery.Calls).IsEqualTo(0);
     }
 
     [Fact]
@@ -99,9 +99,9 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync("--", "foo");
 
-        Assert.Equal(ExitCode.UsageError, exitCode);
-        Assert.Equal(["Unexpected argument: 'foo'.", UsageHint], signalme.Console.Error);
-        Assert.Equal(0, signalme.Discovery.Calls);
+        Check.That(exitCode).IsEqualTo(ExitCode.UsageError);
+        Check.That(signalme.Console.Error).ContainsExactly(["Unexpected argument: 'foo'.", UsageHint]);
+        Check.That(signalme.Discovery.Calls).IsEqualTo(0);
     }
 
     [Theory]
@@ -112,10 +112,10 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync(argument);
 
-        Assert.Equal(ExitCode.UsageError, exitCode);
-        Assert.Equal(2, signalme.Console.Error.Count);
-        Assert.Equal(UsageHint, signalme.Console.Error[^1]);
-        Assert.Equal(0, signalme.Discovery.Calls);
+        Check.That(exitCode).IsEqualTo(ExitCode.UsageError);
+        Check.That(signalme.Console.Error.Count).IsEqualTo(2);
+        Check.That(signalme.Console.Error[^1]).IsEqualTo(UsageHint);
+        Check.That(signalme.Discovery.Calls).IsEqualTo(0);
     }
 
     /// <summary>
@@ -129,9 +129,9 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync("extra");
 
-        Assert.Equal(ExitCode.UsageError, exitCode);
-        Assert.Equal(["Unknown command 'extra'.", UsageHint], signalme.Console.Error);
-        Assert.Equal(0, signalme.Discovery.Calls);
+        Check.That(exitCode).IsEqualTo(ExitCode.UsageError);
+        Check.That(signalme.Console.Error).ContainsExactly(["Unknown command 'extra'.", UsageHint]);
+        Check.That(signalme.Discovery.Calls).IsEqualTo(0);
     }
 
     #endregion
@@ -147,11 +147,11 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync();
 
-        Assert.Equal(ExitCode.DeviceError, exitCode);
-        Assert.Equal(["No Luxafor device detected.", "Check that a Luxafor device is connected to a USB port."], signalme.Console.Error);
-        Assert.Equal([Banner], signalme.Console.Output);
-        Assert.Equal(1, signalme.Discovery.Calls);
-        Assert.Equal(0, signalme.Console.Reads);
+        Check.That(exitCode).IsEqualTo(ExitCode.DeviceError);
+        Check.That(signalme.Console.Error).ContainsExactly(["No Luxafor device detected.", "Check that a Luxafor device is connected to a USB port."]);
+        Check.That(signalme.Console.Output).ContainsExactly([Banner]);
+        Check.That(signalme.Discovery.Calls).IsEqualTo(1);
+        Check.That(signalme.Console.Reads).IsEqualTo(0);
     }
 
     [Fact]
@@ -161,13 +161,13 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync();
 
-        Assert.Equal(ExitCode.DeviceError, exitCode);
-        Assert.Equal([
+        Check.That(exitCode).IsEqualTo(ExitCode.DeviceError);
+        Check.That(signalme.Console.Error).ContainsExactly([
             "Could not reach a Luxafor device: InvalidOperationException: HID unavailable",
             "The device may be unplugged or already held by another application. Luxafor devices are driven through the Windows HID stack and cannot be reached on other systems."
-        ], signalme.Console.Error);
-        Assert.Equal([Banner], signalme.Console.Output);
-        Assert.Equal(0, signalme.Console.Reads);
+        ]);
+        Check.That(signalme.Console.Output).ContainsExactly([Banner]);
+        Check.That(signalme.Console.Reads).IsEqualTo(0);
     }
 
     [Fact]
@@ -177,11 +177,11 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync();
 
-        Assert.Equal(ExitCode.DeviceError, exitCode);
-        Assert.Equal([Banner, "Luxafor device detected.", "Mode: manual", "SignalMe stopped."], signalme.Console.Output);
-        Assert.Equal(["The Luxafor device refused to turn its LEDs off.", "The Luxafor device refused to turn its LEDs off."], signalme.Console.Error);
-        Assert.Equal(0, signalme.Console.Reads);
-        Assert.True(device.IsDisposed);
+        Check.That(exitCode).IsEqualTo(ExitCode.DeviceError);
+        Check.That(signalme.Console.Output).ContainsExactly([Banner, "Luxafor device detected.", "Mode: manual", "SignalMe stopped."]);
+        Check.That(signalme.Console.Error).ContainsExactly(["The Luxafor device refused to turn its LEDs off.", "The Luxafor device refused to turn its LEDs off."]);
+        Check.That(signalme.Console.Reads).IsEqualTo(0);
+        Check.That(device.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -195,13 +195,13 @@ public sealed class CommandLineTests {
         signalme.DeviceMonitor.Disconnect();
         int exitCode = await run;
 
-        Assert.Equal(ExitCode.DeviceError, exitCode);
-        Assert.Same(device, signalme.MonitoredDevice);
-        Assert.Equal(["Luxafor device disconnected."], signalme.Console.Error);
-        Assert.Equal("SignalMe stopped.", signalme.Console.Output[^1]);
-        Assert.Equal("SetColor(#FFFF00)", device.LastCommand);
-        Assert.True(device.IsDisposed);
-        Assert.True(signalme.DeviceMonitor.IsDisposed);
+        Check.That(exitCode).IsEqualTo(ExitCode.DeviceError);
+        Check.That(signalme.MonitoredDevice).IsSameReferenceAs(device);
+        Check.That(signalme.Console.Error).ContainsExactly(["Luxafor device disconnected."]);
+        Check.That(signalme.Console.Output[^1]).IsEqualTo("SignalMe stopped.");
+        Check.That(device.LastCommand).IsEqualTo("SetColor(#FFFF00)");
+        Check.That(device.IsDisposed).IsTrue();
+        Check.That(signalme.DeviceMonitor.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -212,11 +212,11 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync();
 
-        Assert.Equal(ExitCode.UnexpectedError, exitCode);
-        Assert.Equal(["signalme: InvalidOperationException: no window"], signalme.Console.Error);
-        Assert.Equal("SignalMe stopped.", signalme.Console.Output[^1]);
-        Assert.Equal("TurnOff", device.LastCommand);
-        Assert.True(device.IsDisposed);
+        Check.That(exitCode).IsEqualTo(ExitCode.UnexpectedError);
+        Check.That(signalme.Console.Error).ContainsExactly(["signalme: InvalidOperationException: no window"]);
+        Check.That(signalme.Console.Output[^1]).IsEqualTo("SignalMe stopped.");
+        Check.That(device.LastCommand).IsEqualTo("TurnOff");
+        Check.That(device.IsDisposed).IsTrue();
     }
 
     #endregion
@@ -230,7 +230,7 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync();
 
-        Assert.Equal(ExitCode.Success, exitCode);
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
         string[] expected = [
             Banner,
             "Luxafor device detected.",
@@ -247,14 +247,14 @@ public sealed class CommandLineTests {
             "Stopping SignalMe...",
             "SignalMe stopped."
         ];
-        Assert.Equal(expected, signalme.Console.Output);
-        Assert.Empty(signalme.Console.Error);
-        Assert.Equal(["TurnOff", "SetColor(#FFFF00)"], device.Commands.Take(2));
-        Assert.Equal("TurnOff", device.LastCommand);
-        Assert.True(device.IsDisposed);
-        Assert.Equal(UserStatus.Busy, signalme.Store.Get());
-        Assert.True(signalme.Monitor.Started);
-        Assert.True(signalme.Monitor.IsDisposed);
+        Check.That(signalme.Console.Output).IsEqualTo(expected);
+        Check.That(signalme.Console.Error).IsEmpty();
+        Check.That(device.Commands.Take(2)).ContainsExactly(["TurnOff", "SetColor(#FFFF00)"]);
+        Check.That(device.LastCommand).IsEqualTo("TurnOff");
+        Check.That(device.IsDisposed).IsTrue();
+        Check.That(signalme.Store.Get()).IsEqualTo(UserStatus.Busy);
+        Check.That(signalme.Monitor.Started).IsTrue();
+        Check.That(signalme.Monitor.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -265,27 +265,27 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync();
 
-        Assert.Equal(ExitCode.Success, exitCode);
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
         IReadOnlyList<string> output = signalme.Console.Output;
-        Assert.Contains("2 Luxafor devices detected.", output);
-        Assert.Contains(output, block => block.Contains(FirstId, StringComparison.Ordinal) && block.Contains(SecondId, StringComparison.Ordinal));
-        Assert.Contains("Identifying device #1...", output);
-        Assert.Contains("Identifying device #2...", output);
-        Assert.Contains($"Device selected: {SecondId}", output);
-        Assert.Contains("Mode: manual", output);
-        Assert.True(output.ToList().IndexOf($"Device selected: {SecondId}") < output.ToList().IndexOf("Mode: manual"));
-        Assert.Contains("Status: busy", output);
-        Assert.Empty(signalme.Console.Error);
+        Check.That(output).Contains("2 Luxafor devices detected.");
+        Check.That(output).HasElementThatMatches(block => block.Contains(FirstId, StringComparison.Ordinal) && block.Contains(SecondId, StringComparison.Ordinal));
+        Check.That(output).Contains("Identifying device #1...");
+        Check.That(output).Contains("Identifying device #2...");
+        Check.That(output).Contains($"Device selected: {SecondId}");
+        Check.That(output).Contains("Mode: manual");
+        Check.That(output.ToList().IndexOf($"Device selected: {SecondId}") < output.ToList().IndexOf("Mode: manual")).IsTrue();
+        Check.That(output).Contains("Status: busy");
+        Check.That(signalme.Console.Error).IsEmpty();
 
         // The declined device only ever played its wave, and was released as soon as the other was chosen.
-        Assert.Equal(Wave, first.Commands);
-        Assert.True(first.IsDisposed);
+        Check.That(first.Commands).IsEqualTo(Wave);
+        Check.That(first.IsDisposed).IsTrue();
 
         // The chosen one played its wave, was driven through the run, and ended off and released.
-        Assert.Equal(Wave, second.Commands.Take(Wave.Length));
-        Assert.Contains("SetColor(#FFFF00)", second.Commands);
-        Assert.Equal("TurnOff", second.LastCommand);
-        Assert.True(second.IsDisposed);
+        Check.That(second.Commands.Take(Wave.Length)).IsEqualTo(Wave);
+        Check.That(second.Commands).Contains("SetColor(#FFFF00)");
+        Check.That(second.LastCommand).IsEqualTo("TurnOff");
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     /// <summary>
@@ -298,10 +298,10 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync("--mode", " MANUAL ");
 
-        Assert.Equal(ExitCode.Success, exitCode);
-        Assert.Contains("Mode: manual", signalme.Console.Output);
-        Assert.Contains("Mode: manual" + NewLine + "Desired status: none" + NewLine + "Effective status: off" + NewLine + "Session: active", signalme.Console.Output);
-        Assert.DoesNotContain(signalme.Console.Output, block => block.Contains("MANUAL", StringComparison.Ordinal));
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Console.Output).Contains("Mode: manual");
+        Check.That(signalme.Console.Output).Contains("Mode: manual" + NewLine + "Desired status: none" + NewLine + "Effective status: off" + NewLine + "Session: active");
+        Check.That(signalme.Console.Output).Not.HasElementThatMatches(block => block.Contains("MANUAL", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -312,13 +312,13 @@ public sealed class CommandLineTests {
 
         int exitCode = await signalme.RunAsync();
 
-        Assert.Equal(ExitCode.Success, exitCode);
-        Assert.Equal("SignalMe stopped.", signalme.Console.Output[^1]);
-        Assert.Empty(signalme.Console.Error);
-        Assert.DoesNotContain("Mode: manual", signalme.Console.Output);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
-        Assert.False(signalme.Monitor.Started);
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Console.Output[^1]).IsEqualTo("SignalMe stopped.");
+        Check.That(signalme.Console.Error).IsEmpty();
+        Check.That(signalme.Console.Output).Not.Contains("Mode: manual");
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
+        Check.That(signalme.Monitor.Started).IsFalse();
     }
 
     #endregion
@@ -327,8 +327,8 @@ public sealed class CommandLineTests {
     public void Exit_codes_are_all_distinct() {
         int[] codes = [ExitCode.Success, ExitCode.UsageError, ExitCode.DeviceError, ExitCode.UnexpectedError];
 
-        Assert.Equal(codes.Length, codes.Distinct().Count());
-        Assert.Equal(0, ExitCode.Success);
+        Check.That(codes.Distinct().Count()).IsEqualTo(codes.Length);
+        Check.That(ExitCode.Success).IsEqualTo(0);
     }
 
     /// <summary>

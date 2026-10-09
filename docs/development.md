@@ -55,7 +55,7 @@ seam the tests replace:
 - **`FakeLuxaforDevice`** implements `ILuxaforDevice`, the interface the controller library already
   exposes, so no wrapper was needed. It records the commands it accepts and can be told to refuse them
   or to throw, which is how the device-failure paths are covered; its `Path` is settable, so the
-  selection tests can tell two devices apart.
+  selection tests can tell two devices apart, and so is `IsConnected`, so a test can unplug it.
 - **`IConsole`** / **`FakeConsole`**: every console interaction goes through `IConsole`. The fake answers
   reads from a script, then reports the end of input — or leaves a read pending until the token is
   cancelled, like a user who never presses Enter before Ctrl+C. It captures the output, the prompts and
@@ -64,6 +64,9 @@ seam the tests replace:
 - **`ISessionMonitor`** / **`FakeSessionMonitor`**: the test raises a lock or an unlock by hand, from any
   thread, and can make `Start()` flip the state, raise it, or throw — the three things the real monitor
   does when it closes the gap between construction and subscription.
+- **`IDeviceConnectionMonitor`** / **`FakeDeviceConnectionMonitor`**: the test reports the device
+  unplugged by hand, at the moment it chooses. The real monitor is tested on its own, over a check the
+  test controls and an interval of a few milliseconds.
 - **`ILuxaforDeviceDiscovery`** / **`FakeDiscovery`**, returning a list of fakes or throwing. The
   command-line tests run the real command line, `--help` to the exit code, through a `SignalMeServices`
   bag of fakes.
@@ -79,6 +82,13 @@ seam the tests replace:
 
 Tests assert the contract, not the frames: none of them pins a specific animation frame. The messages
 SignalMe prints are part of that contract and are asserted exactly.
+
+Assertions are written with [NFluent](https://www.n-fluent.net/), as in the Luxafor library:
+`Check.That(actual).IsEqualTo(expected)`, `Check.ThatCode(...).Throws<T>()`. xUnit runs the tests, its
+`Assert` is not used. One case stays outside `Check.ThatCode`: NFluent waits on asynchronous code, and a
+cancelled task that is waited on reports a generic `TaskCanceledException` instead of the exception that
+carries the reason. The few tests that check that reason capture it with xUnit's `Record.ExceptionAsync`
+and check it with NFluent.
 
 Test parallelisation is disabled for one reason — a few tests redirect the process console to assert on
 what SignalMe reports, which is process-wide state.

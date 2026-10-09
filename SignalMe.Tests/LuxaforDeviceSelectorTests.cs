@@ -41,16 +41,16 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [device]);
 
-        Assert.Same(device, selected);
-        Assert.Equal(["Luxafor device detected."], console.Output);
-        Assert.Equal(0, console.Reads);
-        Assert.Empty(device.Commands);
-        Assert.False(device.IsDisposed);
+        Check.That(selected).IsSameReferenceAs(device);
+        Check.That(console.Output).ContainsExactly(["Luxafor device detected."]);
+        Check.That(console.Reads).IsEqualTo(0);
+        Check.That(device.Commands).IsEmpty();
+        Check.That(device.IsDisposed).IsFalse();
     }
 
     [Fact]
-    public async Task An_empty_discovery_is_not_the_selector_s_to_handle() {
-        await Assert.ThrowsAsync<ArgumentException>(() => SelectAsync(new FakeConsole(), []));
+    public void An_empty_discovery_is_not_the_selector_s_to_handle() {
+        Check.ThatCode(() => SelectAsync(new FakeConsole(), [])).Throws<ArgumentException>();
     }
 
     #endregion
@@ -65,11 +65,11 @@ public sealed class LuxaforDeviceSelectorTests {
         await SelectAsync(console, [first, second]);
 
         // Under a blank line: the banner is the caller's last word before the dialog starts (spec §43).
-        Assert.Equal("", console.Output[0]);
-        Assert.Equal("2 Luxafor devices detected.", console.Output[1]);
-        Assert.Equal("", console.Output[2]);
-        Assert.Contains(FirstId, console.Output[3]);
-        Assert.Contains(SecondId, console.Output[3]);
+        Check.That(console.Output[0]).IsEqualTo("");
+        Check.That(console.Output[1]).IsEqualTo("2 Luxafor devices detected.");
+        Check.That(console.Output[2]).IsEqualTo("");
+        Check.That(console.Output[3]).Contains(FirstId);
+        Check.That(console.Output[3]).Contains(SecondId);
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public sealed class LuxaforDeviceSelectorTests {
             "│ 2 │ LONGER-ID │",
             "└───┴───────────┘"
         ];
-        Assert.Equal(string.Join(Environment.NewLine, expected), console.Output[3]);
+        Check.That(console.Output[3]).IsEqualTo(string.Join(Environment.NewLine, expected));
     }
 
     [Fact]
@@ -98,10 +98,10 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, devices);
 
-        Assert.Same(devices[9], selected);
-        Assert.Contains("│  # │ Id    │", console.Output[3]);
-        Assert.Contains("│  1 │ dev1  │", console.Output[3]);
-        Assert.Contains("│ 10 │ dev10 │", console.Output[3]);
+        Check.That(selected).IsSameReferenceAs(devices[9]);
+        Check.That(console.Output[3]).Contains("│  # │ Id    │");
+        Check.That(console.Output[3]).Contains("│  1 │ dev1  │");
+        Check.That(console.Output[3]).Contains("│ 10 │ dev10 │");
     }
 
     #endregion
@@ -115,7 +115,7 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(second, selected);
+        Check.That(selected).IsSameReferenceAs(second);
         // Spaced as spec §43 draws it: a blank line under the banner, before the table, each question and
         // each announcement.
         string[] expected = [
@@ -142,7 +142,7 @@ public sealed class LuxaforDeviceSelectorTests {
             "line: ",
             $"line: Device selected: {SecondId}"
         ];
-        Assert.Equal(expected, console.Transcript);
+        Check.That(console.Transcript).IsEqualTo(expected);
     }
 
     [Fact]
@@ -152,10 +152,10 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(second, selected);
-        Assert.True(first.IsDisposed);
-        Assert.False(second.IsDisposed);
-        Assert.Equal($"Device selected: {SecondId}", console.Output[^1]);
+        Check.That(selected).IsSameReferenceAs(second);
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsFalse();
+        Check.That(console.Output[^1]).IsEqualTo($"Device selected: {SecondId}");
     }
 
     [Fact]
@@ -165,9 +165,9 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Empty(first.Commands);
-        Assert.Equal(Wave, second.Commands);
-        Assert.Equal("TurnOff", ((FakeLuxaforDevice)selected).LastCommand);
+        Check.That(first.Commands).IsEmpty();
+        Check.That(second.Commands).IsEqualTo(Wave);
+        Check.That(((FakeLuxaforDevice)selected).LastCommand).IsEqualTo("TurnOff");
     }
 
     [Theory]
@@ -178,13 +178,13 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(second, selected);
-        Assert.Equal(["Select device: ", "Select device: ", "Use this device? [Y/N]: "], console.Prompts);
+        Check.That(selected).IsSameReferenceAs(second);
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Select device: ", "Use this device? [Y/N]: "]);
         // The refusal follows the answer directly; the question comes back under a blank line (spec §7.2).
-        Assert.Equal(["prompt: Select device: ", $"read: {input}", "line: Invalid device number.", "line: ", "prompt: Select device: ", "read: 2"], console.Transcript.Skip(5).Take(6));
-        Assert.Equal(["Invalid device number.", "Identifying device #2...", $"Device selected: {SecondId}"], console.Output.Skip(4).Where(block => block.Length > 0));
+        Check.That(console.Transcript.Skip(5).Take(6)).ContainsExactly(["prompt: Select device: ", $"read: {input}", "line: Invalid device number.", "line: ", "prompt: Select device: ", "read: 2"]);
+        Check.That(console.Output.Skip(4).Where(block => block.Length > 0)).ContainsExactly(["Invalid device number.", "Identifying device #2...", $"Device selected: {SecondId}"]);
         // Nothing was identified on a refused number: no wave went out.
-        Assert.Empty(first.Commands);
+        Check.That(first.Commands).IsEmpty();
     }
 
     [Fact]
@@ -194,12 +194,12 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(first, selected);
-        Assert.Equal(["Select device: ", "Use this device? [Y/N]: ", "Select device: ", "Use this device? [Y/N]: "], console.Prompts);
-        Assert.Equal([.. Wave, .. Wave], first.Commands);
-        Assert.Empty(second.Commands);
-        Assert.True(second.IsDisposed);
-        Assert.False(first.IsDisposed);
+        Check.That(selected).IsSameReferenceAs(first);
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Use this device? [Y/N]: ", "Select device: ", "Use this device? [Y/N]: "]);
+        Check.That(first.Commands).ContainsExactly([.. Wave, .. Wave]);
+        Check.That(second.Commands).IsEmpty();
+        Check.That(second.IsDisposed).IsTrue();
+        Check.That(first.IsDisposed).IsFalse();
     }
 
     [Theory]
@@ -212,7 +212,7 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(first, selected);
+        Check.That(selected).IsSameReferenceAs(first);
     }
 
     [Theory]
@@ -224,7 +224,7 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(second, selected);
+        Check.That(selected).IsSameReferenceAs(second);
     }
 
     [Fact]
@@ -234,10 +234,10 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(first, selected);
-        Assert.Equal(["Select device: ", "Use this device? [Y/N]: ", "Use this device? [Y/N]: ", "Use this device? [Y/N]: ", "Use this device? [Y/N]: "], console.Prompts);
+        Check.That(selected).IsSameReferenceAs(first);
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Use this device? [Y/N]: ", "Use this device? [Y/N]: ", "Use this device? [Y/N]: ", "Use this device? [Y/N]: "]);
         // Asked again, not identified again: one wave only.
-        Assert.Equal(Wave, first.Commands);
+        Check.That(first.Commands).IsEqualTo(Wave);
     }
 
     #endregion
@@ -252,14 +252,15 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(second, selected);
+        Check.That(selected).IsSameReferenceAs(second);
         // Two frames got through, then the clean-up; the LEDs were off before the question came back.
-        Assert.Equal([Frame(1), Frame(2), "TurnOff"], first.Commands);
-        Assert.Equal(["Select device: ", "Select device: ", "Use this device? [Y/N]: "], console.Prompts);
-        string error = Assert.Single(console.Error);
-        Assert.Contains("USB write failed", error);
-        Assert.Equal(["line: Identifying device #1...", $"error: {error}", "line: ", "prompt: Select device: "], console.Transcript.Skip(8).Take(4));
-        Assert.True(first.IsDisposed);
+        Check.That(first.Commands).ContainsExactly([Frame(1), Frame(2), "TurnOff"]);
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Select device: ", "Use this device? [Y/N]: "]);
+        Check.That(console.Error).HasSize(1);
+        string error = console.Error[0];
+        Check.That(error).Contains("USB write failed");
+        Check.That(console.Transcript.Skip(8).Take(4)).ContainsExactly(["line: Identifying device #1...", $"error: {error}", "line: ", "prompt: Select device: "]);
+        Check.That(first.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -270,9 +271,9 @@ public sealed class LuxaforDeviceSelectorTests {
 
         ILuxaforDevice selected = await SelectAsync(console, [first, second]);
 
-        Assert.Same(second, selected);
-        Assert.Equal(["The Luxafor device refused to run the command \"Set LED n° 1 color to #FFFFFF\"."], console.Error);
-        Assert.Equal(["Select device: ", "Select device: ", "Use this device? [Y/N]: "], console.Prompts);
+        Check.That(selected).IsSameReferenceAs(second);
+        Check.That(console.Error).ContainsExactly(["The Luxafor device refused to run the command \"Set LED n° 1 color to #FFFFFF\"."]);
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Select device: ", "Use this device? [Y/N]: "]);
     }
 
     /// <summary>
@@ -281,21 +282,21 @@ public sealed class LuxaforDeviceSelectorTests {
     ///     device it knows nothing about.
     /// </summary>
     [Fact]
-    public async Task Cancelling_after_a_device_refused_to_switch_off_retries_the_turn_off_on_the_way_out_and_reports_it() {
+    public void Cancelling_after_a_device_refused_to_switch_off_retries_the_turn_off_on_the_way_out_and_reports_it() {
         (FakeLuxaforDevice first, FakeLuxaforDevice second) = TwoDevices();
         first.RefuseFromCall = Wave.Length; // the wave's final turn-off, and everything after it
         FakeConsole console = new("1");
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SelectAsync(console, [first, second]));
+        Check.ThatCode(() => SelectAsync(console, [first, second])).Throws<OperationCanceledException>();
 
-        Assert.Equal(["Select device: ", "Select device: "], console.Prompts);
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Select device: "]);
         // The wave's own refusal first, then the retry's: two attempts, both reported.
-        Assert.Equal(["The Luxafor device refused to turn its LEDs off.", "The Luxafor device refused to turn its LEDs off."], console.Error);
+        Check.That(console.Error).ContainsExactly(["The Luxafor device refused to turn its LEDs off.", "The Luxafor device refused to turn its LEDs off."]);
         // Every frame got through; no turn-off ever did.
-        Assert.Equal(Wave[..^1], first.Commands);
-        Assert.Empty(second.Commands);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
+        Check.That(first.Commands).IsEqualTo(Wave[..^1]);
+        Check.That(second.Commands).IsEmpty();
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     #endregion
@@ -312,12 +313,12 @@ public sealed class LuxaforDeviceSelectorTests {
         await console.InputAwaited;
         await cancellation.CancelAsync();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => selecting);
-        Assert.Equal(["Select device: ", "Use this device? [Y/N]: ", "Select device: "], console.Prompts);
-        Assert.Equal("TurnOff", first.LastCommand);
-        Assert.Empty(second.Commands);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
+        Check.ThatCode(() => selecting).Throws<OperationCanceledException>();
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Use this device? [Y/N]: ", "Select device: "]);
+        Check.That(first.LastCommand).IsEqualTo("TurnOff");
+        Check.That(second.Commands).IsEmpty();
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -330,55 +331,55 @@ public sealed class LuxaforDeviceSelectorTests {
         await console.InputAwaited;
         await cancellation.CancelAsync();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => selecting);
-        Assert.Equal(["Select device: ", "Use this device? [Y/N]: "], console.Prompts);
+        Check.ThatCode(() => selecting).Throws<OperationCanceledException>();
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Use this device? [Y/N]: "]);
         // The wave's own turn-off is the only one: a device known to be off is not told again.
-        Assert.Equal(Wave, first.Commands);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
+        Check.That(first.Commands).IsEqualTo(Wave);
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     [Fact]
-    public async Task Cancelling_during_the_wave_leaves_the_device_off_and_disposes_every_device() {
+    public void Cancelling_during_the_wave_leaves_the_device_off_and_disposes_every_device() {
         using CancellationTokenSource cancellation = new();
         (FakeLuxaforDevice first, FakeLuxaforDevice second) = TwoDevices();
         InstantDelay delay   = new() { OnWait = wait => { if (wait == 3) { cancellation.Cancel(); } } };
         FakeConsole  console = new("1", "y");
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SelectAsync(console, [first, second], delay, cancellation.Token));
+        Check.ThatCode(() => SelectAsync(console, [first, second], delay, cancellation.Token)).Throws<OperationCanceledException>();
 
         // Three frames went out before the cut; never asked whether to keep a device it could not show.
-        Assert.Equal(3, first.Commands.Count(command => command.StartsWith("Send(", StringComparison.Ordinal)));
-        Assert.Equal("TurnOff", first.LastCommand);
-        Assert.Equal(["Select device: "], console.Prompts);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
+        Check.That(first.Commands.Count(command => command.StartsWith("Send(", StringComparison.Ordinal))).IsEqualTo(3);
+        Check.That(first.LastCommand).IsEqualTo("TurnOff");
+        Check.That(console.Prompts).ContainsExactly(["Select device: "]);
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     [Fact]
-    public async Task An_input_that_ends_while_a_number_is_awaited_is_a_cancellation() {
+    public void An_input_that_ends_while_a_number_is_awaited_is_a_cancellation() {
         (FakeLuxaforDevice first, FakeLuxaforDevice second) = TwoDevices();
         FakeConsole console = new();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SelectAsync(console, [first, second]));
+        Check.ThatCode(() => SelectAsync(console, [first, second])).Throws<OperationCanceledException>();
 
-        Assert.Equal(["Select device: "], console.Prompts);
-        Assert.Empty(first.Commands);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
+        Check.That(console.Prompts).ContainsExactly(["Select device: "]);
+        Check.That(first.Commands).IsEmpty();
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     [Fact]
-    public async Task An_input_that_ends_while_a_confirmation_is_awaited_is_a_cancellation() {
+    public void An_input_that_ends_while_a_confirmation_is_awaited_is_a_cancellation() {
         (FakeLuxaforDevice first, FakeLuxaforDevice second) = TwoDevices();
         FakeConsole console = new("2");
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SelectAsync(console, [first, second]));
+        Check.ThatCode(() => SelectAsync(console, [first, second])).Throws<OperationCanceledException>();
 
-        Assert.Equal(["Select device: ", "Use this device? [Y/N]: "], console.Prompts);
-        Assert.Equal(Wave, second.Commands);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
+        Check.That(console.Prompts).ContainsExactly(["Select device: ", "Use this device? [Y/N]: "]);
+        Check.That(second.Commands).IsEqualTo(Wave);
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -388,12 +389,12 @@ public sealed class LuxaforDeviceSelectorTests {
         (FakeLuxaforDevice first, FakeLuxaforDevice second) = TwoDevices();
         FakeConsole console = new("1", "y");
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SelectAsync(console, [first, second], cancellationToken: cancellation.Token));
+        Check.ThatCode(() => SelectAsync(console, [first, second], cancellationToken: cancellation.Token)).Throws<OperationCanceledException>();
 
-        Assert.Empty(console.Transcript);
-        Assert.Empty(first.Commands);
-        Assert.True(first.IsDisposed);
-        Assert.True(second.IsDisposed);
+        Check.That(console.Transcript).IsEmpty();
+        Check.That(first.Commands).IsEmpty();
+        Check.That(first.IsDisposed).IsTrue();
+        Check.That(second.IsDisposed).IsTrue();
     }
 
     [Fact]
@@ -403,10 +404,10 @@ public sealed class LuxaforDeviceSelectorTests {
         FakeLuxaforDevice device  = new();
         FakeConsole       console = new();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SelectAsync(console, [device], cancellationToken: cancellation.Token));
+        Check.ThatCode(() => SelectAsync(console, [device], cancellationToken: cancellation.Token)).Throws<OperationCanceledException>();
 
-        Assert.Empty(console.Transcript);
-        Assert.True(device.IsDisposed);
+        Check.That(console.Transcript).IsEmpty();
+        Check.That(device.IsDisposed).IsTrue();
     }
 
     #endregion

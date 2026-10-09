@@ -9,7 +9,7 @@ public sealed class UserCurrentStatusTests {
     public void No_file_means_no_status() {
         using TemporaryStatusStore statuses = new();
 
-        Assert.Null(statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsNull();
     }
 
     [Theory]
@@ -21,7 +21,7 @@ public sealed class UserCurrentStatusTests {
 
         statuses.Store.Set(status);
 
-        Assert.Equal(status, statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsEqualTo(status);
     }
 
     /// <summary>
@@ -34,17 +34,17 @@ public sealed class UserCurrentStatusTests {
         Directory.CreateDirectory(statuses.Directory);
         File.WriteAllText(statuses.FilePath, "away");
 
-        Assert.Null(statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsNull();
     }
 
     [Fact]
     public void Away_cannot_be_remembered() {
         using TemporaryStatusStore statuses = new();
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => statuses.Store.Set(UserStatus.Away));
+        Check.ThatCode(() => statuses.Store.Set(UserStatus.Away)).Throws<ArgumentOutOfRangeException>();
 
         // Rejected before anything touched the disk.
-        Assert.False(Directory.Exists(statuses.Directory));
+        Check.That(Directory.Exists(statuses.Directory)).IsFalse();
     }
 
     [Fact]
@@ -52,9 +52,9 @@ public sealed class UserCurrentStatusTests {
         using TemporaryStatusStore statuses = new();
         statuses.Store.Set(UserStatus.Busy);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => statuses.Store.Set(UserStatus.Away));
+        Check.ThatCode(() => statuses.Store.Set(UserStatus.Away)).Throws<ArgumentOutOfRangeException>();
 
-        Assert.Equal(UserStatus.Busy, statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     [Fact]
@@ -64,8 +64,8 @@ public sealed class UserCurrentStatusTests {
 
         statuses.Store.Set(null);
 
-        Assert.False(File.Exists(statuses.FilePath));
-        Assert.Null(statuses.Store.Get());
+        Check.That(File.Exists(statuses.FilePath)).IsFalse();
+        Check.That(statuses.Store.Get()).IsNull();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class UserCurrentStatusTests {
 
         statuses.Store.Set(null);
 
-        Assert.Null(statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsNull();
     }
 
     [Theory]
@@ -88,7 +88,7 @@ public sealed class UserCurrentStatusTests {
         File.WriteAllText(statuses.FilePath, content);
 
         // It used to throw, which took down every mood command until the file was deleted.
-        Assert.Null(statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsNull();
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class UserCurrentStatusTests {
         Directory.CreateDirectory(statuses.Directory);
         File.WriteAllText(statuses.FilePath, "  busy \n");
 
-        Assert.Equal(UserStatus.Busy, statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     /// <summary>
@@ -111,9 +111,9 @@ public sealed class UserCurrentStatusTests {
 
         statuses.Store.Set(UserStatus.DoNotDisturb);
 
-        Assert.Equal(UserStatus.DoNotDisturb, statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsEqualTo(UserStatus.DoNotDisturb);
         // No scratch file is left behind next to it.
-        Assert.Equal([statuses.FilePath], Directory.GetFiles(statuses.Directory));
+        Check.That(Directory.GetFiles(statuses.Directory)).ContainsExactly([statuses.FilePath]);
     }
 
     [Fact]
@@ -123,17 +123,17 @@ public sealed class UserCurrentStatusTests {
         File.WriteAllText(statuses.FilePath + ".tmp", "do-not-disturb");
 
         // A crash between the write and the move must not change what signalme remembers.
-        Assert.Equal(UserStatus.Busy, statuses.Store.Get());
+        Check.That(statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     [Fact]
     public void The_directory_is_created_on_demand() {
         using TemporaryStatusStore statuses = new();
-        Assert.False(Directory.Exists(statuses.Directory));
+        Check.That(Directory.Exists(statuses.Directory)).IsFalse();
 
         statuses.Store.Set(UserStatus.Busy);
 
-        Assert.True(File.Exists(statuses.FilePath));
+        Check.That(File.Exists(statuses.FilePath)).IsTrue();
     }
 
 }

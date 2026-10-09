@@ -30,7 +30,7 @@ public sealed class MoodPatternTests {
 
         UserStatus? left = await PlayAsync(mood, device, UserStatus.DoNotDisturb);
 
-        Assert.Equal(UserStatus.DoNotDisturb, left);
+        Check.That(left).IsEqualTo(UserStatus.DoNotDisturb);
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public sealed class MoodPatternTests {
 
         UserStatus? left = await PlayAsync(UserMood.Ready, device, UserStatus.DoNotDisturb);
 
-        Assert.Equal(UserStatus.Available, left);
+        Check.That(left).IsEqualTo(UserStatus.Available);
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public sealed class MoodPatternTests {
 
         await PlayAsync(mood, device, UserStatus.DoNotDisturb);
 
-        Assert.NotEqual("SetColor(#FF0000)", device.LastCommand);
+        Check.That(device.LastCommand).IsNotEqualTo("SetColor(#FF0000)");
     }
 
     [Fact]
@@ -63,32 +63,32 @@ public sealed class MoodPatternTests {
         await PlayAsync(UserMood.Bored, device, UserStatus.Busy);
 
         // The fade is part of the animation and lands every LED on the base colour.
-        Assert.Contains("#FFFF00", device.LastCommand);
+        Check.That(device.LastCommand).Contains("#FFFF00");
     }
 
     [Theory]
     [MemberData(nameof(AllMoods))]
-    public async Task A_refused_command_stops_the_animation(UserMood mood) {
+    public void A_refused_command_stops_the_animation(UserMood mood) {
         FakeLuxaforDevice device = new() { RefuseFromCall = 1 };
 
-        await Assert.ThrowsAsync<DeviceCommandFailedException>(() => PlayAsync(mood, device));
+        Check.ThatCode(() => PlayAsync(mood, device)).Throws<DeviceCommandFailedException>();
 
         // The animation gave up straight away rather than sending its whole sequence into the void.
-        Assert.Empty(device.Commands);
+        Check.That(device.Commands).IsEmpty();
     }
 
     [Theory]
     [MemberData(nameof(AllMoods))]
-    public async Task A_device_exception_surfaces_as_a_device_failure_with_the_cause_inside(UserMood mood) {
+    public void A_device_exception_surfaces_as_a_device_failure_with_the_cause_inside(UserMood mood) {
         FakeLuxaforDevice device = new() { ThrowOnCall = 3 };
 
-        DeviceCommandFailedException thrown = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => PlayAsync(mood, device));
+        DeviceCommandFailedException thrown = Check.ThatCode(() => PlayAsync(mood, device)).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Contains("could not be reached", thrown.Message);
-        Assert.Contains("USB write failed", thrown.Message);
-        Assert.IsType<InvalidOperationException>(thrown.InnerException);
+        Check.That(thrown.Message).Contains("could not be reached");
+        Check.That(thrown.Message).Contains("USB write failed");
+        Check.That(thrown.InnerException).IsInstanceOf<InvalidOperationException>();
         // It stopped at the broken call: two commands got through, nothing after.
-        Assert.Equal(2, device.Commands.Count);
+        Check.That(device.Commands.Count).IsEqualTo(2);
     }
 
     [Fact]
@@ -100,12 +100,12 @@ public sealed class MoodPatternTests {
         }
 
         // Proof the animations really are asking to wait, and that the tests are simply not sitting there.
-        Assert.True(delay.Waits > 100, $"expected the animations to request many waits, got {delay.Waits}.");
+        Check.WithCustomMessage($"expected the animations to request many waits, got {delay.Waits}.").That(delay.Waits > 100).IsTrue();
     }
 
     [Fact]
     public void The_factory_refuses_a_mood_it_does_not_know() {
-        Assert.Throws<InvalidEnumArgumentException>(() => MoodPatternFactory.Create((UserMood)99, new FakeLuxaforDevice(), new InstantDelay()));
+        Check.ThatCode(() => MoodPatternFactory.Create((UserMood)99, new FakeLuxaforDevice(), new InstantDelay())).Throws<InvalidEnumArgumentException>();
     }
 
 }

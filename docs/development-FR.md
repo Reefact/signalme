@@ -58,7 +58,8 @@ est derrière un point d'injection que les tests remplacent :
 - **`FakeLuxaforDevice`** implémente `ILuxaforDevice`, l'interface que la librairie de pilotage expose
   déjà : aucune surcouche n'a été nécessaire. Il enregistre les commandes qu'il accepte et peut se voir
   demander de les refuser ou de lever une exception, ce qui couvre les chemins d'échec du périphérique ;
-  son `Path` est modifiable, pour que les tests de sélection distinguent deux périphériques.
+  son `Path` est modifiable, pour que les tests de sélection distinguent deux périphériques, tout comme
+  `IsConnected`, pour qu'un test puisse le débrancher.
 - **`IConsole`** / **`FakeConsole`** : chaque interaction avec la console passe par `IConsole`. Le faux
   répond aux lectures à partir d'un script, puis annonce la fin de l'entrée — ou laisse une lecture en
   attente jusqu'à l'annulation du jeton, comme un utilisateur qui n'appuie jamais sur Entrée avant
@@ -69,6 +70,9 @@ est derrière un point d'injection que les tests remplacent :
   déverrouillage à la main, depuis n'importe quel thread, et peut faire en sorte que `Start()` bascule
   l'état, le déclenche, ou lève une exception — les trois choses que fait le vrai moniteur quand il
   comble l'écart entre sa construction et son abonnement.
+- **`IDeviceConnectionMonitor`** / **`FakeDeviceConnectionMonitor`** : le test annonce le périphérique
+  débranché à la main, au moment qu'il choisit. Le vrai moniteur est testé à part, sur une vérification
+  que le test contrôle et un intervalle de quelques millisecondes.
 - **`ILuxaforDeviceDiscovery`** / **`FakeDiscovery`**, qui renvoie une liste de faux ou lève une
   exception. Les tests de la ligne de commande font tourner la vraie ligne de commande, de `--help` au
   code de sortie, à travers un sac de faux `SignalMeServices`.
@@ -84,6 +88,13 @@ est derrière un point d'injection que les tests remplacent :
 
 Les tests vérifient le contrat, pas les images : aucun ne fige une frame d'animation précise. Les messages
 que SignalMe affiche font partie de ce contrat et sont vérifiés à la lettre.
+
+Les assertions sont écrites avec [NFluent](https://www.n-fluent.net/), comme dans la librairie Luxafor :
+`Check.That(actual).IsEqualTo(expected)`, `Check.ThatCode(...).Throws<T>()`. xUnit fait tourner les
+tests, son `Assert` n'est pas utilisé. Un cas reste hors de `Check.ThatCode` : NFluent attend le code
+asynchrone, et une tâche annulée qu'on attend ainsi rapporte une `TaskCanceledException` générique au lieu
+de l'exception qui porte la raison. Les quelques tests qui vérifient cette raison la capturent avec
+`Record.ExceptionAsync` de xUnit et la vérifient avec NFluent.
 
 La parallélisation des tests est désactivée pour une seule raison — quelques tests redirigent la console
 du processus pour vérifier ce que SignalMe rapporte, ce qui est un état global au processus.

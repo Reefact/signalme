@@ -36,17 +36,17 @@ public sealed class StatusCoordinatorTests {
     public async Task The_initial_render_shows_the_desired_status_unless_the_session_is_locked(UserStatus desired, SessionState session, string expected) {
         await using Harness signalme = new(desired, session);
 
-        Assert.Equal([expected], signalme.Device.Commands);
-        Assert.Equal(desired, signalme.State.DesiredStatus);
-        Assert.Equal(session, signalme.State.Session);
-        Assert.Equal(session == SessionState.Locked ? EffectiveStatus.Away : Enum.Parse<EffectiveStatus>(desired.ToString()), signalme.State.Effective);
+        Check.That(signalme.Device.Commands).ContainsExactly([expected]);
+        Check.That(signalme.State.DesiredStatus).IsEqualTo(desired);
+        Check.That(signalme.State.Session).IsEqualTo(session);
+        Check.That(signalme.State.Effective).IsEqualTo(session == SessionState.Locked ? EffectiveStatus.Away : Enum.Parse<EffectiveStatus>(desired.ToString()));
     }
 
     [Fact]
     public async Task The_initial_render_says_what_it_shows() {
         await using Harness signalme = new(UserStatus.Busy, SessionState.Locked);
 
-        Assert.Equal(["Status: busy", "Effective status: away"], signalme.Console.Output);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Effective status: away"]);
     }
 
     [Fact]
@@ -56,10 +56,10 @@ public sealed class StatusCoordinatorTests {
         await signalme.LockAsync();
         await signalme.UnlockAsync();
 
-        Assert.Equal([Busy, Away, Busy], signalme.Device.Commands);
-        Assert.Equal(["Status: busy", "Windows session locked." + NewLine + "Effective status: away", "Windows session unlocked." + NewLine + "Effective status: busy"], signalme.Console.Output);
-        Assert.Equal(UserStatus.Busy, signalme.State.DesiredStatus);
-        Assert.Equal(EffectiveStatus.Busy, signalme.State.Effective);
+        Check.That(signalme.Device.Commands).ContainsExactly([Busy, Away, Busy]);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Windows session locked." + NewLine + "Effective status: away", "Windows session unlocked." + NewLine + "Effective status: busy"]);
+        Check.That(signalme.State.DesiredStatus).IsEqualTo(UserStatus.Busy);
+        Check.That(signalme.State.Effective).IsEqualTo(EffectiveStatus.Busy);
     }
 
     [Fact]
@@ -70,9 +70,9 @@ public sealed class StatusCoordinatorTests {
         await signalme.UnlockAsync();
 
         // Nothing to render: the device is off and stays off, the session is only reported.
-        Assert.Equal([Off], signalme.Device.Commands);
-        Assert.Equal(["Status: off", "Windows session locked." + NewLine + "Effective status: off", "Windows session unlocked." + NewLine + "Effective status: off"], signalme.Console.Output);
-        Assert.Equal(EffectiveStatus.Off, signalme.State.Effective);
+        Check.That(signalme.Device.Commands).ContainsExactly([Off]);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: off", "Windows session locked." + NewLine + "Effective status: off", "Windows session unlocked." + NewLine + "Effective status: off"]);
+        Check.That(signalme.State.Effective).IsEqualTo(EffectiveStatus.Off);
     }
 
     [Fact]
@@ -80,13 +80,13 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
         await signalme.LockAsync();
 
-        Assert.Equal(IntentOutcome.Applied, await signalme.SetAsync(UserStatus.Available));
+        Check.That(await signalme.SetAsync(UserStatus.Available)).IsEqualTo(IntentOutcome.Applied);
         await signalme.UnlockAsync();
 
-        Assert.Equal([Busy, Away, Away, Available], signalme.Device.Commands);
-        Assert.Contains("Status: available", signalme.Console.Output);
-        Assert.Contains("Effective status: away", signalme.Console.Output);
-        Assert.Equal(UserStatus.Available, signalme.Statuses.Store.Get());
+        Check.That(signalme.Device.Commands).ContainsExactly([Busy, Away, Away, Available]);
+        Check.That(signalme.Console.Output).Contains("Status: available");
+        Check.That(signalme.Console.Output).Contains("Effective status: away");
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Available);
     }
 
     [Fact]
@@ -97,17 +97,17 @@ public sealed class StatusCoordinatorTests {
         // Ordered behind the duplicate: once this is answered, the duplicate has been looked at.
         await signalme.SetAsync(UserStatus.Busy);
 
-        Assert.Equal([Busy, Busy], signalme.Device.Commands);
-        Assert.DoesNotContain(signalme.Console.Output, line => line.Contains("Windows session"));
+        Check.That(signalme.Device.Commands).ContainsExactly([Busy, Busy]);
+        Check.That(signalme.Console.Output).Not.HasElementThatMatches(line => line.Contains("Windows session"));
     }
 
     [Fact]
     public async Task Away_is_not_a_status_a_mode_may_ask_for() {
         await using Harness signalme = new(UserStatus.Busy);
 
-        await Assert.ThrowsAsync<ArgumentException>(() => signalme.SetAsync(UserStatus.Away));
+        Check.ThatCode(() => signalme.SetAsync(UserStatus.Away)).Throws<ArgumentException>();
 
-        Assert.Equal([Busy], signalme.Device.Commands);
+        Check.That(signalme.Device.Commands).ContainsExactly([Busy]);
     }
 
     #endregion
@@ -118,11 +118,11 @@ public sealed class StatusCoordinatorTests {
     public async Task A_status_is_remembered_once_displayed() {
         await using Harness signalme = new();
 
-        Assert.Equal(IntentOutcome.Applied, await signalme.SetAsync(UserStatus.DoNotDisturb));
+        Check.That(await signalme.SetAsync(UserStatus.DoNotDisturb)).IsEqualTo(IntentOutcome.Applied);
 
-        Assert.Equal([Off, Dnd], signalme.Device.Commands);
-        Assert.Equal(["Status: off", "Status: do-not-disturb"], signalme.Console.Output);
-        Assert.Equal(UserStatus.DoNotDisturb, signalme.Statuses.Store.Get());
+        Check.That(signalme.Device.Commands).ContainsExactly([Off, Dnd]);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: off", "Status: do-not-disturb"]);
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.DoNotDisturb);
     }
 
     [Fact]
@@ -130,10 +130,10 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
 
         await signalme.LockAsync();
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
 
         await signalme.UnlockAsync();
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     [Fact]
@@ -141,12 +141,12 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
         signalme.Device.RefuseFromCall = 2;
 
-        await Assert.ThrowsAsync<DeviceCommandFailedException>(() => signalme.SetAsync(UserStatus.Available));
+        Check.ThatCode(() => signalme.SetAsync(UserStatus.Available)).Throws<DeviceCommandFailedException>();
 
-        Assert.IsType<DeviceCommandFailedException>(await signalme.StopAsync());
+        Check.That(await signalme.StopAsync()).IsInstanceOf<DeviceCommandFailedException>();
         // The remembered status must keep describing what the LEDs are actually showing.
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
-        Assert.Equal(UserStatus.Busy, signalme.State.DesiredStatus);
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
+        Check.That(signalme.State.DesiredStatus).IsEqualTo(UserStatus.Busy);
     }
 
     [Fact]
@@ -154,17 +154,17 @@ public sealed class StatusCoordinatorTests {
         await using Harness refusing = new(UserStatus.Busy);
         refusing.Device.RefuseFromCall = 2;
 
-        await Assert.ThrowsAsync<DeviceCommandFailedException>(() => refusing.ExecuteAsync(new SignalMeIntent.TurnOff()));
-        Assert.Equal(UserStatus.Busy, refusing.Statuses.Store.Get());
+        Check.ThatCode(() => refusing.ExecuteAsync(new SignalMeIntent.TurnOff())).Throws<DeviceCommandFailedException>();
+        Check.That(refusing.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
 
         await using Harness obeying = new(UserStatus.Busy);
 
-        Assert.Equal(IntentOutcome.Applied, await obeying.ExecuteAsync(new SignalMeIntent.TurnOff()));
-        Assert.Null(obeying.Statuses.Store.Get());
-        Assert.Equal([Busy, Off], obeying.Device.Commands);
-        Assert.Equal(["Status: busy", "Status: off"], obeying.Console.Output);
-        Assert.Null(obeying.State.DesiredStatus);
-        Assert.Equal(EffectiveStatus.Off, obeying.State.Effective);
+        Check.That(await obeying.ExecuteAsync(new SignalMeIntent.TurnOff())).IsEqualTo(IntentOutcome.Applied);
+        Check.That(obeying.Statuses.Store.Get()).IsNull();
+        Check.That(obeying.Device.Commands).ContainsExactly([Busy, Off]);
+        Check.That(obeying.Console.Output).ContainsExactly(["Status: busy", "Status: off"]);
+        Check.That(obeying.State.DesiredStatus).IsNull();
+        Check.That(obeying.State.Effective).IsEqualTo(EffectiveStatus.Off);
     }
 
     #endregion
@@ -175,25 +175,25 @@ public sealed class StatusCoordinatorTests {
     public async Task A_signal_plays_and_the_status_comes_back() {
         await using Harness signalme = new(UserStatus.Busy);
 
-        Assert.Equal(IntentOutcome.SignalCompleted, await signalme.PlayAsync(UserMood.Happy));
+        Check.That(await signalme.PlayAsync(UserMood.Happy)).IsEqualTo(IntentOutcome.SignalCompleted);
 
-        Assert.Equal(Busy, signalme.Device.LastCommand);
-        Assert.True(signalme.Device.Commands.Count > 2, "expected the animation to have sent frames.");
-        Assert.Equal(["Status: busy", "Playing: happy", "Restored: busy"], signalme.Console.Output);
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
-        Assert.Null(signalme.State.PlayingSignal);
+        Check.That(signalme.Device.LastCommand).IsEqualTo(Busy);
+        Check.WithCustomMessage("expected the animation to have sent frames.").That(signalme.Device.Commands.Count > 2).IsTrue();
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Playing: happy", "Restored: busy"]);
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
+        Check.That(signalme.State.PlayingSignal).IsNull();
     }
 
     [Fact]
     public async Task Ready_ends_on_available_and_remembers_it() {
         await using Harness signalme = new(UserStatus.Busy);
 
-        Assert.Equal(IntentOutcome.SignalCompleted, await signalme.PlayAsync(UserMood.Ready));
+        Check.That(await signalme.PlayAsync(UserMood.Ready)).IsEqualTo(IntentOutcome.SignalCompleted);
 
-        Assert.Equal(Available, signalme.Device.LastCommand);
-        Assert.Equal(["Status: busy", "Playing: ready", "Status: available"], signalme.Console.Output);
-        Assert.Equal(UserStatus.Available, signalme.Statuses.Store.Get());
-        Assert.Equal(UserStatus.Available, signalme.State.DesiredStatus);
+        Check.That(signalme.Device.LastCommand).IsEqualTo(Available);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Playing: ready", "Status: available"]);
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Available);
+        Check.That(signalme.State.DesiredStatus).IsEqualTo(UserStatus.Available);
     }
 
     [Fact]
@@ -204,12 +204,12 @@ public sealed class StatusCoordinatorTests {
         Task<IntentOutcome> signal = signalme.PlayAsync(UserMood.Happy);
         await hold.Reached;
 
-        Assert.Equal(UserMood.Happy, signalme.State.PlayingSignal);
-        Assert.Equal(UserStatus.Busy, signalme.State.DesiredStatus);
+        Check.That(signalme.State.PlayingSignal).IsEqualTo(UserMood.Happy);
+        Check.That(signalme.State.DesiredStatus).IsEqualTo(UserStatus.Busy);
 
         hold.Release();
-        Assert.Equal(IntentOutcome.SignalCompleted, await signal);
-        Assert.Null(signalme.State.PlayingSignal);
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalCompleted);
+        Check.That(signalme.State.PlayingSignal).IsNull();
     }
 
     [Fact]
@@ -223,13 +223,13 @@ public sealed class StatusCoordinatorTests {
 
         await signalme.LockAsync();
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalInterrupted);
         // Away right after the last frame: no restore frame, nothing of the animation after it.
-        Assert.Equal(framesSent + 1, signalme.Device.Commands.Count);
-        Assert.Equal(Away, signalme.Device.LastCommand);
-        Assert.DoesNotContain(signalme.Console.Output, line => line.StartsWith("Restored", StringComparison.Ordinal));
-        Assert.Null(signalme.State.PlayingSignal);
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Check.That(signalme.Device.Commands.Count).IsEqualTo(framesSent + 1);
+        Check.That(signalme.Device.LastCommand).IsEqualTo(Away);
+        Check.That(signalme.Console.Output).Not.HasElementThatMatches(line => line.StartsWith("Restored", StringComparison.Ordinal));
+        Check.That(signalme.State.PlayingSignal).IsNull();
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     [Fact]
@@ -244,9 +244,9 @@ public sealed class StatusCoordinatorTests {
 
         await signalme.UnlockAsync();
 
-        Assert.Equal(Busy, signalme.Device.LastCommand);
-        Assert.Equal(3, signalme.Delay.Waits);
-        Assert.Equal(["Status: busy", "Playing: happy", "Windows session locked." + NewLine + "Effective status: away", "Windows session unlocked." + NewLine + "Effective status: busy"], signalme.Console.Output);
+        Check.That(signalme.Device.LastCommand).IsEqualTo(Busy);
+        Check.That(signalme.Delay.Waits).IsEqualTo(3);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Playing: happy", "Windows session locked." + NewLine + "Effective status: away", "Windows session unlocked." + NewLine + "Effective status: busy"]);
     }
 
     [Fact]
@@ -258,13 +258,13 @@ public sealed class StatusCoordinatorTests {
         await hold.Reached;
         int framesSent = signalme.Device.Commands.Count;
 
-        Assert.Equal(IntentOutcome.Applied, await signalme.SetAsync(UserStatus.Available));
+        Check.That(await signalme.SetAsync(UserStatus.Available)).IsEqualTo(IntentOutcome.Applied);
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
-        Assert.Equal(framesSent + 1, signalme.Device.Commands.Count);
-        Assert.Equal(Available, signalme.Device.LastCommand);
-        Assert.Equal(UserStatus.Available, signalme.Statuses.Store.Get());
-        Assert.Equal(["Status: busy", "Playing: desperate", "Status: available"], signalme.Console.Output);
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalInterrupted);
+        Check.That(signalme.Device.Commands.Count).IsEqualTo(framesSent + 1);
+        Check.That(signalme.Device.LastCommand).IsEqualTo(Available);
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Available);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Playing: desperate", "Status: available"]);
     }
 
     [Fact]
@@ -276,10 +276,10 @@ public sealed class StatusCoordinatorTests {
         await hold.Reached;
         Task<IntentOutcome> second = signalme.PlayAsync(UserMood.Alerting);
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await first);
-        Assert.Equal(IntentOutcome.SignalCompleted, await second);
-        Assert.Equal(["Status: busy", "Playing: happy", "Playing: alerting", "Restored: busy"], signalme.Console.Output);
-        Assert.Equal(Busy, signalme.Device.LastCommand);
+        Check.That(await first).IsEqualTo(IntentOutcome.SignalInterrupted);
+        Check.That(await second).IsEqualTo(IntentOutcome.SignalCompleted);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Playing: happy", "Playing: alerting", "Restored: busy"]);
+        Check.That(signalme.Device.LastCommand).IsEqualTo(Busy);
     }
 
     [Fact]
@@ -290,11 +290,11 @@ public sealed class StatusCoordinatorTests {
         Task<IntentOutcome> signal = signalme.PlayAsync(UserMood.Happy);
         await hold.Reached;
 
-        Assert.Equal(IntentOutcome.Applied, await signalme.ExecuteAsync(new SignalMeIntent.TurnOff()));
+        Check.That(await signalme.ExecuteAsync(new SignalMeIntent.TurnOff())).IsEqualTo(IntentOutcome.Applied);
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
-        Assert.Equal(Off, signalme.Device.LastCommand);
-        Assert.Null(signalme.Statuses.Store.Get());
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalInterrupted);
+        Check.That(signalme.Device.LastCommand).IsEqualTo(Off);
+        Check.That(signalme.Statuses.Store.Get()).IsNull();
     }
 
     [Fact]
@@ -302,11 +302,11 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
         await signalme.LockAsync();
 
-        Assert.Equal(IntentOutcome.SignalRefusedSessionLocked, await signalme.PlayAsync(UserMood.Happy));
+        Check.That(await signalme.PlayAsync(UserMood.Happy)).IsEqualTo(IntentOutcome.SignalRefusedSessionLocked);
 
-        Assert.Equal([Busy, Away], signalme.Device.Commands);
-        Assert.Contains("Session locked: 'happy' is not played.", signalme.Console.Output);
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Check.That(signalme.Device.Commands).ContainsExactly([Busy, Away]);
+        Check.That(signalme.Console.Output).Contains("Session locked: 'happy' is not played.");
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     [Theory]
@@ -316,22 +316,22 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new();
         SignalMeState     before   = signalme.State;
 
-        Assert.Equal(IntentOutcome.SignalRefusedOff, await signalme.PlayAsync(mood));
+        Check.That(await signalme.PlayAsync(mood)).IsEqualTo(IntentOutcome.SignalRefusedOff);
 
-        Assert.Equal([Off], signalme.Device.Commands);
-        Assert.Contains($"SignalMe is off: '{mood.ToString().ToLowerInvariant()}' is not played.", signalme.Console.Output);
-        Assert.Null(signalme.Statuses.Store.Get());
-        Assert.Equal(before, signalme.State);
+        Check.That(signalme.Device.Commands).ContainsExactly([Off]);
+        Check.That(signalme.Console.Output).Contains($"SignalMe is off: '{mood.ToString().ToLowerInvariant()}' is not played.");
+        Check.That(signalme.Statuses.Store.Get()).IsNull();
+        Check.That(signalme.State).IsEqualTo(before);
     }
 
     [Fact]
     public async Task Off_wins_over_the_lock_when_refusing_a_signal() {
         await using Harness signalme = new(null, SessionState.Locked);
 
-        Assert.Equal(IntentOutcome.SignalRefusedOff, await signalme.PlayAsync(UserMood.Happy));
+        Check.That(await signalme.PlayAsync(UserMood.Happy)).IsEqualTo(IntentOutcome.SignalRefusedOff);
 
-        Assert.Contains("SignalMe is off: 'happy' is not played.", signalme.Console.Output);
-        Assert.DoesNotContain(signalme.Console.Output, line => line.StartsWith("Session locked", StringComparison.Ordinal));
+        Check.That(signalme.Console.Output).Contains("SignalMe is off: 'happy' is not played.");
+        Check.That(signalme.Console.Output).Not.HasElementThatMatches(line => line.StartsWith("Session locked", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -354,13 +354,13 @@ public sealed class StatusCoordinatorTests {
 
         // Reached only by an animation nobody cancelled before its fourth wait.
         await fourth.Reached;
-        Assert.Equal(UserMood.Happy, signalme.State.PlayingSignal);
-        Assert.False(signal.IsCompleted);
+        Check.That(signalme.State.PlayingSignal).IsEqualTo(UserMood.Happy);
+        Check.That(signal.IsCompleted).IsFalse();
         fourth.Release();
 
-        Assert.Equal(IntentOutcome.SignalCompleted, await signal);
-        Assert.True(signalme.Delay.Waits > 4, "expected the animation to have run past the held waits.");
-        Assert.Equal(["Status: busy", "Playing: happy", "Restored: busy"], signalme.Console.Output);
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalCompleted);
+        Check.WithCustomMessage("expected the animation to have run past the held waits.").That(signalme.Delay.Waits > 4).IsTrue();
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Playing: happy", "Restored: busy"]);
     }
 
     /// <summary>
@@ -372,12 +372,12 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
         signalme.Delay.OnWait = wait => { if (wait == 3) { signalme.Coordinator.OnSessionChanged(SessionState.Locked); } };
 
-        Assert.Equal(IntentOutcome.SignalCompleted, await signalme.PlayAsync(UserMood.Ready));
+        Check.That(await signalme.PlayAsync(UserMood.Ready)).IsEqualTo(IntentOutcome.SignalCompleted);
         await signalme.Console.WaitForOutputAsync(4);
 
-        Assert.Equal(UserStatus.Available, signalme.Statuses.Store.Get());
-        Assert.Equal(["Status: busy", "Playing: ready", "Status: available", "Windows session locked." + NewLine + "Effective status: away"], signalme.Console.Output);
-        Assert.Equal([Available, Away], signalme.Device.Commands.TakeLast(2));
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Available);
+        Check.That(signalme.Console.Output).ContainsExactly(["Status: busy", "Playing: ready", "Status: available", "Windows session locked." + NewLine + "Effective status: away"]);
+        Check.That(signalme.Device.Commands.TakeLast(2)).ContainsExactly([Available, Away]);
     }
 
     #endregion
@@ -393,13 +393,13 @@ public sealed class StatusCoordinatorTests {
         await hold.Reached;
         int framesSent = signalme.Device.Commands.Count;
 
-        Assert.Null(await signalme.StopAsync());
+        Check.That(await signalme.StopAsync()).IsNull();
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalInterrupted);
         // The runtime turns the device off next; the loop itself writes nothing on its way out.
-        Assert.Equal(framesSent, signalme.Device.Commands.Count);
-        Assert.Equal(3, signalme.Delay.Waits);
-        Assert.Null(signalme.State.PlayingSignal);
+        Check.That(signalme.Device.Commands.Count).IsEqualTo(framesSent);
+        Check.That(signalme.Delay.Waits).IsEqualTo(3);
+        Check.That(signalme.State.PlayingSignal).IsNull();
     }
 
     [Fact]
@@ -416,10 +416,10 @@ public sealed class StatusCoordinatorTests {
 
         Task<IntentOutcome> signal = signalme.PlayAsync(UserMood.Alerting);
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued!);
-        Assert.Null(await signalme.StopAsync());
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalInterrupted);
+        Check.ThatCode(() => queued!).Throws<OperationCanceledException>();
+        Check.That(await signalme.StopAsync()).IsNull();
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     /// <summary>
@@ -439,12 +439,12 @@ public sealed class StatusCoordinatorTests {
         Task<IntentOutcome>? queued = null;
         using CancellationTokenRegistration registration = signalme.Cancellation.Token.Register(() => queued = signalme.SetAsync(UserStatus.Available));
 
-        Assert.Null(await signalme.StopAsync());
+        Check.That(await signalme.StopAsync()).IsNull();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued!);
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
-        Assert.Equal([Busy], signalme.Device.Commands);
-        Assert.DoesNotContain("Status: available", signalme.Console.Output);
+        Check.ThatCode(() => queued!).Throws<OperationCanceledException>();
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
+        Check.That(signalme.Device.Commands).ContainsExactly([Busy]);
+        Check.That(signalme.Console.Output).Not.Contains("Status: available");
     }
 
     /// <summary>
@@ -457,13 +457,13 @@ public sealed class StatusCoordinatorTests {
         Task<IntentOutcome>? queued = null;
         using CancellationTokenRegistration registration = signalme.Cancellation.Token.Register(() => queued = signalme.PlayAsync(UserMood.Happy));
 
-        Assert.Null(await signalme.StopAsync());
+        Check.That(await signalme.StopAsync()).IsNull();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued!);
-        Assert.Equal([Busy], signalme.Device.Commands);
-        Assert.DoesNotContain("Playing: happy", signalme.Console.Output);
-        Assert.Equal(0, signalme.Delay.Waits);
-        Assert.Null(signalme.State.PlayingSignal);
+        Check.ThatCode(() => queued!).Throws<OperationCanceledException>();
+        Check.That(signalme.Device.Commands).ContainsExactly([Busy]);
+        Check.That(signalme.Console.Output).Not.Contains("Playing: happy");
+        Check.That(signalme.Delay.Waits).IsEqualTo(0);
+        Check.That(signalme.State.PlayingSignal).IsNull();
     }
 
     [Fact]
@@ -471,9 +471,12 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
         await signalme.StopAsync();
 
-        OperationCanceledException thrown = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => signalme.SetAsync(UserStatus.Available));
+        // Awaited rather than handed to Check.ThatCode: NFluent waits on the task, and a cancelled task
+        // waited on reports a generic TaskCanceledException instead of the one carrying the reason.
+        Exception? thrown = await Record.ExceptionAsync(() => signalme.SetAsync(UserStatus.Available));
 
-        Assert.Equal("SignalMe is stopping.", thrown.Message);
+        Check.That(thrown).InheritsFrom<OperationCanceledException>();
+        Check.That(thrown!.Message).IsEqualTo("SignalMe is stopping.");
     }
 
     /// <summary>
@@ -484,12 +487,14 @@ public sealed class StatusCoordinatorTests {
     public async Task An_intent_posted_after_the_loop_faulted_is_refused() {
         await using Harness signalme = new(UserStatus.Busy);
         signalme.Device.RefuseFromCall = 2;
-        await Assert.ThrowsAsync<DeviceCommandFailedException>(() => signalme.SetAsync(UserStatus.Available));
-        Assert.IsType<DeviceCommandFailedException>(await signalme.StopAsync());
+        Check.ThatCode(() => signalme.SetAsync(UserStatus.Available)).Throws<DeviceCommandFailedException>();
+        Check.That(await signalme.StopAsync()).IsInstanceOf<DeviceCommandFailedException>();
 
-        OperationCanceledException thrown = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => signalme.SetAsync(UserStatus.DoNotDisturb));
+        // Awaited for the same reason as above: the reason of a cancellation is lost on a waited task.
+        Exception? thrown = await Record.ExceptionAsync(() => signalme.SetAsync(UserStatus.DoNotDisturb));
 
-        Assert.Equal("SignalMe is stopping.", thrown.Message);
+        Check.That(thrown).InheritsFrom<OperationCanceledException>();
+        Check.That(thrown!.Message).IsEqualTo("SignalMe is stopping.");
     }
 
     [Fact]
@@ -497,11 +502,11 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
         signalme.Device.RefuseFromCall = 2;
 
-        DeviceCommandFailedException fromIntent = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => signalme.SetAsync(UserStatus.Available));
+        DeviceCommandFailedException fromIntent = Check.ThatCode(() => signalme.SetAsync(UserStatus.Available)).Throws<DeviceCommandFailedException>().Value;
         Exception?                   fromLoop   = await signalme.StopAsync();
 
-        Assert.Same(fromIntent, fromLoop);
-        Assert.Equal(["The Luxafor device refused to display the 'available' status."], signalme.Console.Error);
+        Check.That(fromLoop).IsSameReferenceAs(fromIntent);
+        Check.That(signalme.Console.Error).ContainsExactly(["The Luxafor device refused to display the 'available' status."]);
     }
 
     [Fact]
@@ -509,12 +514,12 @@ public sealed class StatusCoordinatorTests {
         await using Harness signalme = new(UserStatus.Busy);
         signalme.Device.ThrowOnCall = 4;
 
-        DeviceCommandFailedException fromSignal = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => signalme.PlayAsync(UserMood.Alerting));
+        DeviceCommandFailedException fromSignal = Check.ThatCode(() => signalme.PlayAsync(UserMood.Alerting)).Throws<DeviceCommandFailedException>().Value;
         Exception?                   fromLoop   = await signalme.StopAsync();
 
-        Assert.Same(fromSignal, fromLoop);
-        Assert.IsType<InvalidOperationException>(fromSignal.InnerException);
-        Assert.Single(signalme.Console.Error);
+        Check.That(fromLoop).IsSameReferenceAs(fromSignal);
+        Check.That(fromSignal.InnerException).IsInstanceOf<InvalidOperationException>();
+        Check.That(signalme.Console.Error).HasSize(1);
     }
 
     [Fact]
@@ -529,13 +534,13 @@ public sealed class StatusCoordinatorTests {
             queued = signalme.SetAsync(UserStatus.Available);
         };
 
-        DeviceCommandFailedException fromSignal = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => signalme.PlayAsync(UserMood.Alerting));
-        DeviceCommandFailedException fromQueued = await Assert.ThrowsAsync<DeviceCommandFailedException>(() => queued!);
+        DeviceCommandFailedException fromSignal = Check.ThatCode(() => signalme.PlayAsync(UserMood.Alerting)).Throws<DeviceCommandFailedException>().Value;
+        DeviceCommandFailedException fromQueued = Check.ThatCode(() => queued!).Throws<DeviceCommandFailedException>().Value;
 
-        Assert.Same(fromSignal, fromQueued);
-        Assert.IsType<DeviceCommandFailedException>(await signalme.StopAsync());
-        Assert.Single(signalme.Console.Error);
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
+        Check.That(fromQueued).IsSameReferenceAs(fromSignal);
+        Check.That(await signalme.StopAsync()).IsInstanceOf<DeviceCommandFailedException>();
+        Check.That(signalme.Console.Error).HasSize(1);
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
     }
 
     [Fact]
@@ -547,10 +552,10 @@ public sealed class StatusCoordinatorTests {
             if (wait == 40) { signalme.Device.RefuseFromCall = signalme.Device.Commands.Count + 1; }
         };
 
-        await Assert.ThrowsAsync<DeviceCommandFailedException>(() => signalme.PlayAsync(UserMood.Alerting));
+        Check.ThatCode(() => signalme.PlayAsync(UserMood.Alerting)).Throws<DeviceCommandFailedException>();
 
-        Assert.IsType<DeviceCommandFailedException>(await signalme.StopAsync());
-        Assert.Equal(["The Luxafor device refused to display the 'busy' status."], signalme.Console.Error);
+        Check.That(await signalme.StopAsync()).IsInstanceOf<DeviceCommandFailedException>();
+        Check.That(signalme.Console.Error).ContainsExactly(["The Luxafor device refused to display the 'busy' status."]);
     }
 
     [Fact]
@@ -560,9 +565,9 @@ public sealed class StatusCoordinatorTests {
 
         signalme.Coordinator.OnDeviceDisconnected();
 
-        Assert.IsType<DeviceDisconnectedException>(await Record.ExceptionAsync(() => signalme.Loop.WaitAsync(TimeSpan.FromSeconds(10))));
-        Assert.Equal(["Luxafor device disconnected."], signalme.Console.Error);
-        Assert.Equal(written, signalme.Device.Commands.Count);
+        Check.That(await Record.ExceptionAsync(() => signalme.Loop.WaitAsync(TimeSpan.FromSeconds(10)))).IsInstanceOf<DeviceDisconnectedException>();
+        Check.That(signalme.Console.Error).ContainsExactly(["Luxafor device disconnected."]);
+        Check.That(signalme.Device.Commands.Count).IsEqualTo(written);
     }
 
     [Fact]
@@ -575,10 +580,10 @@ public sealed class StatusCoordinatorTests {
         int framesSent = signalme.Device.Commands.Count;
         signalme.Coordinator.OnDeviceDisconnected();
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
-        Assert.IsType<DeviceDisconnectedException>(await Record.ExceptionAsync(() => signalme.Loop.WaitAsync(TimeSpan.FromSeconds(10))));
-        Assert.Equal(framesSent, signalme.Device.Commands.Count);
-        Assert.Null(signalme.State.PlayingSignal);
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalInterrupted);
+        Check.That(await Record.ExceptionAsync(() => signalme.Loop.WaitAsync(TimeSpan.FromSeconds(10)))).IsInstanceOf<DeviceDisconnectedException>();
+        Check.That(signalme.Device.Commands.Count).IsEqualTo(framesSent);
+        Check.That(signalme.State.PlayingSignal).IsNull();
     }
 
     [Fact]
@@ -597,10 +602,10 @@ public sealed class StatusCoordinatorTests {
 
         Task<IntentOutcome> signal = signalme.PlayAsync(UserMood.Happy);
 
-        Assert.Equal(IntentOutcome.SignalInterrupted, await signal);
-        await Assert.ThrowsAsync<DeviceDisconnectedException>(() => queued!);
-        Assert.Equal(UserStatus.Busy, signalme.Statuses.Store.Get());
-        Assert.Single(signalme.Console.Error);
+        Check.That(await signal).IsEqualTo(IntentOutcome.SignalInterrupted);
+        Check.ThatCode(() => queued!).Throws<DeviceDisconnectedException>();
+        Check.That(signalme.Statuses.Store.Get()).IsEqualTo(UserStatus.Busy);
+        Check.That(signalme.Console.Error).HasSize(1);
     }
 
     [Fact]
@@ -611,7 +616,7 @@ public sealed class StatusCoordinatorTests {
 
         signalme.Coordinator.TurnOffQuietly();
 
-        Assert.Equal(["The Luxafor device refused to turn its LEDs off."], signalme.Console.Error);
+        Check.That(signalme.Console.Error).ContainsExactly(["The Luxafor device refused to turn its LEDs off."]);
     }
 
     [Fact]
@@ -622,7 +627,7 @@ public sealed class StatusCoordinatorTests {
 
         signalme.Coordinator.TurnOffQuietly();
 
-        Assert.Equal(["The Luxafor device could not be turned off: InvalidOperationException: USB write failed"], signalme.Console.Error);
+        Check.That(signalme.Console.Error).ContainsExactly(["The Luxafor device could not be turned off: InvalidOperationException: USB write failed"]);
     }
 
     #endregion

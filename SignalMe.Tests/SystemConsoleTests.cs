@@ -29,8 +29,8 @@ public sealed class SystemConsoleTests {
             // The read completed, so the prompt is no longer pending: this one is written plainly.
             console.WriteLine("Status: busy");
 
-            Assert.Equal("busy", line);
-            Assert.Equal("> " + NewLine + "Windows session locked." + NewLine + "Effective status: away" + NewLine + "> " + "Status: busy" + NewLine, output.ToString());
+            Check.That(line).IsEqualTo("busy");
+            Check.That(output.ToString()).IsEqualTo("> " + NewLine + "Windows session locked." + NewLine + "Effective status: away" + NewLine + "> " + "Status: busy" + NewLine);
         } finally {
             Console.SetOut(originalOut);
             Console.SetIn(originalIn);
@@ -45,7 +45,7 @@ public sealed class SystemConsoleTests {
         try {
             new SystemConsole().WriteLine("Status: busy");
 
-            Assert.Equal("Status: busy" + NewLine, output.ToString());
+            Check.That(output.ToString()).IsEqualTo("Status: busy" + NewLine);
         } finally {
             Console.SetOut(originalOut);
         }
@@ -70,10 +70,10 @@ public sealed class SystemConsoleTests {
             console.Write("> ");
             Task<string?> read = console.ReadLineAsync(cancellation.Token);
             await cancellation.CancelAsync();
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => read);
+            Check.ThatCode(() => read).Throws<OperationCanceledException>();
             console.WriteLine("Stopping SignalMe...");
 
-            Assert.Equal("> " + NewLine + "Stopping SignalMe..." + NewLine, output.ToString());
+            Check.That(output.ToString()).IsEqualTo("> " + NewLine + "Stopping SignalMe..." + NewLine);
         } finally {
             // Frees the thread still blocked in Console.ReadLine, which would otherwise outlive the test.
             input.Release();
@@ -101,8 +101,8 @@ public sealed class SystemConsoleTests {
             string? line = await console.ReadLineAsync(CancellationToken.None);
             console.WriteLine("Stopping SignalMe...");
 
-            Assert.Null(line);
-            Assert.Equal("> " + NewLine + "Stopping SignalMe..." + NewLine, output.ToString());
+            Check.That(line).IsNull();
+            Check.That(output.ToString()).IsEqualTo("> " + NewLine + "Stopping SignalMe..." + NewLine);
         } finally {
             Console.SetOut(originalOut);
             Console.SetIn(originalIn);

@@ -13,12 +13,12 @@ public sealed class StatusColorsTests {
     [InlineData(UserStatus.DoNotDisturb, "#FF0000")]
     [InlineData(UserStatus.Away, "#9932CC")]
     public void Each_status_has_its_colour(UserStatus status, string expected) {
-        Assert.Equal(expected, StatusColors.For(status).ToString());
+        Check.That(StatusColors.For(status).ToString()).IsEqualTo(expected);
     }
 
     [Fact]
     public void No_status_is_black_that_is_off() {
-        Assert.Equal("#000000", StatusColors.For((UserStatus?)null).ToString());
+        Check.That(StatusColors.For((UserStatus?)null).ToString()).IsEqualTo("#000000");
     }
 
     [Theory]
@@ -28,7 +28,7 @@ public sealed class StatusColorsTests {
     [InlineData(EffectiveStatus.Busy, "#FFFF00")]
     [InlineData(EffectiveStatus.DoNotDisturb, "#FF0000")]
     public void Each_effective_status_has_its_colour(EffectiveStatus status, string expected) {
-        Assert.Equal(expected, StatusColors.For(status).ToString());
+        Check.That(StatusColors.For(status).ToString()).IsEqualTo(expected);
     }
 
     /// <summary>
@@ -41,13 +41,13 @@ public sealed class StatusColorsTests {
     [InlineData(UserStatus.DoNotDisturb, EffectiveStatus.DoNotDisturb)]
     [InlineData(UserStatus.Away, EffectiveStatus.Away)]
     public void The_two_overloads_agree(UserStatus status, EffectiveStatus effective) {
-        Assert.Equal(StatusColors.For(status), StatusColors.For(effective));
+        Check.That(StatusColors.For(effective)).IsEqualTo(StatusColors.For(status));
     }
 
     [Fact]
     public void An_undefined_status_is_refused() {
-        Assert.Throws<InvalidEnumArgumentException>(() => StatusColors.For((UserStatus)99));
-        Assert.Throws<InvalidEnumArgumentException>(() => StatusColors.For((EffectiveStatus)99));
+        Check.ThatCode(() => StatusColors.For((UserStatus)99)).Throws<InvalidEnumArgumentException>();
+        Check.ThatCode(() => StatusColors.For((EffectiveStatus)99)).Throws<InvalidEnumArgumentException>();
     }
 
 }

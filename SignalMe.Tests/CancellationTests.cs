@@ -15,22 +15,21 @@ public sealed class CancellationTests {
 
     [Theory]
     [MemberData(nameof(AllMoods))]
-    public async Task An_interrupted_animation_stops_early(UserMood mood) {
+    public void An_interrupted_animation_stops_early(UserMood mood) {
         using CancellationTokenSource cancellation = new();
         FakeLuxaforDevice             device       = new();
         // Stands in for a lock or a new intent arriving a few frames in.
         InstantDelay delay = new() { OnWait = wait => { if (wait == 3) { cancellation.Cancel(); } } };
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => MoodPatternFactory.Create(mood, device, delay).PlayAsync(UserStatus.Busy, cancellation.Token));
+        Check.ThatCode(() => MoodPatternFactory.Create(mood, device, delay).PlayAsync(UserStatus.Busy, cancellation.Token)).Throws<OperationCanceledException>();
 
         // It gave up at the third wait rather than running the sequence to the end.
-        Assert.Equal(3, delay.Waits);
+        Check.That(delay.Waits).IsEqualTo(3);
     }
 
     [Theory]
     [MemberData(nameof(AllMoods))]
-    public async Task An_interrupted_animation_sends_no_frame_after_the_interruption(UserMood mood) {
+    public void An_interrupted_animation_sends_no_frame_after_the_interruption(UserMood mood) {
         using CancellationTokenSource cancellation = new();
         FakeLuxaforDevice             device       = new();
         int                           framesSent   = -1;
@@ -43,10 +42,9 @@ public sealed class CancellationTests {
             }
         };
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => MoodPatternFactory.Create(mood, device, delay).PlayAsync(UserStatus.Busy, cancellation.Token));
+        Check.ThatCode(() => MoodPatternFactory.Create(mood, device, delay).PlayAsync(UserStatus.Busy, cancellation.Token)).Throws<OperationCanceledException>();
 
-        Assert.Equal(framesSent, device.Commands.Count);
+        Check.That(device.Commands.Count).IsEqualTo(framesSent);
     }
 
     /// <summary>
@@ -61,10 +59,9 @@ public sealed class CancellationTests {
         FakeLuxaforDevice device = new();
         InstantDelay      delay  = new();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => MoodPatternFactory.Create(mood, device, delay).PlayAsync(UserStatus.Busy, cancellation.Token));
+        Check.ThatCode(() => MoodPatternFactory.Create(mood, device, delay).PlayAsync(UserStatus.Busy, cancellation.Token)).Throws<OperationCanceledException>();
 
-        Assert.Equal(1, delay.Waits);
+        Check.That(delay.Waits).IsEqualTo(1);
     }
 
 }
