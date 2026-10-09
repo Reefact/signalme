@@ -21,7 +21,7 @@ public static class ErrorReporting {
     public static string Describe(Exception exception) {
         ArgumentNullException.ThrowIfNull(exception);
 
-        return exception is DeviceCommandFailedException ? exception.Message : $"signalme: {exception.GetType().Name}: {exception.Message}";
+        return exception is DeviceCommandFailedException or DeviceDisconnectedException ? exception.Message : $"signalme: {exception.GetType().Name}: {exception.Message}";
     }
 
     #endregion

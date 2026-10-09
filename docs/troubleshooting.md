@@ -103,13 +103,27 @@ included. In SignalMe 1.x a signal would play over a dark device; it no longer d
 
 **What to do:** type a status first — `busy`, for instance — then the signal.
 
+## Luxafor device disconnected
+
+**Symptom:** `Luxafor device disconnected.`, then `Stopping SignalMe...` and `SignalMe stopped.`, exit
+code `2`.
+
+**Cause:** SignalMe checks every two seconds that the device it drives is still plugged in, and it no
+longer was: unplugged, behind a USB hub or a dock that lost power, or cut off by the laptop's sleep.
+SignalMe stops rather than claim a status no device shows, and writes nothing to the device on its way
+out, since it is gone.
+
+**What to do:** plug the device back and start SignalMe again. It starts from the last status the device
+did show.
+
 ## The device refused a command, or could not be reached, during the run
 
 **Symptom:** `The Luxafor device refused to ...` or `The Luxafor device could not be reached: ...`, then
 `Stopping SignalMe...` and `SignalMe stopped.`, exit code `2`.
 
-**Cause:** the device was found at startup but a later write failed — typically unplugged during the
-run, or taken over by another application. SignalMe does not keep running without a device it can drive,
+**Cause:** the device was found at startup but a later write failed — typically taken over by another
+application, or unplugged too briefly for the check to see it go: the handle SignalMe holds does not
+survive even a short absence. SignalMe does not keep running without a device it can drive,
 and does not pretend the last change was applied: a refused status is not remembered.
 
 **What to do:** plug the device back, close the application that took it, and start SignalMe again. It

@@ -36,6 +36,9 @@ public sealed class FakeLuxaforDevice : ILuxaforDevice {
     /// <summary>Settable, so that a selection test can tell several devices apart by their id.</summary>
     public string Path { get; set; } = @"\\?\fake";
 
+    /// <summary>Settable, so that a test can unplug the device; reading it records no command.</summary>
+    public bool IsConnected { get; set; } = true;
+
     public bool SetColor(BrightColor color)                              => Accept($"SetColor({color})");
     public bool SetColor(TargetedLeds targetedLeds, BrightColor color)   => Accept($"SetColor({targetedLeds}, {color})");
     public bool TurnOff()                                                => Accept("TurnOff");

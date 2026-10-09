@@ -185,6 +185,26 @@ public sealed class CommandLineTests {
     }
 
     [Fact]
+    public async Task A_device_unplugged_during_the_run_is_a_device_error() {
+        FakeLuxaforDevice device   = new();
+        using Harness     signalme = new(new FakeConsole("busy") { EndOfInput = false }, device);
+
+        Task<int> run = signalme.RunAsync();
+        // The status is shown and SignalMe waits for the next command when the device goes missing.
+        await signalme.Console.InputAwaited.WaitAsync(TimeSpan.FromSeconds(10));
+        signalme.DeviceMonitor.Disconnect();
+        int exitCode = await run;
+
+        Assert.Equal(ExitCode.DeviceError, exitCode);
+        Assert.Same(device, signalme.MonitoredDevice);
+        Assert.Equal(["Luxafor device disconnected."], signalme.Console.Error);
+        Assert.Equal("SignalMe stopped.", signalme.Console.Output[^1]);
+        Assert.Equal("SetColor(#FFFF00)", device.LastCommand);
+        Assert.True(device.IsDisposed);
+        Assert.True(signalme.DeviceMonitor.IsDisposed);
+    }
+
+    [Fact]
     public async Task A_session_monitor_that_cannot_start_is_an_unexpected_error() {
         FakeLuxaforDevice device   = new();
         using Harness     signalme = new(new FakeConsole("busy"), device);
@@ -324,9 +344,13 @@ public sealed class CommandLineTests {
             Discovery = new FakeDiscovery(devices);
         }
 
-        public FakeConsole        Console   { get; }
-        public FakeDiscovery      Discovery { get; }
-        public FakeSessionMonitor Monitor   { get; } = new();
+        public FakeConsole                 Console       { get; }
+        public FakeDiscovery               Discovery     { get; }
+        public FakeSessionMonitor          Monitor       { get; } = new();
+        public FakeDeviceConnectionMonitor DeviceMonitor { get; } = new();
+
+        /// <summary>The device the command asked a connection monitor for: the one selected, or none yet.</summary>
+        public ILuxaforDevice? MonitoredDevice { get; private set; }
 
         public UserCurrentStatus Store => _store.Store;
 
@@ -336,7 +360,12 @@ public sealed class CommandLineTests {
                 Delay                 = new InstantDelay(),
                 Discovery             = Discovery,
                 Store                 = _store.Store,
-                SessionMonitorFactory = () => Monitor
+                SessionMonitorFactory = () => Monitor,
+                DeviceMonitorFactory  = device => {
+                    MonitoredDevice = device;
+
+                    return DeviceMonitor;
+                }
             };
 
             return SignalMeCommandApp.Create(services).RunAsync(args);

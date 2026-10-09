@@ -15,13 +15,13 @@ namespace SignalMe.Infrastructure;
 /// <remarks>
 ///     The device reports a refused command by returning false rather than by throwing, so ignoring the
 ///     return value lets signalme carry on — and report success — while the LEDs never changed. A device
-///     that is unplugged mid-run throws from the HID layer instead; that is wrapped too, so one exception
-///     type covers "the device did not do it" whatever the cause. Every device call signalme makes goes
-///     through here, with one exception: the identification wave's clean-up calls <c>TurnOff()</c> directly
-///     and ignores the outcome, since it has no console and an exception is already on its way to the
-///     caller. The best-effort turn-offs at shutdown and on the selector's exits use
-///     <see cref="TurnOffQuietly" />, which reports instead of throwing, since by then there is nothing
-///     left to do about a failure.
+///     unplugged mid-run answers false too, rather than throwing: the failed write is swallowed below the
+///     Luxafor library. Whatever a call does throw is wrapped as well, so one exception type covers "the
+///     device did not do it" whatever the cause. Every device call signalme makes goes through here, with
+///     one exception: the identification wave's clean-up calls <c>TurnOff()</c> directly and ignores the
+///     outcome, since it has no console and an exception is already on its way to the caller. The
+///     best-effort turn-offs at shutdown and on the selector's exits use <see cref="TurnOffQuietly" />,
+///     which reports instead of throwing, since by then there is nothing left to do about a failure.
 /// </remarks>
 public static class LuxaforDeviceExtensions {
 

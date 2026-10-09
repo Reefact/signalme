@@ -1391,6 +1391,18 @@ Si le périphérique sélectionné devient inaccessible pendant l'exécution :
 * SignalMe ne doit pas prétendre avoir appliqué le changement demandé ;
 * le runtime doit s'arrêter proprement si le périphérique ne peut plus être piloté.
 
+SignalMe vérifie toutes les deux secondes que le périphérique sélectionné est toujours branché. Un
+périphérique débranché arrête le runtime sans attendre la prochaine écriture :
+
+```text
+Luxafor device disconnected.
+Stopping SignalMe...
+SignalMe stopped.
+```
+
+Le code de sortie est celui d'une erreur périphérique. Rien n'est plus écrit sur le périphérique : il n'y
+a pas de tentative d'extinction finale.
+
 La reconnexion ou la redécouverte dynamique de périphériques ne fait pas partie de cette V2.
 
 ---
