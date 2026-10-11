@@ -19,7 +19,7 @@ Sur une autre plateforme, `signalme` sort sur une erreur périphérique en expli
 | Périphérique | État |
 | --- | --- |
 | Luxafor Orb | **Testé.** Le périphérique sur lequel SignalMe est développé. |
-| Luxafor Flag | **Devrait fonctionner, non testé.** Mêmes identifiants et même protocole d'éclairage, six LED adressables. |
+| Luxafor Flag | **Testé** avec la 2.0.0-preview.2 : un statut affiché, le passage en `away` au verrouillage de la session, et l'arrêt au débranchement. Mêmes identifiants et même protocole d'éclairage que l'Orb, six LED adressables. |
 | Luxafor Mute Button, Luxafor Colorblind Flag | **Devrait fonctionner, non testé.** Les commandes d'éclairage sont les mêmes ; la disposition des LED, leur nombre et le rendu des couleurs peuvent différer. |
 | Luxafor Bluetooth, Switch, Cube, Pomodoro-Timer, CO2 Monitor | **Non supportés.** Ils ne se pilotent pas par ce protocole USB HID. |
 

@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   `Unknown command: '…'.`. A `--mode` with no value, or with a value that starts with `-`, now produces
   `Option '--mode' needs a value: --mode <MODE>.`, and `--help` prints SignalMe's own usage text. Exit
   codes are unchanged.
+- **The Luxafor Flag is now listed as tested** in [Hardware and platform support](docs/hardware.md): a
+  status, the switch to `away` on session lock and the stop on unplug were checked on one with
+  2.0.0-preview.2.
 
 ## [2.0.0-preview.2] - 2026-10-09
 
