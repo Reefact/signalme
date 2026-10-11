@@ -19,7 +19,7 @@ On another platform, `signalme` exits with a device error and says why.
 | Device | Status |
 | --- | --- |
 | Luxafor Orb | **Tested.** The device SignalMe is developed against. |
-| Luxafor Flag | **Expected to work, not tested.** Same identifiers and lighting protocol, six addressable LEDs. |
+| Luxafor Flag | **Tested** with 2.0.0-preview.2: a status shown, the switch to `away` on session lock, and the stop on unplug. Same identifiers and lighting protocol as the Orb, six addressable LEDs. |
 | Luxafor Mute Button, Luxafor Colorblind Flag | **Expected to work, not tested.** The lighting commands are the same; the LED layout, the number of LEDs and the colour rendering may differ. |
 | Luxafor Bluetooth, Switch, Cube, Pomodoro-Timer, CO2 Monitor | **Not supported.** These are not driven through this USB HID protocol. |
 

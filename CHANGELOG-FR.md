@@ -23,6 +23,9 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   l'invite. Un `--mode` sans valeur, ou dont la valeur commence par `-`, affiche
   `Option '--mode' needs a value: --mode <MODE>.`, et `--help` affiche un usage propre à SignalMe. Les
   codes de sortie ne changent pas.
+- **Le Luxafor Flag figure désormais comme testé** dans [Matériel et plateformes](docs/hardware-FR.md) :
+  un statut, le passage en `away` au verrouillage de la session et l'arrêt au débranchement y ont été
+  vérifiés avec la 2.0.0-preview.2.
 
 ## [2.0.0-preview.2] - 2026-10-09
 
