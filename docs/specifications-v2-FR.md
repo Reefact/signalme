@@ -1274,8 +1274,8 @@ La séparation des responsabilités est normative ; les noms et dossiers exacts 
 La ligne de commande est lue par un parseur propre à SignalMe (`Commands/CommandLineParser.cs`), sans
 librairie de ligne de commande.
 
-Décision prise en 2.0.0-preview.2. Spectre.Console.Cli a d'abord été conservé pour le parsing initial,
-puis retiré : pour une seule option sans sous-commande, il coûtait plus qu'il n'apportait.
+Décision prise après la 2.0.0-preview.2. Spectre.Console.Cli a d'abord été conservé pour le parsing
+initial, puis retiré : pour une seule option sans sous-commande, il coûtait plus qu'il n'apportait.
 
 * son mode strict lisait `signalme --mode` comme `--mode __default_command`, si bien qu'il fallait le
   laisser en mode relâché et revérifier soi-même options inconnues et arguments en trop ;

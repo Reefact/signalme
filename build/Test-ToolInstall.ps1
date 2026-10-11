@@ -42,8 +42,8 @@ try {
         return $output
     }
 
-    # The unit tests pin the text of the help and the version; here they are run from the installed tool,
-    # which is what a user actually types.
+    # The unit tests pin the help and version text; here both are checked through the installed tool,
+    # exactly as a user would run it.
     $help = Invoke-SignalMe -Arguments @('--help') -ExpectedExitCode 0 -What 'help'
     if ($help -notmatch '--mode') { throw "The help does not mention the '--mode' option.`n$help" }
 

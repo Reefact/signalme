@@ -15,8 +15,8 @@ namespace SignalMe.Commands;
 /// </summary>
 /// <remarks>
 ///     Lives here rather than in Program.cs so that the tests can run the real command line, help and exit
-///     codes included, instead of a copy of it. Everything it prints goes through the
-///     <see cref="IConsole" /> of the services, the help and the version as well.
+///     codes included, instead of a copy of it. All of its output, including help and version
+///     information, goes through the <see cref="IConsole" /> of the services.
 /// </remarks>
 public static class SignalMeCommandApp {
 

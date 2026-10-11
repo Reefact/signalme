@@ -20,8 +20,9 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   1 Mo.
 - **Un argument en trop affiche `Unexpected argument: 'extra'.`**, avant comme après `--`, au lieu du
   `Unknown command 'extra'.` de Spectre, qu'on pouvait confondre avec le `Unknown command: '…'.` de
-  l'invite. Un `--mode` sans valeur affiche `Option '--mode' needs a value: --mode <MODE>.`, et `--help`
-  affiche un usage propre à SignalMe. Les codes de sortie ne changent pas.
+  l'invite. Un `--mode` sans valeur, ou dont la valeur commence par `-`, affiche
+  `Option '--mode' needs a value: --mode <MODE>.`, et `--help` affiche un usage propre à SignalMe. Les
+  codes de sortie ne changent pas.
 
 ## [2.0.0-preview.2] - 2026-10-09
 

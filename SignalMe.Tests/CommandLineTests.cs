@@ -13,8 +13,8 @@ namespace SignalMe.Tests;
 ///     through the manual mode.
 /// </summary>
 /// <remarks>
-///     The help and the version go through <see cref="IConsole" /> like everything else signalme prints, so
-///     their text is checked here, not only their exit codes. The finer points of reading the arguments are
+///     Help and version output go through <see cref="IConsole" />, like everything else signalme prints, so
+///     their text is checked here, not only their exit codes. The finer points of argument parsing are
 ///     covered by <see cref="CommandLineParserTests" />.
 /// </remarks>
 public sealed class CommandLineTests {
@@ -47,7 +47,7 @@ public sealed class CommandLineTests {
     }
 
     /// <summary>
-    ///     The help is part of the public contract, so its text is pinned here: the docs quote it, and a
+    ///     The help text is part of the public contract, so it is pinned here: the docs quote it, and any
     ///     change to it must be deliberate.
     /// </summary>
     [Fact]
@@ -74,7 +74,7 @@ public sealed class CommandLineTests {
     }
 
     [Fact]
-    public async Task The_help_wins_over_a_usage_error_on_the_same_line() {
+    public async Task The_help_takes_precedence_over_a_usage_error_on_the_same_command_line() {
         using Harness signalme = new(new FakeConsole());
 
         int exitCode = await signalme.RunAsync("--bogus", "--help");
@@ -150,6 +150,8 @@ public sealed class CommandLineTests {
     [InlineData("--mode", "--mode")]
     [InlineData("--mode=", "--mode")]
     [InlineData("-m", "-m")]
+    [InlineData("--mode=-bogus", "--mode")]
+    [InlineData("-m=-bogus", "-m")]
     public async Task A_mode_without_a_value_is_a_usage_error(string argument, string option) {
         using Harness signalme = new(new FakeConsole(), new FakeLuxaforDevice());
 
@@ -161,9 +163,9 @@ public sealed class CommandLineTests {
     }
 
     /// <summary>
-    ///     SignalMe takes no positional argument: a bare word on the command line is reported in the same
-    ///     words as one placed after "--", not as an unknown sub-command, which would be confused with the
-    ///     "Unknown command" of the prompt.
+    ///     SignalMe accepts no positional arguments: a bare word is reported with the same message as one
+    ///     placed after "--", rather than as an unknown sub-command, which could be confused with the
+    ///     prompt's "Unknown command".
     /// </summary>
     [Fact]
     public async Task A_stray_argument_is_a_usage_error() {

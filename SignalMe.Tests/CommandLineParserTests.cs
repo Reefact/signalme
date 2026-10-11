@@ -3,8 +3,8 @@ using SignalMe.Commands;
 namespace SignalMe.Tests;
 
 /// <summary>
-///     How the arguments are read, as a pure function: which request comes out of which line. What each
-///     request then prints and exits with is covered by <see cref="CommandLineTests" />.
+///     How the arguments are parsed, as a pure function: which request each command line produces. What
+///     each request then prints, and the exit code it returns, is covered by <see cref="CommandLineTests" />.
 /// </summary>
 public sealed class CommandLineParserTests {
 
@@ -32,9 +32,16 @@ public sealed class CommandLineParserTests {
         { ["--mode"], "Option '--mode' needs a value: --mode <MODE>." },
         { ["-m"], "Option '-m' needs a value: -m <MODE>." },
         { ["--mode="], "Option '--mode' needs a value: --mode <MODE>." },
-        // A mode name never starts with a dash: what follows "--mode" is another option, not its value.
+        { ["-m="], "Option '-m' needs a value: -m <MODE>." },
+        { ["--mode", ""], "Option '--mode' needs a value: --mode <MODE>." },
+        // A mode name never starts with a dash, so a value that does is treated as missing, whichever way
+        // it is attached to the option.
         { ["--mode", "--bogus"], "Option '--mode' needs a value: --mode <MODE>." },
-        // The first problem met is the one reported.
+        { ["--mode", "-"], "Option '--mode' needs a value: --mode <MODE>." },
+        { ["--mode=-bogus"], "Option '--mode' needs a value: --mode <MODE>." },
+        { ["-m=-bogus"], "Option '-m' needs a value: -m <MODE>." },
+        { ["--mode=-"], "Option '--mode' needs a value: --mode <MODE>." },
+        // Only the first problem encountered is reported.
         { ["extra", "--bogus"], "Unexpected argument: 'extra'." }
     };
 
@@ -65,11 +72,12 @@ public sealed class CommandLineParserTests {
     }
 
     /// <summary>
-    ///     Help and version touch nothing, and someone asking for the usage of a line they got wrong should
-    ///     get it: both win over a usage error, and the help wins over the version.
+    ///     Help and version have no side effects, and someone asking for help with a command line they got
+    ///     wrong should get it: both take precedence over a usage error, and help takes precedence over
+    ///     version.
     /// </summary>
     [Fact]
-    public void Help_and_version_win_over_the_rest_of_the_line() {
+    public void Help_and_version_take_precedence_over_the_rest_of_the_command_line() {
         Check.That(CommandLineParser.Parse(["--bogus", "--help"])).IsInstanceOf<CommandLineRequest.ShowHelp>();
         Check.That(CommandLineParser.Parse(["extra", "-v"])).IsInstanceOf<CommandLineRequest.ShowVersion>();
         Check.That(CommandLineParser.Parse(["--version", "--help"])).IsInstanceOf<CommandLineRequest.ShowHelp>();

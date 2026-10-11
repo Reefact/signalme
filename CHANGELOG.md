@@ -11,13 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
-- **The command line no longer relies on Spectre.Console.Cli.** SignalMe reads its one option itself, and
-  every message of the command line now goes through the same console as the rest, so the help and the
-  version print on any system, redirected output included. The package is about 1 MB lighter.
-- **A stray argument reads `Unexpected argument: 'extra'.`**, before or after `--`, instead of Spectre's
-  `Unknown command 'extra'.`, which could be mistaken for the `Unknown command: '…'.` of the prompt. A
-  `--mode` with no value reads `Option '--mode' needs a value: --mode <MODE>.`, and `--help` prints a
-  usage of SignalMe's own. Exit codes are unchanged.
+- **The command line no longer relies on Spectre.Console.Cli.** SignalMe now parses its single option
+  itself, and all command-line output goes through the same console as everything else, so help and
+  version information print on every system, even when output is redirected. The package is about 1 MB
+  lighter.
+- **A stray argument now produces `Unexpected argument: 'extra'.`**, whether it comes before or after
+  `--`, instead of Spectre's `Unknown command 'extra'.`, which could be mistaken for the prompt's
+  `Unknown command: '…'.`. A `--mode` with no value, or with a value that starts with `-`, now produces
+  `Option '--mode' needs a value: --mode <MODE>.`, and `--help` prints SignalMe's own usage text. Exit
+  codes are unchanged.
 
 ## [2.0.0-preview.2] - 2026-10-09
 

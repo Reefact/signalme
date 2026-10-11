@@ -15,17 +15,23 @@ namespace SignalMe.Commands;
 /// </summary>
 /// <remarks>
 ///     <para>
-///         Written by hand rather than through a command-line library: SignalMe has a single option and no
-///         sub-command, and the library it used to rely on cost more than it gave. Its messages and its
-///         help went through a console of its own, which the tests could not see, and a stray argument was
-///         reported as an unknown sub-command. Here every message is SignalMe's own and goes through
-///         <see cref="Infrastructure.IConsole" />.
+///         Written by hand rather than with a command-line library: SignalMe has a single option and no
+///         sub-commands, and the library it used to rely on added more overhead than value. That library
+///         wrote its messages and help through its own console, which the tests could not observe, and it
+///         reported a stray argument as an unknown sub-command. Here every message is SignalMe's own, and
+///         all output goes through <see cref="Infrastructure.IConsole" />.
 ///     </para>
 ///     <para>
-///         <c>--help</c> and <c>--version</c> win over everything else on the line, errors included: they
-///         touch nothing, and someone asking for the usage of a line they got wrong should get it. Among
-///         the other problems, the first one met is the one reported. A <c>--mode</c> given twice keeps the
-///         last value, the usual reading of a repeated option.
+///         <c>--help</c> and <c>--version</c> take precedence over everything else on the command line, even
+///         when it also contains an error: they have no side effects, and someone asking for help with a
+///         command line they got wrong should get it. Otherwise, only the first problem encountered is
+///         reported. If <c>--mode</c> is given more than once, the last value wins, as is usual for a
+///         repeated option.
+///     </para>
+///     <para>
+///         A mode name never starts with a dash. An empty value, or one that starts with <c>-</c>, is
+///         therefore treated as a missing value, whether it follows the option as a separate argument
+///         (<c>--mode -x</c>) or after an equals sign (<c>--mode=-x</c>).
 ///     </para>
 /// </remarks>
 public static class CommandLineParser {
@@ -47,7 +53,7 @@ public static class CommandLineParser {
         for (int index = 0; index < args.Count; index++) {
             string argument = args[index];
 
-            // After "--" nothing is an option any more, and SignalMe takes no positional argument.
+            // After "--" nothing is treated as an option, and SignalMe accepts no positional arguments.
             if (afterSeparator) {
                 problem ??= $"Unexpected argument: '{argument}'.";
 
@@ -68,8 +74,9 @@ public static class CommandLineParser {
 
                     break;
                 case "-m" or "--mode":
-                    // A mode name never starts with a dash: what follows is another option, not a value.
-                    if (index + 1 < args.Count && !IsOption(args[index + 1])) {
+                    // What follows is the value only if it can be one; otherwise it is left for the next
+                    // iteration, which reports it if nothing was reported yet.
+                    if (index + 1 < args.Count && IsModeValue(args[index + 1])) {
                         mode = args[++index];
                     } else {
                         problem ??= MissingValue(argument);
@@ -78,10 +85,10 @@ public static class CommandLineParser {
                     break;
                 default:
                     if (TrySplitInlineValue(argument, out string option, out string value)) {
-                        if (value.Length == 0) {
-                            problem ??= MissingValue(option);
-                        } else {
+                        if (IsModeValue(value)) {
                             mode = value;
+                        } else {
+                            problem ??= MissingValue(option);
                         }
                     } else if (IsOption(argument)) {
                         problem ??= $"Unknown option: '{OptionName(argument)}'.";
@@ -127,6 +134,11 @@ public static class CommandLineParser {
 
     private static bool IsOption(string argument) {
         return argument.Length > 1 && argument[0] == '-';
+    }
+
+    /// <summary>Whether <paramref name="candidate" /> can be a mode name: not empty, and not starting with a dash.</summary>
+    private static bool IsModeValue(string candidate) {
+        return candidate.Length > 0 && candidate[0] != '-';
     }
 
     private static string OptionName(string argument) {

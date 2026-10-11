@@ -46,9 +46,9 @@ SignalMe 2.0 is a resident process with one rule at its centre: **one component 
   device off and disposes it whatever happened.
 - The **command line** (`Commands/`) parses `--mode`, discovers and selects the device, then hands it to
   the runtime and maps its outcome to an exit code. The parser is SignalMe's own rather than a
-  command-line library: Spectre.Console.Cli was dropped in 2.0.0-preview.2, its reasons are recorded in
-  §38 of the [v2 specification](specifications-v2-FR.md). Every message of the command line, the help
-  and the version included, goes through `IConsole`, so the tests check their text.
+  command-line library: Spectre.Console.Cli was removed after 2.0.0-preview.2, for the reasons recorded in
+  §38 of the [v2 specification](specifications-v2-FR.md). All command-line output, including help and
+  version information, goes through `IConsole`, so the tests can check its text.
 
 ## Tests
 
