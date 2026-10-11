@@ -49,7 +49,7 @@ périphérique.**
   éteint puis libère le périphérique quoi qu'il soit arrivé.
 - La **ligne de commande** (`Commands/`) analyse `--mode`, découvre et sélectionne le périphérique, puis
   le confie au runtime et traduit son issue en code de sortie. Le parseur est propre à SignalMe plutôt
-  qu'une librairie de ligne de commande : Spectre.Console.Cli a été retiré après la 2.0.0-preview.2, ses
+  qu'une librairie de ligne de commande : Spectre.Console.Cli a été retiré dans la 2.0.0-preview.3, ses
   raisons sont consignées au §38 de la [spécification v2](specifications-v2-FR.md). Tous les messages de
   la ligne de commande, aide et version comprises, passent par `IConsole`, si bien que les tests en
   vérifient le texte.
@@ -151,7 +151,7 @@ d'exactement 1 Mo, une assembly manquante, une commande renommée — et vérifi
 
 ```shell
 dotnet pack -c Release -o artifacts
-dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.2
+dotnet tool install --global SignalMe --add-source ./artifacts --version 2.0.0-preview.3
 ```
 
 Utilisez `--tool-path ./tmp-tool` au lieu de `--global` pour l'essayer sans toucher à vos outils globaux.

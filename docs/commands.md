@@ -51,7 +51,7 @@ of the command line, even when it also contains a usage error.
 
 ```text
 $ signalme --help
-SignalMe 2.0.0-preview.2
+SignalMe 2.0.0-preview.3
 A resident presence runtime for Luxafor devices.
 
 Usage:
@@ -68,7 +68,7 @@ Options:
 Once SignalMe runs, type 'help' at its prompt for the commands it understands.
 
 $ signalme --version
-2.0.0-preview.2
+2.0.0-preview.3
 ```
 
 ### Anything else
@@ -97,7 +97,7 @@ before or after `--`. When a command line contains several errors, only the firs
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.2
+SignalMe 2.0.0-preview.3
 Luxafor device detected.
 Mode: manual
 Status: busy
@@ -334,7 +334,7 @@ signalme || echo "SignalMe did not stop cleanly"
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.2
+SignalMe 2.0.0-preview.3
 Luxafor device detected.
 Mode: manual
 Status: busy

@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [2.0.0-preview.3] - 2026-10-11
+
+The third preview of 2.0. SignalMe now parses its command line itself instead of relying on
+Spectre.Console.Cli: help and version information print on every system, a few usage messages are
+clearer, and the package is about 1 MB lighter. Like the previous previews, it is published as a
+pre-release: `dotnet tool install --global SignalMe --prerelease` installs it, and
+`dotnet tool update --global SignalMe --prerelease` updates an installed preview.
+
 ### Changed
 
 - **The command line no longer relies on Spectre.Console.Cli.** SignalMe now parses its single option
@@ -187,7 +195,8 @@ new major version. It is not a claim that the tool has stopped evolving.
   [Hardware and platform support](docs/hardware.md) for what is expected to work and what is not
   supported.
 
-[Unreleased]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.2...HEAD
+[Unreleased]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.3...HEAD
+[2.0.0-preview.3]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.2...v2.0.0-preview.3
 [2.0.0-preview.2]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...v2.0.0-preview.2
 [2.0.0-preview.1]: https://github.com/Reefact/signalme/compare/v1.0.2...v2.0.0-preview.1
 [1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2
