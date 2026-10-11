@@ -32,7 +32,8 @@ Le mode décide d'où vient le statut. SignalMe 2.0 n'en connaît qu'un, `manual
 le statut vous-même ; c'est le mode par défaut, si bien que `signalme` et `signalme --mode manual` sont
 une seule et même chose. Le nom est débarrassé de ses espaces et comparé sans tenir compte de la casse.
 Les quatre écritures `--mode manual`, `--mode=manual`, `-m manual` et `-m=manual` sont équivalentes ;
-donnée deux fois, l'option garde sa dernière valeur.
+donnée deux fois, l'option garde sa dernière valeur. Un nom de mode ne commence jamais par `-` : une
+valeur qui commence ainsi, comme `--mode -x` ou `--mode=-x`, est signalée comme une valeur manquante.
 
 Un mode inconnu est une erreur d'utilisation, signalée avant qu'aucun périphérique ne soit touché :
 

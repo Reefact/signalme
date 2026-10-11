@@ -30,8 +30,10 @@ Once it runs, the **interactive commands** are typed at its prompt:
 
 The mode decides where the status comes from. SignalMe 2.0 knows one mode, `manual`, in which you type
 the status yourself; it is the default, so `signalme` and `signalme --mode manual` are the same thing. The
-name is trimmed and compared regardless of case. The four spellings `--mode manual`, `--mode=manual`,
-`-m manual` and `-m=manual` are equivalent; given twice, the option keeps its last value.
+name is trimmed and compared case-insensitively. The four forms `--mode manual`, `--mode=manual`,
+`-m manual` and `-m=manual` are equivalent. If the option is given more than once, the last value wins.
+A mode name never starts with `-`, so a value that does, such as `--mode -x` or `--mode=-x`, is reported
+as a missing value.
 
 An unknown mode is a usage error, reported before any device is touched:
 
@@ -44,8 +46,8 @@ Available modes: manual
 ### `--help` (`-h`), `--version` (`-v`)
 
 `--help` prints the usage, `--version` prints the version; `-h` and `-v` are their short forms. Neither
-opens a device, so both work on any machine, Windows or not. Either one wins over the rest of the line,
-a usage error included.
+opens a device, so both work on any machine, Windows or not. Either option takes precedence over the rest
+of the command line, even when it also contains a usage error.
 
 ```text
 $ signalme --help
@@ -88,8 +90,8 @@ Option '--mode' needs a value: --mode <MODE>.
 Type 'signalme --help' for usage.
 ```
 
-SignalMe takes no argument other than its options, so any bare word is unexpected, before or after `--`.
-When a line holds several problems, the first one is reported.
+SignalMe accepts no arguments other than its options, so any bare word is unexpected, whether it comes
+before or after `--`. When a command line contains several errors, only the first one is reported.
 
 ## Startup
 
