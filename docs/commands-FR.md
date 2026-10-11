@@ -31,6 +31,8 @@ Une fois qu'il tourne, les **commandes interactives** se tapent à son invite :
 Le mode décide d'où vient le statut. SignalMe 2.0 n'en connaît qu'un, `manual`, dans lequel vous tapez
 le statut vous-même ; c'est le mode par défaut, si bien que `signalme` et `signalme --mode manual` sont
 une seule et même chose. Le nom est débarrassé de ses espaces et comparé sans tenir compte de la casse.
+Les quatre écritures `--mode manual`, `--mode=manual`, `-m manual` et `-m=manual` sont équivalentes ;
+donnée deux fois, l'option garde sa dernière valeur.
 
 Un mode inconnu est une erreur d'utilisation, signalée avant qu'aucun périphérique ne soit touché :
 
@@ -44,7 +46,29 @@ Available modes: manual
 
 `--help` affiche l'usage, `--version` affiche la version ; `-h` et `-v` en sont les formes courtes. Ni
 l'un ni l'autre n'ouvre de périphérique : les deux fonctionnent sur n'importe quelle machine, Windows ou
-non.
+non. L'un comme l'autre l'emporte sur le reste de la ligne, erreur d'utilisation comprise.
+
+```text
+$ signalme --help
+SignalMe 2.0.0-preview.2
+A resident presence runtime for Luxafor devices.
+
+Usage:
+  signalme [--mode <MODE>]
+  signalme --help
+  signalme --version
+
+Options:
+  -m, --mode <MODE>  Where the status comes from. Default: manual.
+                     Available modes: manual.
+  -h, --help         Prints this help.
+  -v, --version      Prints the version.
+
+Once SignalMe runs, type 'help' at its prompt for the commands it understands.
+
+$ signalme --version
+2.0.0-preview.2
+```
 
 ### Tout le reste
 
@@ -57,13 +81,16 @@ Unknown option: '--bogus'.
 Type 'signalme --help' for usage.
 
 $ signalme extra
-Unknown command 'extra'.
+Unexpected argument: 'extra'.
+Type 'signalme --help' for usage.
+
+$ signalme --mode
+Option '--mode' needs a value: --mode <MODE>.
 Type 'signalme --help' for usage.
 ```
 
-SignalMe n'a pas de sous-commandes : sur la ligne de commande, `Unknown command` désigne un argument qu'il
-n'attendait pas (un argument placé après `--` est signalé par `Unexpected argument: 'extra'.`). Ce n'est
-pas le `Unknown command: '…'.` de l'invite, qui concerne une ligne tapée une fois SignalMe lancé.
+SignalMe n'accepte aucun argument en dehors de ses options : tout mot isolé est inattendu, avant comme après
+`--`. Quand une ligne contient plusieurs problèmes, le premier est signalé.
 
 ## Démarrage
 

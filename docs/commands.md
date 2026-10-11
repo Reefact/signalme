@@ -30,7 +30,8 @@ Once it runs, the **interactive commands** are typed at its prompt:
 
 The mode decides where the status comes from. SignalMe 2.0 knows one mode, `manual`, in which you type
 the status yourself; it is the default, so `signalme` and `signalme --mode manual` are the same thing. The
-name is trimmed and compared regardless of case.
+name is trimmed and compared regardless of case. The four spellings `--mode manual`, `--mode=manual`,
+`-m manual` and `-m=manual` are equivalent; given twice, the option keeps its last value.
 
 An unknown mode is a usage error, reported before any device is touched:
 
@@ -43,7 +44,30 @@ Available modes: manual
 ### `--help` (`-h`), `--version` (`-v`)
 
 `--help` prints the usage, `--version` prints the version; `-h` and `-v` are their short forms. Neither
-opens a device, so both work on any machine, Windows or not.
+opens a device, so both work on any machine, Windows or not. Either one wins over the rest of the line,
+a usage error included.
+
+```text
+$ signalme --help
+SignalMe 2.0.0-preview.2
+A resident presence runtime for Luxafor devices.
+
+Usage:
+  signalme [--mode <MODE>]
+  signalme --help
+  signalme --version
+
+Options:
+  -m, --mode <MODE>  Where the status comes from. Default: manual.
+                     Available modes: manual.
+  -h, --help         Prints this help.
+  -v, --version      Prints the version.
+
+Once SignalMe runs, type 'help' at its prompt for the commands it understands.
+
+$ signalme --version
+2.0.0-preview.2
+```
 
 ### Anything else
 
@@ -56,13 +80,16 @@ Unknown option: '--bogus'.
 Type 'signalme --help' for usage.
 
 $ signalme extra
-Unknown command 'extra'.
+Unexpected argument: 'extra'.
+Type 'signalme --help' for usage.
+
+$ signalme --mode
+Option '--mode' needs a value: --mode <MODE>.
 Type 'signalme --help' for usage.
 ```
 
-SignalMe has no sub-commands: `Unknown command` on the command line means an argument it did not expect
-(one placed after `--` is reported as `Unexpected argument: 'extra'.` instead). It is not the
-`Unknown command: '…'.` of the prompt, which is about a line typed once SignalMe runs.
+SignalMe takes no argument other than its options, so any bare word is unexpected, before or after `--`.
+When a line holds several problems, the first one is reported.
 
 ## Startup
 

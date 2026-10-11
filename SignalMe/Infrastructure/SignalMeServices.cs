@@ -16,10 +16,9 @@ namespace SignalMe.Infrastructure;
 ///     default.
 /// </summary>
 /// <remarks>
-///     The command app attaches it to the command context, which is how the tests run the real command
-///     line, option parsing and exit codes included, over a console they script and devices they fake. A
-///     bag rather than a container: the command has a handful of dependencies and Spectre's own resolver
-///     builds the command itself.
+///     The command app hands it to the command, which is how the tests run the real command line, option
+///     parsing and exit codes included, over a console they script and devices they fake. A bag rather
+///     than a container: the command has a handful of dependencies.
 /// </remarks>
 public sealed class SignalMeServices {
 

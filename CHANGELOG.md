@@ -9,6 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **The command line no longer relies on Spectre.Console.Cli.** SignalMe reads its one option itself, and
+  every message of the command line now goes through the same console as the rest, so the help and the
+  version print on any system, redirected output included. The package is about 1 MB lighter.
+- **A stray argument reads `Unexpected argument: 'extra'.`**, before or after `--`, instead of Spectre's
+  `Unknown command 'extra'.`, which could be mistaken for the `Unknown command: '…'.` of the prompt. A
+  `--mode` with no value reads `Option '--mode' needs a value: --mode <MODE>.`, and `--help` prints a
+  usage of SignalMe's own. Exit codes are unchanged.
+
 ## [2.0.0-preview.2] - 2026-10-09
 
 The second preview of 2.0. SignalMe now notices an unplugged device on its own, within two seconds,

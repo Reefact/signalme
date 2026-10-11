@@ -587,7 +587,7 @@ Commands:
 Press Ctrl+C to stop SignalMe.
 ```
 
-Le contenu exact pourra être formaté avec Spectre.Console.
+Le contenu exact est écrit tel quel sur la console, sans librairie de rendu (voir §38).
 
 ---
 
@@ -1269,9 +1269,27 @@ La séparation des responsabilités est normative ; les noms et dossiers exacts 
 
 ---
 
-# 38. CLI Spectre.Console
+# 38. Ligne de commande
 
-Spectre.Console.Cli peut être conservé pour le parsing initial.
+La ligne de commande est lue par un parseur propre à SignalMe (`Commands/CommandLineParser.cs`), sans
+librairie de ligne de commande.
+
+Décision prise en 2.0.0-preview.2. Spectre.Console.Cli a d'abord été conservé pour le parsing initial,
+puis retiré : pour une seule option sans sous-commande, il coûtait plus qu'il n'apportait.
+
+* son mode strict lisait `signalme --mode` comme `--mode __default_command`, si bien qu'il fallait le
+  laisser en mode relâché et revérifier soi-même options inconnues et arguments en trop ;
+* sans gestionnaire d'exception, il avalait une erreur sans message, avec un code de sortie `-1` ;
+* un argument en trop était signalé comme une sous-commande inconnue (`Unknown command 'extra'.`), à
+  confondre avec le `Unknown command: '…'.` de l'invite ;
+* l'aide et la version passaient par sa propre console et non par `IConsole`, si bien que les tests ne
+  pouvaient pas les vérifier, et rien ne s'affichait sous Linux quand la sortie était redirigée ;
+* il imposait une commande au constructeur sans paramètre, servie par un sac de données ;
+* il pesait environ 1 Mo dans le paquet (Spectre.Console et ses ressources), pour un SignalMe.dll de
+  100 Ko, alors que son rendu n'était même pas utilisé.
+
+Tous les messages de la ligne de commande, l'aide et la version comprises, passent désormais par
+`IConsole`. Si SignalMe gagne un jour des sous-commandes, le choix d'une librairie sera à reconsidérer.
 
 Le programme doit avoir une commande par défaut permettant :
 

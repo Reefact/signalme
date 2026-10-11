@@ -1,79 +1,76 @@
 #region Usings declarations
 
 using System;
+using System.Threading.Tasks;
 
 using SignalMe.Infrastructure;
-
-using Spectre.Console;
-using Spectre.Console.Cli;
 
 #endregion
 
 namespace SignalMe.Commands;
 
 /// <summary>
-///     Builds the signalme command line: one default command, <see cref="RunCommand" />, and the help and
-///     version Spectre provides around it.
+///     The signalme command line: reads the arguments, answers <c>--help</c> and <c>--version</c>, rejects
+///     a usage error, or runs <see cref="RunCommand" />, and turns whatever happened into an exit code.
 /// </summary>
 /// <remarks>
 ///     Lives here rather than in Program.cs so that the tests can run the real command line, help and exit
-///     codes included, instead of a copy of it.
+///     codes included, instead of a copy of it. Everything it prints goes through the
+///     <see cref="IConsole" /> of the services, the help and the version as well.
 /// </remarks>
 public static class SignalMeCommandApp {
+
+    private const string UsageHint = "Type 'signalme --help' for usage.";
 
     #region Statics members declarations
 
     /// <summary>
-    ///     Creates the command line over <paramref name="services" />, or over the real console, device
-    ///     discovery, status store and session monitor when none are given.
+    ///     Runs the command line over <paramref name="services" />, or over the real console, device
+    ///     discovery, status store and monitors when none are given, and returns the exit code.
     /// </summary>
-    public static CommandApp<RunCommand> Create(SignalMeServices? services = null) {
-        SignalMeServices       resolved = services ?? new SignalMeServices();
-        CommandApp<RunCommand> app      = new();
+    public static async Task<int> RunAsync(string[] args, SignalMeServices? services = null) {
+        ArgumentNullException.ThrowIfNull(args);
 
-        app.WithData(resolved);
-        app.Configure(config => {
-            config.SetApplicationName("signalme");
+        SignalMeServices resolved = services ?? new SignalMeServices();
+        IConsole         console  = resolved.Console;
 
-            // Enables --version and -v, which Spectre answers by itself before parsing anything else. It
-            // renders the string as markup, hence the escape; the version is the one the banner prints.
-            config.SetApplicationVersion(Markup.Escape(RunCommand.Version));
+        try {
+            CommandLineRequest request = CommandLineParser.Parse(args);
 
-            // Parsing stays relaxed, Spectre's default. In strict mode a failed parse is retried with the
-            // default command's name inserted among the arguments, so "signalme --mode" would bind the
-            // mode to "__default_command" instead of failing. Relaxed, an unknown option or a stray
-            // argument lands in the command's remaining arguments, and RunCommand rejects them first thing.
+            switch (request) {
+                case CommandLineRequest.ShowHelp:
+                    console.WriteLine(CommandLineParser.HelpText(RunCommand.Version));
 
-            // Without a handler, Spectre swallows an unhandled exception whole: no message on any stream,
-            // and a -1 exit code. The console is the captured one rather than anything from the resolver
-            // the handler is given, which is null for a parse error.
-            config.SetExceptionHandler((exception, _) => {
-                IConsole console = resolved.Console;
-                switch (exception) {
-                    case CommandParseException:
-                    case CommandRuntimeException:
-                        console.WriteError(exception.Message);
-                        console.WriteError("Type 'signalme --help' for usage.");
+                    return ExitCode.Success;
+                case CommandLineRequest.ShowVersion:
+                    console.WriteLine(RunCommand.Version);
 
-                        return ExitCode.UsageError;
-                    case OperationCanceledException:
-                        // A clean stop, not a failure: the same line the runtime prints, on the same stream.
-                        console.WriteLine("SignalMe stopped.");
+                    return ExitCode.Success;
+                case CommandLineRequest.Invalid invalid:
+                    console.WriteError(invalid.Reason);
+                    console.WriteError(UsageHint);
 
-                        return ExitCode.Success;
-                    case DeviceCommandFailedException:
-                        console.WriteError(ErrorReporting.Describe(exception));
+                    return ExitCode.UsageError;
+                case CommandLineRequest.Run run:
+                    return await new RunCommand(resolved).ExecuteAsync(run.Mode).ConfigureAwait(false);
+                default:
+                    throw new ArgumentException($"Unknown command-line request '{request.GetType().Name}'.", nameof(args));
+            }
+        } catch (OperationCanceledException) {
+            // A device selection cut short by Ctrl+C or by the end of input: a clean stop, not a failure,
+            // printed on the same stream and in the same words as the runtime's own stop.
+            console.WriteLine("SignalMe stopped.");
 
-                        return ExitCode.DeviceError;
-                    default:
-                        console.WriteError(ErrorReporting.Describe(exception));
+            return ExitCode.Success;
+        } catch (DeviceCommandFailedException exception) {
+            console.WriteError(ErrorReporting.Describe(exception));
 
-                        return ExitCode.UnexpectedError;
-                }
-            });
-        });
+            return ExitCode.DeviceError;
+        } catch (Exception exception) {
+            console.WriteError(ErrorReporting.Describe(exception));
 
-        return app;
+            return ExitCode.UnexpectedError;
+        }
     }
 
     #endregion
