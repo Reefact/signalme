@@ -13,9 +13,9 @@ namespace SignalMe.Tests;
 ///     through the manual mode.
 /// </summary>
 /// <remarks>
-///     The help and the version are rendered by Spectre through its own console, not through
-///     <see cref="IConsole" />, and it prints nothing when the output is redirected on Linux: only their
-///     exit codes are checked here, their text is checked by the tool-install script on the Windows agent.
+///     The help and the version go through <see cref="IConsole" /> like everything else signalme prints, so
+///     their text is checked here, not only their exit codes. The finer points of reading the arguments are
+///     covered by <see cref="CommandLineParserTests" />.
 /// </remarks>
 public sealed class CommandLineTests {
 
@@ -40,8 +40,48 @@ public sealed class CommandLineTests {
         int exitCode = await signalme.RunAsync(option);
 
         Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Console.Output).ContainsExactly([CommandLineParser.HelpText(RunCommand.Version)]);
+        Check.That(signalme.Console.Error).IsEmpty();
         Check.That(signalme.Discovery.Calls).IsEqualTo(0);
         Check.That(signalme.Console.Reads).IsEqualTo(0);
+    }
+
+    /// <summary>
+    ///     The help is part of the public contract, so its text is pinned here: the docs quote it, and a
+    ///     change to it must be deliberate.
+    /// </summary>
+    [Fact]
+    public void The_help_names_the_option_the_default_and_the_known_modes() {
+        string[] expected = [
+            $"SignalMe {RunCommand.Version}",
+            "A resident presence runtime for Luxafor devices.",
+            "",
+            "Usage:",
+            "  signalme [--mode <MODE>]",
+            "  signalme --help",
+            "  signalme --version",
+            "",
+            "Options:",
+            "  -m, --mode <MODE>  Where the status comes from. Default: manual.",
+            "                     Available modes: manual.",
+            "  -h, --help         Prints this help.",
+            "  -v, --version      Prints the version.",
+            "",
+            "Once SignalMe runs, type 'help' at its prompt for the commands it understands."
+        ];
+
+        Check.That(CommandLineParser.HelpText(RunCommand.Version).Split(NewLine)).ContainsExactly(expected);
+    }
+
+    [Fact]
+    public async Task The_help_wins_over_a_usage_error_on_the_same_line() {
+        using Harness signalme = new(new FakeConsole());
+
+        int exitCode = await signalme.RunAsync("--bogus", "--help");
+
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Console.Output).ContainsExactly([CommandLineParser.HelpText(RunCommand.Version)]);
+        Check.That(signalme.Console.Error).IsEmpty();
     }
 
     [Theory]
@@ -53,6 +93,8 @@ public sealed class CommandLineTests {
         int exitCode = await signalme.RunAsync(option);
 
         Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Console.Output).ContainsExactly([RunCommand.Version]);
+        Check.That(signalme.Console.Error).IsEmpty();
         Check.That(signalme.Discovery.Calls).IsEqualTo(0);
         Check.That(signalme.Console.Reads).IsEqualTo(0);
     }
@@ -105,23 +147,23 @@ public sealed class CommandLineTests {
     }
 
     [Theory]
-    [InlineData("--mode")]
-    [InlineData("--mode=")]
-    public async Task A_mode_without_a_value_is_a_usage_error(string argument) {
+    [InlineData("--mode", "--mode")]
+    [InlineData("--mode=", "--mode")]
+    [InlineData("-m", "-m")]
+    public async Task A_mode_without_a_value_is_a_usage_error(string argument, string option) {
         using Harness signalme = new(new FakeConsole(), new FakeLuxaforDevice());
 
         int exitCode = await signalme.RunAsync(argument);
 
         Check.That(exitCode).IsEqualTo(ExitCode.UsageError);
-        Check.That(signalme.Console.Error.Count).IsEqualTo(2);
-        Check.That(signalme.Console.Error[^1]).IsEqualTo(UsageHint);
+        Check.That(signalme.Console.Error).ContainsExactly([$"Option '{option}' needs a value: {option} <MODE>.", UsageHint]);
         Check.That(signalme.Discovery.Calls).IsEqualTo(0);
     }
 
     /// <summary>
-    ///     A bare argument is a parse error worded by Spectre, which cannot tell it from the name of a
-    ///     sub-command signalme does not have. The docs quote that text, so it is pinned here: a Spectre
-    ///     upgrade that rewords it fails this test rather than silently breaking the docs.
+    ///     SignalMe takes no positional argument: a bare word on the command line is reported in the same
+    ///     words as one placed after "--", not as an unknown sub-command, which would be confused with the
+    ///     "Unknown command" of the prompt.
     /// </summary>
     [Fact]
     public async Task A_stray_argument_is_a_usage_error() {
@@ -130,7 +172,7 @@ public sealed class CommandLineTests {
         int exitCode = await signalme.RunAsync("extra");
 
         Check.That(exitCode).IsEqualTo(ExitCode.UsageError);
-        Check.That(signalme.Console.Error).ContainsExactly(["Unknown command 'extra'.", UsageHint]);
+        Check.That(signalme.Console.Error).ContainsExactly(["Unexpected argument: 'extra'.", UsageHint]);
         Check.That(signalme.Discovery.Calls).IsEqualTo(0);
     }
 
@@ -304,6 +346,19 @@ public sealed class CommandLineTests {
         Check.That(signalme.Console.Output).Not.HasElementThatMatches(block => block.Contains("MANUAL", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("--mode=manual")]
+    [InlineData("-m=manual")]
+    public async Task The_mode_can_be_given_in_one_argument(string argument) {
+        using Harness signalme = new(new FakeConsole(), new FakeLuxaforDevice());
+
+        int exitCode = await signalme.RunAsync(argument);
+
+        Check.That(exitCode).IsEqualTo(ExitCode.Success);
+        Check.That(signalme.Console.Output).Contains("Mode: manual");
+        Check.That(signalme.Console.Error).IsEmpty();
+    }
+
     [Fact]
     public async Task A_selection_cut_short_stops_cleanly() {
         FakeLuxaforDevice first    = new() { Path = FirstId };
@@ -368,7 +423,7 @@ public sealed class CommandLineTests {
                 }
             };
 
-            return SignalMeCommandApp.Create(services).RunAsync(args);
+            return SignalMeCommandApp.RunAsync(args, services);
         }
 
         public void Dispose() {

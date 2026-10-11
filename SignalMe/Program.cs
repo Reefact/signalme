@@ -4,4 +4,4 @@ using SignalMe.Commands;
 
 #endregion
 
-return SignalMeCommandApp.Create().Run(args);
+return await SignalMeCommandApp.RunAsync(args).ConfigureAwait(false);

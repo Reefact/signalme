@@ -42,9 +42,8 @@ try {
         return $output
     }
 
-    # The help and the version are rendered by the command-line library itself; the unit tests only see
-    # their exit codes, because that library prints nothing when the output is redirected on Linux. This
-    # Windows agent is where their text is checked.
+    # The unit tests pin the text of the help and the version; here they are run from the installed tool,
+    # which is what a user actually types.
     $help = Invoke-SignalMe -Arguments @('--help') -ExpectedExitCode 0 -What 'help'
     if ($help -notmatch '--mode') { throw "The help does not mention the '--mode' option.`n$help" }
 

@@ -48,7 +48,11 @@ périphérique.**
   statut initial avant que le mode ne démarre, fait tourner le coordinateur et le mode côte à côte, et
   éteint puis libère le périphérique quoi qu'il soit arrivé.
 - La **ligne de commande** (`Commands/`) analyse `--mode`, découvre et sélectionne le périphérique, puis
-  le confie au runtime et traduit son issue en code de sortie.
+  le confie au runtime et traduit son issue en code de sortie. Le parseur est propre à SignalMe plutôt
+  qu'une librairie de ligne de commande : Spectre.Console.Cli a été retiré en 2.0.0-preview.2, ses
+  raisons sont consignées au §38 de la [spécification v2](specifications-v2-FR.md). Tous les messages de
+  la ligne de commande, aide et version comprises, passent par `IConsole`, si bien que les tests en
+  vérifient le texte.
 
 ## Tests
 

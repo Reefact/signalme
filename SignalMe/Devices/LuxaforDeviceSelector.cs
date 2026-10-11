@@ -27,10 +27,10 @@ namespace SignalMe.Devices;
 ///         dialog needs an answer, so a single device never touches the input at all: the CI agent has none.
 ///     </para>
 ///     <para>
-///         The table is drawn by hand rather than through Spectre.Console, whose rendering bends to the
-///         terminal width it detects and collapses cells to "…" once the output is redirected. The id
-///         column must show the whole path: that is what the user matches against the device they
-///         recognised.
+///         The table is drawn by hand rather than through a rendering library: Spectre.Console's, tried
+///         first, bends to the terminal width it detects and collapses cells to "…" once the output is
+///         redirected. The id column must show the whole path: that is what the user matches against the
+///         device they recognised.
 ///     </para>
 /// </remarks>
 public sealed class LuxaforDeviceSelector {

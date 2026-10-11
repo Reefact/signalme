@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,8 +15,6 @@ using SignalMe.Modes;
 using SignalMe.Runtime;
 using SignalMe.Sessions;
 
-using Spectre.Console.Cli;
-
 #endregion
 
 namespace SignalMe.Commands;
@@ -28,9 +25,8 @@ namespace SignalMe.Commands;
 /// </summary>
 /// <remarks>
 ///     <para>
-///         Its dependencies come from the <see cref="SignalMeServices" /> the command app attached to the
-///         context, so the tests run this very command over a scripted console and fake devices. The
-///         constructor stays parameterless for the same reason: Spectre's own resolver builds the command.
+///         Its dependencies come from the <see cref="SignalMeServices" /> it is given, so the tests run this
+///         very command over a scripted console and fake devices.
 ///     </para>
 ///     <para>
 ///         The steps are ordered so that the command line is rejected before a device is touched, and so
@@ -38,9 +34,7 @@ namespace SignalMe.Commands;
 ///         and no input, and must stop on the device error rather than on a read that never completes.
 ///     </para>
 /// </remarks>
-public sealed class RunCommand : AsyncCommand<RunCommand.Settings> {
-
-    private const string UsageHint = "Type 'signalme --help' for usage.";
+public sealed class RunCommand {
 
     #region Statics members declarations
 
@@ -48,13 +42,6 @@ public sealed class RunCommand : AsyncCommand<RunCommand.Settings> {
     ///     The informational version of the assembly, as the banner prints it and as --version reports it.
     /// </summary>
     public static string Version { get; } = typeof(RunCommand).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
-
-    private static int RejectUsage(IConsole console, string message) {
-        console.WriteError(message);
-        console.WriteError(UsageHint);
-
-        return ExitCode.UsageError;
-    }
 
     private static int ToExitCode(RuntimeOutcome outcome) {
         return outcome switch {
@@ -67,25 +54,36 @@ public sealed class RunCommand : AsyncCommand<RunCommand.Settings> {
 
     #endregion
 
-    /// <inheritdoc />
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings) {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(settings);
+    #region Fields declarations
 
-        SignalMeServices services = (SignalMeServices)context.Data!;
+    private readonly SignalMeServices _services;
+
+    #endregion
+
+    #region Constructors declarations
+
+    public RunCommand(SignalMeServices services) {
+        ArgumentNullException.ThrowIfNull(services);
+
+        _services = services;
+    }
+
+    #endregion
+
+    /// <summary>
+    ///     Runs SignalMe in <paramref name="requestedMode" />, as typed on the command line, and returns the
+    ///     exit code. An unknown mode is rejected before any device is touched.
+    /// </summary>
+    public async Task<int> ExecuteAsync(string requestedMode) {
+        ArgumentNullException.ThrowIfNull(requestedMode);
+
+        SignalMeServices services = _services;
         IConsole         console  = services.Console;
 
-        // Relaxed parsing leaves an unknown option or a stray argument in the remaining arguments rather
-        // than failing on them: they are usage errors all the same, reported before anything else happens.
-        string? unknownOption = context.Remaining.Parsed.Select(option => option.Key).FirstOrDefault();
-        if (unknownOption is not null) { return RejectUsage(console, $"Unknown option: '{unknownOption}'."); }
-        if (context.Remaining.Raw.Count > 0) { return RejectUsage(console, $"Unexpected argument: '{context.Remaining.Raw[0]}'."); }
-
-        // Validated here rather than in Settings.Validate(), so that the message is signalme's own instead
-        // of being wrapped in Spectre's validation error. The factory names the mode as it advertises it,
-        // so "Mode:" and the status report spell it one way whatever spacing or capitals were typed.
-        if (!SignalMeModeFactory.TryResolve(settings.Mode, out string? modeName) || !SignalMeModeFactory.TryCreate(modeName, console, out ISignalMeMode? mode)) {
-            console.WriteError($"Unknown mode: '{settings.Mode}'.");
+        // The factory names the mode as it advertises it, so "Mode:" and the status report spell it one
+        // way whatever spacing or capitals were typed.
+        if (!SignalMeModeFactory.TryResolve(requestedMode, out string? modeName) || !SignalMeModeFactory.TryCreate(modeName, console, out ISignalMeMode? mode)) {
+            console.WriteError($"Unknown mode: '{requestedMode}'.");
             console.WriteError($"Available modes: {string.Join(", ", SignalMeModeFactory.KnownModes)}");
 
             return ExitCode.UsageError;
@@ -114,7 +112,7 @@ public sealed class RunCommand : AsyncCommand<RunCommand.Settings> {
         }
 
         // A selection cut short, by Ctrl+C or because the input ended, throws: the selector has released
-        // every device by then, and the command app's handler turns it into a clean "SignalMe stopped.".
+        // every device by then, and the command app turns it into a clean "SignalMe stopped.".
         ILuxaforDevice device = await new LuxaforDeviceSelector(console, services.Delay).SelectAsync(devices, cancellation.Token).ConfigureAwait(false);
 
         console.WriteLine($"Mode: {modeName}");
@@ -127,18 +125,5 @@ public sealed class RunCommand : AsyncCommand<RunCommand.Settings> {
 
         return ToExitCode(outcome);
     }
-
-    #region Nested types declarations
-
-    public sealed class Settings : CommandSettings {
-
-        [CommandOption("-m|--mode <MODE>")]
-        [Description("The mode SignalMe runs in, which decides where the status comes from.")]
-        [DefaultValue("manual")]
-        public string Mode { get; init; } = "manual";
-
-    }
-
-    #endregion
 
 }

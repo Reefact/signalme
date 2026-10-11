@@ -12,6 +12,17 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
+### Modifié
+
+- **La ligne de commande ne repose plus sur Spectre.Console.Cli.** SignalMe lit lui-même son unique option,
+  et tous les messages de la ligne de commande passent désormais par la même console que le reste, si bien
+  que l'aide et la version s'affichent sur tout système, sortie redirigée comprise. Le paquet perd environ
+  1 Mo.
+- **Un argument en trop affiche `Unexpected argument: 'extra'.`**, avant comme après `--`, au lieu du
+  `Unknown command 'extra'.` de Spectre, qu'on pouvait confondre avec le `Unknown command: '…'.` de
+  l'invite. Un `--mode` sans valeur affiche `Option '--mode' needs a value: --mode <MODE>.`, et `--help`
+  affiche un usage propre à SignalMe. Les codes de sortie ne changent pas.
+
 ## [2.0.0-preview.2] - 2026-10-09
 
 Deuxième préversion de la 2.0. SignalMe remarque désormais de lui-même un périphérique débranché, en deux
