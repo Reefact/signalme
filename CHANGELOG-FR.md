@@ -12,6 +12,14 @@ Le format s'appuie sur [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Non publié]
 
+## [2.0.0-preview.3] - 2026-10-11
+
+Troisième préversion de la 2.0. SignalMe lit désormais lui-même sa ligne de commande, sans
+Spectre.Console.Cli : l'aide et la version s'affichent sur tout système, quelques messages d'utilisation
+sont plus clairs, et le paquet perd environ 1 Mo. Comme les préversions précédentes, elle est publiée
+comme préversion : `dotnet tool install --global SignalMe --prerelease` l'installe, et
+`dotnet tool update --global SignalMe --prerelease` met à jour une préversion déjà installée.
+
 ### Modifié
 
 - **La ligne de commande ne repose plus sur Spectre.Console.Cli.** SignalMe lit lui-même son unique option,
@@ -208,7 +216,8 @@ l'outil a cessé d'évoluer.
 - Seul le Luxafor Orb a été testé. Voir [Matériel et plateformes](docs/hardware-FR.md) pour ce qui devrait
   fonctionner et ce qui n'est pas supporté.
 
-[Non publié]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.2...HEAD
+[Non publié]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.3...HEAD
+[2.0.0-preview.3]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.2...v2.0.0-preview.3
 [2.0.0-preview.2]: https://github.com/Reefact/signalme/compare/v2.0.0-preview.1...v2.0.0-preview.2
 [2.0.0-preview.1]: https://github.com/Reefact/signalme/compare/v1.0.2...v2.0.0-preview.1
 [1.0.2]: https://github.com/Reefact/signalme/compare/v1.0.1...v1.0.2

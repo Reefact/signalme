@@ -51,7 +51,7 @@ non. L'un comme l'autre l'emporte sur le reste de la ligne, erreur d'utilisation
 
 ```text
 $ signalme --help
-SignalMe 2.0.0-preview.2
+SignalMe 2.0.0-preview.3
 A resident presence runtime for Luxafor devices.
 
 Usage:
@@ -68,7 +68,7 @@ Options:
 Once SignalMe runs, type 'help' at its prompt for the commands it understands.
 
 $ signalme --version
-2.0.0-preview.2
+2.0.0-preview.3
 ```
 
 ### Tout le reste
@@ -97,7 +97,7 @@ SignalMe n'accepte aucun argument en dehors de ses options : tout mot isolé est
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.2
+SignalMe 2.0.0-preview.3
 Luxafor device detected.
 Mode: manual
 Status: busy
@@ -340,7 +340,7 @@ signalme || echo "SignalMe ne s'est pas arrêté proprement"
 
 ```text
 $ signalme
-SignalMe 2.0.0-preview.2
+SignalMe 2.0.0-preview.3
 Luxafor device detected.
 Mode: manual
 Status: busy
